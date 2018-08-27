@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Macro Sourcery</title>
+
+		<meta name="description" content="Slides for my talk on beginning with Scala macros">
+		<meta name="author" content="Jakub Kozłowski">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/blood.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/darkula.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+                <!--intro-->
+				<section>
+                    <section>
+                        <h2>Macro <a>Sourcery</a></h2>
+                        <p>Jakub Kozłowski - Scala Developer @ <a href="https://scalac.io" target="_blank">Scalac</a></p>
+						<aside class="notes">
+							hello, macro sourcery, what does it mean;
+							supposed to sound as if macros are sorcery, but one thing they're not is black magic
+						</aside>
+                    </section>
+                    <section>
+                        <h2>Agenda</h2>
+						<aside class="notes">
+							begin by outlining plan to start working with macros
+						</aside>
+                        <ul>
+                            <li>Why && what</li>
+                            <li>Demo</li>
+                            <li>Conclusion</li>
+                        </ul>
+						<aside class="notes">
+							Focus on the WHY
+						</aside>
+                    </section>
+                </section>
+                <!--what && why-->
+				<section>
+					<section>
+						<h3>Who are you?</h3>
+						<aside class="notes">
+							I told you about myself, who are you<br/>
+							how many scala devs<br/>
+							you'll learn regardless
+						</aside>
+					</section>
+					<section>
+						<h3>Why are we here?</h3>
+						<aside class="notes">
+							we're developers<br/>
+							no matter what tech stack<br/>
+							write good software<br/>
+							to write better software, we learn<br/>
+							3 things in particular
+						</aside>
+						<p class="fragment">To learn...</p>
+						<p class="fragment"><br/>how to avoid writing <a>boilerplate</a></p>
+						<p class="fragment">how to avoid <a>runtime overhead</a></p>
+						<p class="fragment">how to add <a>additional static checks</a></p>
+						<p class="fragment"><br/>...with macros</p>
+					</section>
+					<section>
+						<h3>What are macros?</h3>
+						<aside class="notes">
+							Most of you will probably have heard a thing or two about macros
+						</aside>
+						<p class="fragment"><a>Meta</a>programming</p>
+						<p class="fragment">Code that <a>writes code</a></p>
+						<p class="fragment">During the compilation</p>
+					</section>
+					<section>
+						<h3>an <a>annotation macro</a></h3>
+						<p class="fragment">used as <a>an annotation</a></p>
+						<pre class="fragment"><code class="scala">
+@typeclass trait Numeric[T]{
+  @op("+") def add(a: T, b: T): T
+}
+</code></pre>
+						<p class="fragment">e.g. adds methods, <a href="https://github.com/mpilquist/simulacrum">typeclass helpers</a></p>
+						<p class="fragment">currently only with macro-paradise</p>
+					</section>
+					<section>
+						<h3>a <a>def macro</a></h3>
+						<p class="fragment">used as <a>a function</a></p>
+						<pre class="fragment"><code class="scala">
+val result = cached (15.minutes) {
+  expensiveCall(args)
+}
+</code></pre>
+						<p class="fragment">can transform its arguments' ASTs</p>
+					</section>
+					<section>
+						<h3>Abstract Syntax Trees</h3>
+						<p class="fragment">Syntax representation in <a>compilers</a></p>
+						<p class="fragment"><a>Abstract</a>, independent of grammar</p>
+					</section>
+					<section>
+						<h4>Example</h4>
+						<img src="images/sample-ast.png" style="border: none; background: transparent"/>
+						<p><small class="fragment"><code class="scala">println("hello, world")</code></small></p>
+					</section>
+					<section>
+						<h3>Avoiding boilerplate</h3>
+					</section>
+					<section>
+						<h3>JSON (by hand)</h3>
+						<pre class="fragment"><code class="scala">
+case class Person(name: String, age: Int, hometown: String){
+  def toJson = JsonObject(
+    "name"     -> name,
+    "age"      -> age.toString,
+    "hometown" -> hometown
+  )
+}
+
+object Person{
+  def fromJson(json: JsonObject) = Person(json[String]("name"), ...)
+}
+						</code></pre>
+						<pre><code class="scala">
+val person = Person("Joe", 26, "NYC")
+val personJson = person.toJson
+
+//...
+
+val person2 = Person.fromJson(personJson)
+						</code></pre>
+                    </section>
+                    <section>
+						<h3>JSON (with macros)</h3>
+						<pre class="fragment"><code class="scala">
+val person = Person("Joe", 26, "NYC")
+val personJson = person.toJson
+
+//...
+
+val person2 = personJson.convertTo[Person]
+                        </code></pre>
+						<p class="fragment">That's all (with the right macro-based library)</p>
+					</section>
+                    <section>
+                        <h3>Deep update (by hand)</h3>
+                        <pre class="fragment"><code class="scala">
+//given these classes...
+
+case class Address(street: String, city: String, postcode: String)
+case class Person(name: String, age: Int, address: Address)
+                        </code></pre>
+                        <pre class="fragment"><code class="scala">
+//update person's address's street
+val person = Person("Joe", 18, Address("Long", "NYC", "99999"))
+						</code></pre>
+						<pre class="fragment"><code class="scala">
+//omg
+val newPerson =
+    person.copy(
+        address = person.address.copy(
+            street = person.address.street + " st."
+        )
+    )
+                        </code></pre>
+                    </section>
+                    <section>
+                        <img src="images/php-nesting.jpg"/>
+                        <h3 class="fragment">We <a>don't</a> want that</h3>
+                    </section>
+					<section>
+						<h3>Solution?</h3>
+					</section>
+					<section>
+						<p>Use <a href="https://github.com/milessabin/shapeless/blob/master/examples/src/main/scala/shapeless/examples/lenses.scala" target="_blank">Lens</a> (e.g. from shapeless)</p>
+                        <h3>Deep update (with macros)</h3>
+						 <pre><code class="scala">
+//given these classes...
+
+case class Address(street: String, city: String, postcode: String)
+case class Person(name: String, age: Int, address: Address)
+
+//update person's address's street
+val person = Person("Joe", 18, Address("Long", "NYC", "99999"))
+						</code></pre>
+                        <pre class="fragment"><code class="scala">import shapeless._</code></pre>
+						<pre class="fragment"><code class="scala">val streetLens = lens[Person].address.street</code></pre>
+<pre class="fragment"><code class="scala">val newPerson = streetLens.modify(person)(_ + " st.")</code></pre>
+					</section>
+                    <section>
+                        <h3>Avoiding runtime overhead</h3>
+                        <p class="fragment">Creating generic array of elements</p>
+                    </section>
+                    <section>
+                        <h3>Without macros</h3>
+                        <pre class="fragment"><code class="scala">
+def createArray[T: ClassTag](size: Int, el: T) = {
+  val a = new Array[T](size)
+  for (i <- 0 until size) a(i) = el
+  a
+}
+                        </code></pre>
+                        <p class="fragment">Uses <a>boxing</a></p>
+                    </section>
+                    <section>
+                        <p>You can make use of specialization...</p>
+						<pre class="fragment"><code class="scala">
+def createArray[@specialized T: ClassTag](size: Int, el: T) = {
+  val a = new Array[T](size)
+  for (i <- 0 until size) a(i) = el
+  a
+}
+                        </code></pre>
+						<p class="fragment">...which is <a>viral</a> and <a>heavyweight</a></p>
+					</section>
+					<section>
+						<h3>Manual primitive type handling</h3>
+						<pre class="fragment"><code class="scala">
+def createArray[T: ClassTag](size: Int, el: T) = {
+  val a = new Array[T](size)
+
+  def specBody[@specialized U](ell: U) {
+    for (i <- 0 until size) a.asInstanceOf[Array[U]](i) = ell
+  }
+
+  classTag[T] match {
+    case ClassTag.Int => specBody(el.asInstanceOf[Int])
+    ...
+  }
+  a
+}
+						</code></pre>
+						<p class="fragment">boilerplate!!!!111</p>
+					</section>
+                    <section>
+                        <h3>With macros</h3>
+                        <pre class="fragment"><code class="scala">
+def specialized[T: ClassTag](code: Any) = macro ...
+
+def createArray[T: ClassTag](size: Int, el: T) = {
+  val a = new Array[T](size)
+
+  specialized[T] {
+    for (i <- 0 until size) a(i) = el
+  }
+
+  a
+}
+                        </code></pre>
+                        <p class="fragment">Generates specialized code...</p>
+                        <p class="fragment">without specializing the <a>whole call chain</a></p>
+						<aside class="notes">
+							Dotty will have automatic specialization
+						</aside>
+                    </section>
+                    <section>
+                        <h3>Adding additional static checks</h3>
+                    </section>
+                    <section>
+                        <h3>Unsafe behavior</h3>
+                        <div class="fragment">
+                            <p>What's wrong with this code?</p>
+                            <pre><code class="scala">
+def future[T](body: => T) = ...
+
+def receive = {
+  case Request(data) =>
+    future {
+      val result = transform(data)
+      sender ! Response(result)
+    }
+}
+                            </code></pre>
+                        </div>
+                        <p class="fragment">Sender can <a>change</a></p>
+                    </section>
+                    <section>
+                        <h3>Additional checks with macros</h3>
+                        <pre class="fragment"><code class="scala">
+def future[T](body: Spore[T]) = ...
+
+def spore[T](body: => T): Spore[T] = macro ...
+
+def receive = {
+  case Request(data) =>
+
+    //here
+    future(spore {
+      val result = transform(data)
+      sender ! Response(result) // won't compile
+    })
+}
+                        </code></pre>
+                        <p class="fragment">The <a>spore</a> macro will analyze free variables<br/>and fail on suspicious behavior</p>
+                    </section>
+					<section>
+						<h2>Agenda</h2>
+						<ul>
+							<li><s>Why && what</s>✓</li>
+							<li>Demo</li>
+							<li>Conclusion</li>
+						</ul>
+					</section>
+                </section>
+                <!--code-->
+                <section>
+					<section>
+						<h3>Setup</h3>
+						<p class="fragment"><small><code class="scala">"org.scala-lang" % "scala-reflect" % "2.11.8"</code></small></p>
+						<p class="fragment"><small><a>Compile first</a>, use later</small></p>
+						<p class="fragment"><small><code class="scala">import scala.reflect.macros.blackbox</code> <small>(or whitebox)</small></small></p>
+						<p class="fragment"><small>a compiler plugin if using macro paradise</small></p>
+					</section>
+					<section>
+						<h3>Compile before use</h3>
+						<p>Macros need to be compiled <a>before you use them</a></p>
+						<p class="fragment"><small>e.g.</small></p>
+						<ul>
+							<li class="fragment"><code>sbt console</code></li>
+							<li class="fragment">sbt <a>subprojects</a></li>
+							<li class="fragment">external module <a>in IDE</a></li>
+							<li class="fragment"><a>build jar</a> and import</li>
+						</ul>
+					</section>
+					<section>
+						<h3>Blackbox vs whitebox</h3>
+						<p class="fragment"><a>blackbox</a> - returned type is exactly as declared</p>
+						<p class="fragment"><a>whitebox</a> - can return a type more specific than declared</p>
+						<img src="images/whitebox-macros.jpg" class="fragment"/>
+					</section>
+					<section>
+						<h3>Simple macro</h3>
+						<pre><code class="scala">
+def hello: Unit = macro helloImpl
+
+def helloImpl(c: blackbox.Context): c.Expr[Unit] = {
+  import c.universe._
+
+  reify {
+    println("hello!")
+  }
+}
+						</code></pre>
+					</section>
+					<section>
+						<h3>Let's code</h3>
+						<p class="fragment">Write a macro that transforms a function</p>
+						<p class="fragment">into its derivative</p>
+						<p class="fragment"><code>f(x) = -2(x<small>2</small> + 4x - 5)</code></p>
+						<p class="fragment"><code>derive(f) = f'(x) = -4x - 8</code></p>
+					</section>
+					<section>
+						<h2>Agenda</h2>
+						<ul>
+							<li><s>Why && what</s>✓</li>
+							<li><s>Demo</s>✓</li>
+							<li>Conclusion</li>
+						</ul>
+					</section>
+				</section>
+                <!--conclusion-->
+				<section>
+                    <section>
+                        <aside class="notes">
+                            SQL GONE WRONG
+                        </aside>
+                        <h3>The bad parts</h3>
+                        <p class="fragment">opportunity for writing <a>cryptic code</a></p>
+                        <p class="fragment">basically (type-safe) <a>code generation</a></p>
+                        <p class="fragment">still code - potential bugs</p>
+                        <p class="fragment">compilation overhead</p>
+                        <p class="fragment">not trivial to debug</p>
+                        <img class="fragment" src="images/great-power.gif"/>
+                    </section>
+                    <section>
+						<h3>The good parts</h3>
+                        <p class="fragment"><a>Simpler</a> and <a>safer</a> code</p>
+                        <p class="fragment">Trivial client usage</p>
+                        <p class="fragment"><a>Not</a> rocket science</p>
+                    </section>
+					<section>
+						<h3>The future</h3>
+						<p class="fragment">macros will be <a>dropped</a></p>
+						<p class="fragment">replaced by <a>scala.meta</a></p>
+						<p class="fragment">easier to write macros</p>
+						<p class="fragment">better <a>tooling support</a> (e.g. IDEs)</p>
+						<p class="fragment">no whitebox macros</p>
+						<aside class="notes">whitebox macros considered unsound</aside>
+						<p class="fragment">code rewriting in Dotty</p>
+					</section>
+					<section>
+						<h3>Should you use macros?</h3>
+						<p class="fragment">Yes, certainly</p>
+						<br/>
+						<br/>
+						<h3 class="fragment">Should you write your own?</h3>
+						<p class="fragment">only when you absolutely need to</p>
+					</section>
+					<section>
+						<h3>Summary</h3>
+						<p>We've learned:</p>
+						<p class="fragment">what macros are</p>
+						<p class="fragment">how they help</p>
+						<p class="fragment">how they don't</p>
+						<p class="fragment">how to write them</p>
+					</section>
+                    <section>
+                        <h3>Links</h3>
+                        <ul>
+                            <li><a href="http://blog.scalac.io/2016/02/25/def-hello-macro-world.html" target="_blank">More detailed introduction on macros (by me)</a></li>
+                            <li><a href="http://scalamacros.org/paperstalks/2013-07-17-WhatAreMacrosGoodFor.pdf" target="_blank">Source for some examples (by Eugene)</a></li>
+							<li><a href="http://scalamacros.org/paperstalks/2016-06-17-Metaprogramming20.pdf" target="_blank">Slides for Eugene's ScalaDays 2016 Berlin talk</a></li>
+							<li><a href="https://d-d.me/talks/scaladays2016-linker/#/" target="_blank">Slides for Dmitry's talk on dotty-linker</a></li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h3>Thank you!</h3>
+						<p class="fragment">Questions!</p>
+                        <p class="fragment">Slides: <a href="http://kubukoz.github.io/macro-sourcery-slides">kubukoz.github.io/macro-sourcery-slides</a></p>
+                        <p class="fragment">Code: <a href="https://github.com/kubukoz/macro-sourcery-code">github.com/kubukoz/macro-sourcery-code</a></p>
+                        <div class="fragment">
+							<p><br/>Contact me:</p>
+                        	<p><a>@kubukoz</a> | <a>kubukoz@gmail.com</a> | <a href="https://kubukoz.com">kubukoz.com</a></p>
+						</div>
+                    </section>
+					<section>
+						<img src="images/sw_banner.png"/>
+					</section>
+				</section>
+			</div>
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides2" style="display: none;">
+				<section>
+					<h1>Reveal.js</h1>
+					<h3>The HTML Presentation Framework</h3>
+					<p>
+						<small>Created by <a href="http://hakim.se">Hakim El Hattab</a> / <a href="http://twitter.com/hakimel">@hakimel</a></small>
+					</p>
+				</section>
+
+				<section>
+					<h2>Hello There</h2>
+					<p>
+						reveal.js enables you to create beautiful interactive slide decks using HTML. This presentation will show you examples of what it can do.
+					</p>
+				</section>
+
+				<!-- Example of nested vertical slides -->
+				<section>
+					<section>
+						<h2>Vertical Slides</h2>
+						<p>Slides can be nested inside of each other.</p>
+						<p>Use the <em>Space</em> key to navigate through all slides.</p>
+						<br>
+						<a href="#" class="navigate-down">
+							<img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
+						</a>
+					</section>
+					<section>
+						<h2>Basement Level 1</h2>
+						<p>Nested slides are useful for adding additional detail underneath a high level horizontal slide.</p>
+					</section>
+					<section>
+						<h2>Basement Level 2</h2>
+						<p>That's it, time to go back up.</p>
+						<br>
+						<a href="#/2">
+							<img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Up arrow" style="transform: rotate(180deg); -webkit-transform: rotate(180deg);">
+						</a>
+					</section>
+				</section>
+
+				<section>
+					<h2>Slides</h2>
+					<p>
+						Not a coder? Not a problem. There's a fully-featured visual editor for authoring these, try it out at <a href="http://slides.com" target="_blank">http://slides.com</a>.
+					</p>
+				</section>
+
+				<section>
+					<h2>Point of View</h2>
+					<p>
+						Press <strong>ESC</strong> to enter the slide overview.
+					</p>
+					<p>
+						Hold down alt and click on any element to zoom in on it using <a href="http://lab.hakim.se/zoom-js">zoom.js</a>. Alt + click anywhere to zoom back out.
+					</p>
+				</section>
+
+				<section>
+					<h2>Touch Optimized</h2>
+					<p>
+						Presentations look great on touch devices, like mobile phones and tablets. Simply swipe through your slides.
+					</p>
+				</section>
+
+				<section data-markdown>
+					<script type="text/template">
+						## Markdown support
+
+						Write content using inline or external Markdown.
+						Instructions and more info available in the [readme](https://github.com/hakimel/reveal.js#markdown).
+
+						```
+						<section data-markdown>
+						  ## Markdown support
+
+						  Write content using inline or external Markdown.
+						  Instructions and more info available in the [readme](https://github.com/hakimel/reveal.js#markdown).
+						</section>
+						```
+					</script>
+				</section>
+
+				<section>
+					<section id="fragments">
+						<h2>Fragments</h2>
+						<p>Hit the next arrow...</p>
+						<p class="fragment">... to step through ...</p>
+						<p><span class="fragment">... a</span> <span class="fragment">fragmented</span> <span class="fragment">slide.</span></p>
+
+						<aside class="notes">
+							This slide has fragments which are also stepped through in the notes window.
+						</aside>
+					</section>
+					<section>
+						<h2>Fragment Styles</h2>
+						<p>There's different types of fragments, like:</p>
+						<p class="fragment grow">grow</p>
+						<p class="fragment shrink">shrink</p>
+						<p class="fragment fade-out">fade-out</p>
+						<p class="fragment current-visible">current-visible</p>
+						<p class="fragment highlight-red">highlight-red</p>
+						<p class="fragment highlight-blue">highlight-blue</p>
+					</section>
+				</section>
+
+				<section id="transitions">
+					<h2>Transition Styles</h2>
+					<p>
+						You can select from different transitions, like: <br>
+						<a href="?transition=none#/transitions">None</a> -
+						<a href="?transition=fade#/transitions">Fade</a> -
+						<a href="?transition=slide#/transitions">Slide</a> -
+						<a href="?transition=convex#/transitions">Convex</a> -
+						<a href="?transition=concave#/transitions">Concave</a> -
+						<a href="?transition=zoom#/transitions">Zoom</a>
+					</p>
+				</section>
+
+				<section id="themes">
+					<h2>Themes</h2>
+					<p>
+						reveal.js comes with a few themes built in: <br>
+						<!-- Hacks to swap themes after the page has loaded. Not flexible and only intended for the reveal.js demo deck. -->
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/black.css'); return false;">Black (default)</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/white.css'); return false;">White</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/league.css'); return false;">League</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/sky.css'); return false;">Sky</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/beige.css'); return false;">Beige</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/simple.css'); return false;">Simple</a> <br>
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/serif.css'); return false;">Serif</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/blood.css'); return false;">Blood</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/night.css'); return false;">Night</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/moon.css'); return false;">Moon</a> -
+						<a href="#" onclick="document.getElementById('theme').setAttribute('href','css/theme/solarized.css'); return false;">Solarized</a>
+					</p>
+				</section>
+
+				<section>
+					<section data-background="#dddddd">
+						<h2>Slide Backgrounds</h2>
+						<p>
+							Set <code>data-background="#dddddd"</code> on a slide to change the background color. All CSS color formats are supported.
+						</p>
+						<a href="#" class="navigate-down">
+							<img width="178" height="238" data-src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Down arrow">
+						</a>
+					</section>
+					<section data-background="https://s3.amazonaws.com/hakim-static/reveal-js/image-placeholder.png">
+						<h2>Image Backgrounds</h2>
+						<pre><code class="hljs">&lt;section data-background="image.png"&gt;</code></pre>
+					</section>
+					<section data-background="https://s3.amazonaws.com/hakim-static/reveal-js/image-placeholder.png" data-background-repeat="repeat" data-background-size="100px">
+						<h2>Tiled Backgrounds</h2>
+						<pre><code class="hljs" style="word-wrap: break-word;">&lt;section data-background="image.png" data-background-repeat="repeat" data-background-size="100px"&gt;</code></pre>
+					</section>
+					<section data-background-video="https://s3.amazonaws.com/static.slid.es/site/homepage/v1/homepage-video-editor.mp4,https://s3.amazonaws.com/static.slid.es/site/homepage/v1/homepage-video-editor.webm" data-background-color="#000000">
+						<div style="background-color: rgba(0, 0, 0, 0.9); color: #fff; padding: 20px;">
+							<h2>Video Backgrounds</h2>
+							<pre><code class="hljs" style="word-wrap: break-word;">&lt;section data-background-video="video.mp4,video.webm"&gt;</code></pre>
+						</div>
+					</section>
+					<section data-background="http://i.giphy.com/90F8aUepslB84.gif">
+						<h2>... and GIFs!</h2>
+					</section>
+				</section>
+
+				<section data-transition="slide" data-background="#4d7e65" data-background-transition="zoom">
+					<h2>Background Transitions</h2>
+					<p>
+						Different background transitions are available via the backgroundTransition option. This one's called "zoom".
+					</p>
+					<pre><code class="hljs">Reveal.configure({ backgroundTransition: 'zoom' })</code></pre>
+				</section>
+
+				<section data-transition="slide" data-background="#b5533c" data-background-transition="zoom">
+					<h2>Background Transitions</h2>
+					<p>
+						You can override background transitions per-slide.
+					</p>
+					<pre><code class="hljs" style="word-wrap: break-word;">&lt;section data-background-transition="zoom"&gt;</code></pre>
+				</section>
+
+				<section>
+					<h2>Pretty Code</h2>
+					<pre><code class="hljs" data-trim contenteditable>
+function linkify( selector ) {
+  if( supports3DTransforms ) {
+
+    var nodes = document.querySelectorAll( selector );
+
+    for( var i = 0, len = nodes.length; i &lt; len; i++ ) {
+      var node = nodes[i];
+
+      if( !node.className ) {
+        node.className += ' roll';
+      }
+    }
+  }
+}
+					</code></pre>
+					<p>Code syntax highlighting courtesy of <a href="http://softwaremaniacs.org/soft/highlight/en/description/">highlight.js</a>.</p>
+				</section>
+
+				<section>
+					<h2>Marvelous List</h2>
+					<ul>
+						<li>No order here</li>
+						<li>Or here</li>
+						<li>Or here</li>
+						<li>Or here</li>
+					</ul>
+				</section>
+
+				<section>
+					<h2>Fantastic Ordered List</h2>
+					<ol>
+						<li>One is smaller than...</li>
+						<li>Two is smaller than...</li>
+						<li>Three!</li>
+					</ol>
+				</section>
+
+				<section>
+					<h2>Tabular Tables</h2>
+					<table>
+						<thead>
+							<tr>
+								<th>Item</th>
+								<th>Value</th>
+								<th>Quantity</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>Apples</td>
+								<td>$1</td>
+								<td>7</td>
+							</tr>
+							<tr>
+								<td>Lemonade</td>
+								<td>$2</td>
+								<td>18</td>
+							</tr>
+							<tr>
+								<td>Bread</td>
+								<td>$3</td>
+								<td>2</td>
+							</tr>
+						</tbody>
+					</table>
+				</section>
+
+				<section>
+					<h2>Clever Quotes</h2>
+					<p>
+						These guys come in two forms, inline: <q cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						&ldquo;The nice thing about standards is that there are so many to choose from&rdquo;</q> and block:
+					</p>
+					<blockquote cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+						&ldquo;For years there has been a theory that millions of monkeys typing at random on millions of typewriters would
+						reproduce the entire works of Shakespeare. The Internet has proven this theory to be untrue.&rdquo;
+					</blockquote>
+				</section>
+
+				<section>
+					<h2>Intergalactic Interconnections</h2>
+					<p>
+						You can link between slides internally,
+						<a href="#/2/3">like this</a>.
+					</p>
+				</section>
+
+				<section>
+					<h2>Speaker View</h2>
+					<p>There's a <a href="https://github.com/hakimel/reveal.js#speaker-notes">speaker view</a>. It includes a timer, preview of the upcoming slide as well as your speaker notes.</p>
+					<p>Press the <em>S</em> key to try it out.</p>
+
+					<aside class="notes">
+						Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the speaker notes window (hit 's' on your keyboard).
+					</aside>
+				</section>
+
+				<section>
+					<h2>Export to PDF</h2>
+					<p>Presentations can be <a href="https://github.com/hakimel/reveal.js#pdf-export">exported to PDF</a>, here's an example:</p>
+					<iframe src="https://www.slideshare.net/slideshow/embed_code/42840540" width="445" height="355" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:3px solid #666; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+				</section>
+
+				<section>
+					<h2>Global State</h2>
+					<p>
+						Set <code>data-state="something"</code> on a slide and <code>"something"</code>
+						will be added as a class to the document element when the slide is open. This lets you
+						apply broader style changes, like switching the page background.
+					</p>
+				</section>
+
+				<section data-state="customevent">
+					<h2>State Events</h2>
+					<p>
+						Additionally custom events can be triggered on a per slide basis by binding to the <code>data-state</code> name.
+					</p>
+					<pre><code class="javascript" data-trim contenteditable style="font-size: 18px;">
+Reveal.addEventListener( 'customevent', function() {
+	console.log( '"customevent" has fired' );
+} );
+					</code></pre>
+				</section>
+
+				<section>
+					<h2>Take a Moment</h2>
+					<p>
+						Press B or . on your keyboard to pause the presentation. This is helpful when you're on stage and want to take distracting slides off the screen.
+					</p>
+				</section>
+
+				<section>
+					<h2>Much more</h2>
+					<ul>
+						<li>Right-to-left support</li>
+						<li><a href="https://github.com/hakimel/reveal.js#api">Extensive JavaScript API</a></li>
+						<li><a href="https://github.com/hakimel/reveal.js#auto-sliding">Auto-progression</a></li>
+						<li><a href="https://github.com/hakimel/reveal.js#parallax-background">Parallax backgrounds</a></li>
+						<li><a href="https://github.com/hakimel/reveal.js#keyboard-bindings">Custom keyboard bindings</a></li>
+					</ul>
+				</section>
+
+				<section style="text-align: left;">
+					<h1>THE END</h1>
+					<p>
+						- <a href="http://slides.com">Try the online editor</a> <br>
+						- <a href="https://github.com/hakimel/reveal.js">Source code &amp; documentation</a>
+					</p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

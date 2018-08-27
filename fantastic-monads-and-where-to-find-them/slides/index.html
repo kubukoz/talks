@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+		<style>
+			.noborder:not(.visible){
+				border: none;
+				box-shadow: none;
+			}
+		</style>
+		<title>Fantastic Monads and where to find them</title>
+
+		<meta name="description" content="Slides for my talk on Cats">
+		<meta name="author" content="Jakub Kozłowski">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+		<script>
+            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+            })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+            ga('create', 'UA-96990226-1', 'auto');
+            ga('send', 'pageview');
+
+		</script>
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+                <!--intro-->
+				<section>
+                    <section>
+                        <h2>Fantastic Monads and where to find them (2.2)</h2>
+                        <p>Jakub Kozłowski - Scala Developer, <a href="https://scalac.io" target="_blank">Scalac</a></p>
+						<small><a target="_blank" href="http://lxscala.com">Berlin Scala</a> | June 21, 2018 | Berlin, Germany</small>
+                    </section>
+					<section>
+						<h2>Motivation</h2>
+						<ul style="display: block;">
+							<li class="fragment">Write a simple Akka HTTP app</li>
+							<li class="fragment">With some nasty validation!</li>
+							<li class="fragment">Decoupled from futures</li>
+							<li style="color: transparent"></li>
+						</ul>
+					</section>
+					<section data-background="images/intro/bookservice-bg.png" data-background-size="100%">
+					</section>
+					<section>
+						<h3>Why decouple?</h3>
+						<ul>
+							<li class="fragment">Future.successful, Future.sequence | traverse</li>
+							<li class="fragment">Passing ExecutionContext</li>
+							<li class="fragment">Future is not really a monad, breaks referential transparency</li>
+							<hr class="fragment"/>
+							<li class="fragment">Easier mocking (in-memory, tests)</li>
+							<li class="fragment">Easier refactoring to Task, IO etc.</li>
+						</ul>
+					</section>
+					<section>
+						<h2>Prerequisites</h2>
+						<p class="fragment">Typeclasses</p>
+						<p class="fragment">Functor</p>
+						<p class="fragment">Applicative</p>
+						<p class="fragment">Monad</p>
+						<p class="fragment">Traverse</p>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Cats</h2>
+						<p class="fragment"><a href="https://typelevel.org/cats" target="_blank">typelevel</a> project</p>
+						<p class="fragment"><q>"Lightweight, modular, and extensible library for <a>functional programming</a>"</q></p>
+						<p class="fragment">Inspired by <a>Scalaz</a></p>
+						<p class="fragment">Provides <a>type classes</a>, instances and <a>data structures</a></p>
+					</section>
+				</section>
+				<!--using cats tl;dr-->
+				<section>
+					<section>
+						<h2>Using Cats</h2>
+						<div class="fragment">
+							<p><a>Excellent</a> docs at</p>
+							<p><a href="http://typelevel.org/cats/typeclasses.html">http://typelevel.org/cats/typeclasses.html</a></p>
+							<p><a href="http://typelevel.org/cats/datatypes.html">http://typelevel.org/cats/datatypes.html</a></p>
+						</div>
+						<br/>
+						<div class="fragment">
+							<p>uber helpful chatroom at</p>
+							<p><a href="https://gitter.im/typelevel/cats">gitter.im/typelevel/cats</a></p>
+						</div>
+						<!--<div class="fragment" style="display: flex; align-items: center; flex-direction: row; justify-content: center">-->
+							<!--<p>or ask this dude (he's here!)</p>-->
+							<!--<img src="images/luka.jpg" style="width: 10%; margin-left: 20px"/>-->
+						<!--</div>-->
+					</section>
+				</section>
+				<!--typeclass reminder/intro-->
+				<section>
+					<section>
+						<h3>Type classes</h3>
+						<p>Example</p>
+						<pre><code class="scala">trait Empty[T]{
+  def empty(): T
+}</code></pre>
+						<p>Provides an "empty" instance of T</p>
+					</section>
+					<section>
+						<h4>Type classes</h4>
+						<pre><code class="scala">def twoEmpties[T](implicit e: Empty[T]): (T, T) = (e.empty(), e.empty())
+
+implicit val emptyInt: Empty[Int] = new Empty[Int] {
+  def empty(): Int = 0
+}
+
+scala&gt; val (a, b) = twoEmpties[Int]
+a: Int = 0
+b: Int = 0
+
+</code></pre>
+					</section>
+					<section>
+						<h4>Type classes</h4>
+						<pre><code class="scala">scala&gt; val (s1, s2) = twoEmpties[String]
+
+&lt;console&gt;:13: error: could not find
+implicit value for parameter e: Empty[String]
+       val (s1, s2) = twoEmpties[String]
+                                ^</code></pre>
+						<pre class="fragment"><code class="scala">
+implicit val emptyString: Empty[String] = () => ""
+
+scala&gt; val (s1, s2) = twoEmpties[String]
+s1: String = ""
+s2: String = ""
+</code></pre>
+					</section>
+					<section>
+						<h4>Type classes</h4>
+						<p>Conventions</p>
+                        <pre><code class="scala">trait Empty[T]{
+  def empty(): T
+}
+
+object Empty {
+  def apply[T](implicit ev: Empty[T]): Empty[T] = ev
+}
+
+//syntactic sugar for def twoEmpties[T](implicit ev$1: Empty[T])
+def twoEmpties[T : Empty]: (T, T) =
+  (Empty[T].empty(), Empty[T].empty())</code></pre>
+					</section>
+					<section>
+						<h3>Standard library samples</h3>
+						<pre class="fragment noborder"><code class="scala">//e.g. List(1,2,3).sorted
+def sorted[B >: A](implicit ord: Ordering[B])
+
+//e.g. List(1,2,3).sum
+def sum[B >: A](implicit num: Numeric[B]): B
+</code></pre>
+					</section>
+				</section>
+				<!--typeclasses in cats-->
+				<section>
+					<section>
+						<h1>Type classes in Cats</h1>
+					</section>
+					<section>
+						<h2>Functor</h2>
+						<pre class="noborder fragment"><code class="scala">trait Functor[F[_]]{
+  def map[T, U](ts: F[T])(f: T => U): F[U]
+}</code></pre>
+						<pre class="noborder fragment"><code class="scala">def mapPlusOne[F[_] : Functor](ints: F[Int]): F[Int] = {
+  Functor[F].map(ints)(_ + 1)
+
+  //or
+  import cats.syntax.functor._
+  ints.map(_ + 1)
+}</code></pre>
+						<pre class="noborder fragment"><code class="scala">mapPlusOne(List(1, 2, 3)) // List(2, 3, 4)</code></pre>
+						<pre class="noborder fragment"><code class="scala">mapPlusOne(Option(3)) // Some(4): Option[Int]</code></pre>
+						<pre class="noborder fragment"><code class="scala">val f = mapPlusOne((k: String) => k.length) //Functor[String => ?]
+f("a") //2</code></pre>
+					</section>
+					<section>
+						<h2>Applicative</h2>
+						<pre class="noborder fragment"><code class="scala">trait Applicative[F[_]] extends Functor[F]{ //simplified
+  def pure[A](x: A): F[A]
+
+  def ap[A, B](ff: F[A => B])(fa: F[A]): F[B]
+}</code></pre>
+<pre class="noborder fragment"><code class="scala">(
+  User("Mike").pure[Future],
+  findUserF(1),
+  findUsersF()
+).mapN((u1, u2, users) => u1 :: u2 :: users)</code></pre>
+					</section>
+					<section>
+						<h2><b>Monad</b></h2>
+						<pre class="noborder fragment"><code class="scala">trait Monad[F[_]] extends Applicative[F]{
+  def flatMap[A, B](fa: F[A])(f: A => F[B]): F[B]
+}</code></pre>
+<pre class="noborder fragment"><code class="scala">for {
+  user <- findUserF(1)
+  friends <- findFriendsF(user)
+} yield friends</code></pre>
+					</section>
+					<section>
+						<img class="noborder" src="images/meme-brains.png" width="55%"/>
+					</section>
+					<section>
+						<h2>Traverse</h2>
+						<pre class="noborder fragment"><code class="scala">trait Traverse[F[_]] extends Functor[F]{
+  def traverse[G[_]: Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]]
+}</code></pre>
+                        <pre class="noborder fragment"><code class="scala">val strings     : List[Future[String]]
+strings.sequence: Future[List[String]]
+                        </code></pre>
+						<pre class="noborder fragment"><code class="scala">val findParent             : User => Future[Parent]
+val users                  : List[User]
+users.traverse(findParentF): Future[List[Parent]]
+                        </code></pre>
+
+						<pre class="noborder fragment"><code class="scala">xs.traverse(f) <-> xs.map(f).sequence</code></pre>
+						<pre class="noborder fragment"><code class="scala">xs.sequence <-> xs.traverse(x => x) <-> xs.traverse(identity)</code></pre>
+					</section>
+				</section>
+                <section>
+                    <h2>The code</h2>
+                </section>
+				<section>
+					<section>
+						<h3>Enough time?</h3>
+						<h2 class="fragment">🅱️onus material:<br/>Monix Task, cats-effect</h2>
+					</section>
+					<section>
+						<h3>cats-effect</h3>
+						<ul>
+							<li class="fragment">cats module for handling effects</li>
+							<li class="fragment">provides a referentially transparent IO monad</li>
+							<li class="fragment">provides concurrency primitives</li>
+							<li class="fragment">provides type classes like Sync, Async, Effect</li>
+						</ul>
+					</section>
+					<section>
+						<h3>monix</h3>
+						<ul>
+							<li class="fragment">Scala library for concurrency, async, IO, observables...</li>
+							<li class="fragment">provides Task, similar to IO</li>
+						</ul>
+						<p class="fragment"><br/>Task/IO are referentially transparent, Future is not.</p>
+						<p class="fragment">Code time? Code time.</p>
+					</section>
+				</section>
+				<!--thankyou-->
+                <section>
+					<section>
+						<h2>Reading materials</h2>
+						<p><a href="https://blog.scalac.io/2017/04/19/typeclasses-in-scala.html">Typeclasses in Scala (Scalac blog)</a></p>
+                        <p><a href="https://underscore.io/books/scala-with-cats/">Scala with Cats (NEW book from Underscore)</a></p>
+						<p><a href="http://eed3si9n.com/herding-cats/">herding cats</a></p>
+						<p><a href="http://typelevel.org/cats/typeclasses.html">typeclasses in cats (cats docs)</a></p>
+						<p><a href="http://typelevel.org/cats/datatypes.html">datatypes in cats (cats docs)</a></p>
+					</section>
+					<section data-background-image="images/scalawave.png" data-background-size="contain">
+
+					</section>
+                    <section>
+                        <h2 class="fragment">Thank you!</h2>
+                        <p class="fragment">Slides: <a href="http://kubukoz.github.io/fantastic-monads-slides">kubukoz.github.io/fantastic-monads-slides</a></p>
+                        <p class="fragment">Code: <a href="https://github.com/kubukoz//fantastic-monads-code">github.com/kubukoz/fantastic-monads-code</a></p>
+						<p class="fragment">Questions?<br/><br/><br/></p>
+                        <div class="fragment"><hr/><p>Contact me:</p></div>
+                        <a class="fragment">@kubukoz</a>
+                            <p class="fragment" style="display: inline-block">
+                                | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+                            </p>
+                            <p class="fragment" style="display: inline-block">
+                                | <a href="https://kubukoz.com">kubukoz.com</a>
+                            </p>
+                        <h3 class="fragment">Enjoy the rest of the evening</h3>
+                    </section>
+                </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

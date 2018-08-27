@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Legacy code from day one</title>
+    <meta name="author" content="Jakub Kozłowski">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/blood.css" id="theme">
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+    <style>
+        .noborder {
+            border: none !important;
+            background: none !important;
+            box-shadow: none !important;
+        }
+        .tobottom {
+            vertical-align: bottom !important;
+        }
+        #subtitles {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        #subtitles.disabled {
+            display: none;
+        }
+
+        #subtitles p {
+            margin: 0;
+            padding: 20px;
+            background: black;
+        }
+        #subtitles p:empty {
+            display: none;
+        }
+        .sub {
+            display: none;
+        }
+    </style>
+    <!-- Printing and PDF exports -->
+    <script>
+        var link = document.createElement( 'link' );
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55943015-6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-55943015-6');
+    </script>
+
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+<div class="reveal">
+    <div id="subtitles"><p></p></div>
+
+    <div class="slides">
+        <!--intro-->
+        <section>
+            <section>
+                <h2>Legacy code<br/><a>from day one</a></h2>
+                <p>Jakub Kozłowski - Scala Developer, <a href="https://scalac.io" target="_blank">Scalac</a></p>
+                <br/><br/>
+                <small><a href="https://2018.scalamatsuri.org/">Scala Matsuri</a> | March 17, 2018 | Tokyo, Japan</small><br/>
+                <p class="sub">1日目からレガシー化</p>
+            </section>
+            <section>
+                <h2>Disclaimers</h2>
+                <ul>
+                    <li>Only a handful of ideas for messing up a project</li>
+                    <li>No offence meant for anybody</li>
+                    <li>Some over-exaggerated examples</li>
+                    <li>I have nothing against MongoDB</li>
+                </ul>
+                <p class="sub">プロジェクトをダメにする方法を紹介します<br/>特定データベースへの悪気はありません</p>
+            </section>
+            <section>
+                <h3>Schedule</h3>
+                <ul>
+                    <li>Code review</li>
+                    <li>Development</li>
+                    <li>Maintenance</li>
+                </ul>
+                <p class="sub">コードレビュー、開発、メンテ</p>
+            </section>
+        </section>
+        <!--code review-->
+        <section>
+            <section>
+                <h2>Code review</h2>
+                <p>What is it?</p>
+                <div class="fragment">
+                    <img src="images/code-review-flowchart.png" width="40%" style="margin-bottom: 0"/>
+                    <a style="margin-top: 0; font-size: 0.5em; display: block" href="https://mtlynch.io/human-code-reviews-1" target="_blank">https://mtlynch.io/human-code-reviews-1</a>
+                </div>
+            </section>
+            <section>
+                <h2>Code review</h2>
+                <p class="fragment">Don't do it</p>
+                <ul>
+                    <li class="fragment">Your code is perfect</li>
+                    <li class="fragment">Your formatting is consistent</li>
+                    <li class="fragment">So is your naming convention and coding style</li>
+                    <li class="fragment">Less time wasted on the process</li>
+                    <li class="fragment">More time == more code == more features</li>
+                    <li class="fragment">Nobody feels judged</li>
+                </ul>
+                <!--your code is perfect-->
+                <br/>
+                <p class="fragment">...unless you're the one judging</p>
+                <p class="fragment"><small>then invite everyone from the company to take part</small></p>
+                <p class="sub">コードレビューはしなくてもいい</p>
+            </section>
+            <section>
+                <h3>Code review rule 1</h3>
+                <p class="fragment">Focus on the least important things</p>
+                <p class="sub">ルール1: 重要性が最低のことに集中する</p>
+            </section>
+            <section>
+                <img src="images/comments/all-comments.png" class="noborder" width="80%"/>
+            </section>
+            <section>
+                <h3>Code review</h3>
+                <img src="images/comments/comment-formatting.png" class="noborder"/>
+                <p class="fragment">"Flexible formatting"</p>
+                <p class="sub">「柔軟性のあるフォーマット」</p>
+            </section>
+            <section>
+                <h3>Code review</h3>
+                <img src="images/comments/comment-jackson.png" class="noborder"/>
+                <p class="fragment">"Technology agnostic" <small class="fragment tobottom">spaghetti</small></p>
+                <p class="sub">「技術非依存」スパゲッティー</p>
+            </section>
+            <section>
+                <h3>Code review</h3>
+                <img src="images/comments/comment-performance.png" class="noborder"/>
+                <p class="fragment">"Optimize early" <small class="fragment tobottom">and prematurely</small></p>
+                <p class="sub">「早すぎる最適化」</p>
+            </section>
+            <section>
+                <h3>Code review</h3>
+                <img src="images/comments/comment-public.png" class="noborder"/>
+                <p class="fragment">"Optimize for reusability" <small class="fragment tobottom">and never practice it</small></p>
+                <p class="sub">「再利用のための最適化」</p>
+            </section>
+            <section>
+                <h3>Code review</h3>
+                <img src="images/comments/comment-boilerplate.png" class="noborder"/>
+                <p class="fragment">"Simplicity first" <small class="fragment tobottom">boilerplate next</small></p>
+                <p class="sub">「シンプルさファースト」というボイラープレート擁護</p>
+            </section>
+        </section>
+        <!--development-->
+        <section>
+            <section>
+                <h2>Development</h2>
+            </section>
+            <section>
+                <h3>Development</h3>
+                <ul>
+                    <li>Scaling teams</li>
+                    <li>Reinventing the wheel</li>
+                    <li>Ignoring the type system</li>
+                    <li>Ignoring warnings</li>
+                </ul>
+                <p class="sub">開発におけるコツ</p>
+            </section>
+            <section>
+                <h3>Development</h3>
+                <p>Known fact: teams scale linearly</p>
+                <img src="images/growth.png" width="50%" class="noborder"/>
+                <p>Grow the team until its velocity satisfies you</p>
+                <small class="fragment">...or you're out of money</small>
+                <p class="sub">チームは線形にスケールする</p>
+            </section>
+            <section>
+                <h3>Development</h3>
+                <p>Roll your own</p>
+                <br/>
+                <p>Case study: External APIs</p>
+                <p class="sub">独自実装する</p>
+            </section>
+            <section>
+                <h3>Use existing library?</h3>
+                <ul>
+                    <li class="fragment">you may not like the creator</li>
+                    <li class="fragment">it might break compatibility</li>
+                    <li class="fragment">might stop being maintained</li>
+                    <li class="fragment">the code could be deleted</li>
+                    <li class="fragment">potential security vulnerability</li>
+                    <li class="fragment">we don't understand the code anyways</li>
+                </ul>
+                <p class="sub">外部ライブラリは作者のことが好きじゃないかもしれない<br/>互換性が壊れるかもしれない</p>
+            </section>
+            <section>
+                <h3>Roll your own!</h3>
+                <ul>
+                    <li class="fragment">you can write more code</li>
+                    <li class="fragment">fully control the release cycle & artifacts</li>
+                    <li class="fragment">unlimited support</li>
+                    <li class="fragment">you can add any functionality you like</li>
+                    <li class="fragment">no compatibility issues - just release and update all its dependants</li>
+                </ul>
+                <p class="sub">独自実装ならばリリースを制御できる</p>
+            </section>
+            <section>
+                <h3>Development</h3>
+                <p>Ignore the type system</p>
+                <br/>
+                <p>Case study: MongoDB (de)serialization</p>
+                <p class="sub">型システムを無視する</p>
+            </section>
+            <section>
+                <h3>MongoDB (de)serialization</h3>
+                <pre><code class="scala">sealed trait MongoValue
+
+case class Booking(id: BookingId, name: String, time: ZonedDateTime)
+
+//use some typeclass?
+def toBooking(mongo: MongoValue): Option[Booking] = ???</code></pre>
+                <p class="sub">MongoDB のシリアライゼーション</p>
+            </section>
+            <section>
+                <h3>PoC: typeclasses</h3>
+                <p>Sample AST (assume BSON == JSON for simplicity)</p>
+                <pre style="width: 100%"><code class="scala">sealed trait MongoValue extends Product with Serializable
+case class MongoObject(value: Map[String, MongoValue]) extends MongoValue
+case class MongoArray(value: List[MongoValue])         extends MongoValue
+case class MongoString(value: String)                  extends MongoValue
+case class MongoNumber(value: Double)                  extends MongoValue</code></pre>
+                <p class="sub">型クラスを実装してみる</p>
+            </section>
+            <section>
+                <p>PoC: typeclasses (continued)</p>
+                <pre class="fragment"><code class="scala">trait MongoReader[T]{
+  def read(from: MongoValue): Option[T]
+}
+
+implicit val readLong: MongoReader[Long] = from => from match {
+  case MongoNumber(num) => Some(num.toLong)
+  case _                => None
+}</code></pre>
+                <pre class="fragment"><code class="scala">//assume instances for field types exist
+implicit val readBooking: MongoReader[Booking] = from => for {
+  id   <- from.readAs[BookingId]("id")
+  name <- from.readAs[String]("name")
+  time <- from.readAs[ZonedDateTime]("time")
+} yield Booking(id, name, time)</code></pre>
+
+                <pre class="fragment"><code class="scala">def toBooking(mongo: MongoValue): Option[Booking] =
+  implicitly[MongoReader[Booking]].read(mongo)</code></pre>
+                <p class="fragment">Too complicated!</p>
+                <p class="sub">複雑すぎる!</p>
+            </section>
+            <section>
+                <h3>Typeclass drawbacks</h3>
+                <ul>
+                    <li class="fragment">Complex pattern based on rocket science</li>
+                    <li class="fragment">And even harder - implicits</li>
+                    <li class="fragment">Instances must be written by hand - boilerplate</li>
+                    <li class="fragment">Or generated! 😱</li>
+                </ul>
+                <br/>
+                <br/>
+                <p class="fragment">so let's write simple boilerplate instead</p>
+                <p class="sub">型クラスは高度に複雑なパターン<br/>インスタンスは手書きもしくは生成される必要がある</p>
+            </section>
+            <section>
+                <h3>MongoDB (de)serialization</h3>
+                <pre><code class="scala">//companion omitted for brevity
+class DBObject(internal: Map[String, AnyRef])
+
+//definitely better than implicits
+class Booking(obj: DBObject) {
+  private def idOpt = obj.getAsOpt[String]("id")
+
+  def id = idOpt.get //surely safer than nulls
+
+  def name = obj.getAs[String]("name")
+
+  def name_=(value: String) = obj.set("name", value)
+
+  def time = ZonedDateTime.parse(
+    obj.getAs[String]("timestamp")
+  )
+
+  def time_=(value: ZonedDateTime) =
+    obj.set("timestamp", value.toString)
+}</code></pre>
+            </section>
+            <section>
+                <h3>MongoDB (de)serialization</h3>
+                <pre><code class="scala">var booking = new Booking(DBObject.empty)
+//lenses for free!
+booking.name = "hello world"
+booking.time = ZonedDateTime.now()
+
+repository.save(booking)
+
+//pretty sure it won't throw, but if it does, it's fine
+//"let it crash" behavior
+println(booking.id)</code></pre>
+            </section>
+            <section>
+                <h3>Development</h3>
+                <p>Ignore warnings</p>
+                <pre><code class="scala">type Click = String
+def matches(c: Click, str: String) = c == str</code></pre>
+                <p class="fragment">Later...</p>
+                <pre class="fragment"><code class="diff">- type Click = String
++ case class Click(value: String) extends AnyVal</code></pre>
+<pre class="fragment"><code class="scala">
+&lt;console&gt;:2: warning: comparing values of types
+Click and String using `==' will always yield false
+       def matches(c: Click, str: String) = c == str
+                                              ^</code></pre>
+                <p class="sub">警告は無視するべき</p>
+            </section>
+            <section>
+                <h3>Ignore warnings</h3>
+                <pre><code>Compilation finished with 0 errors and 94 warnings.</code></pre>
+                <img src="images/thisisfine.png"/>
+                <p class="sub">大丈夫だから</p>
+            </section>
+        </section>
+        <!--maintenance-->
+        <section>
+            <section>
+                <h2>Maintenance</h2>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <ul>
+                    <li class="fragment">Document nothing</li>
+                    <li class="fragment">Release rarely</li>
+                    <li class="fragment">Customize by default</li>
+                    <li class="fragment">Couple tight</li>
+                    <li class="fragment">Refactor in batch</li>
+                    <li class="fragment">Never change</li>
+                </ul>
+                <p class="sub">メンテナンスのコツ</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Document nothing</p>
+                <ul>
+                    <li class="fragment">Requirements never change</li>
+                    <li class="fragment">Team members never change</li>
+                    <li class="fragment">Tools never change</li>
+                </ul>
+                <p class="fragment">Nobody will ever need to modify your code</p>
+                <p class="sub">要求仕様は変わらないので文書は書かない<br/>チーム構成も変わらないし</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Release rarely</p>
+                <br/>
+                <ul>
+                    <li class="fragment">Delay bugs until later</li>
+                    <li class="fragment">Invest less in deployment needed</li>
+                    <li class="fragment">Don't stress out about a release every day</li>
+                </ul>
+                <p class="sub">リリースはたまにでいい</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Customize by default</p>
+                <ul>
+                    <li class="fragment">Weird branching model (who needs GitFlow)</li>
+                    <li class="fragment">Custom deployment stack</li>
+                    <li class="fragment">Customer-specific logic in code</li>
+                    <li class="fragment">Custom tools/wrappers for everything</li>
+                </ul>
+                <p class="sub">デフォルトで魔改造<br/>カスタムブランチ、カスタム開発スタック</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Couple tight</p>
+                <br/>
+                <ul>
+                    <li class="fragment">Mix layers</li>
+                    <li class="fragment">Avoid abstraction over utilities</li>
+                </ul>
+                <p class="sub">密結合<br/>レイヤーは混ぜる</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Refactor in batch</p>
+                <br/>
+                <ul>
+                    <li class="fragment">"We'll fix it later"</li>
+                    <li class="fragment">Refactor everything at once</li>
+                </ul>
+                <p class="sub">リファクターは後でまとめて<br/>同時に色々リファクタリングする</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <p>Never change</p>
+                <img class="fragment noborder" src="images/oh-no.png"/>
+                <p class="sub">変わらなくてもいいよ</p>
+            </section>
+            <section>
+                <h3>Maintenance</h3>
+                <br/>
+                <p class="fragment" style="text-align: right"><q>"It is not necessary to change. Survival is not mandatory."</q>
+                    <br/><small> - W. Edwards Deming</small></p>
+                <p class="sub">変化は必須ではない。生存は義務ではないのだから。</p>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Summary</h3>
+                <ul>
+                    <li class="fragment">Lots of ways to mess up</li>
+                    <li class="fragment">Make sure to research and try all of them</li>
+                    <li class="fragment">Find more!</li>
+                </ul>
+                <br/>
+                <h2 class="fragment"><code>/s</code></h2>
+                <p class="sub">ダメになる方法は色々あります</p>
+            </section>
+            <section>
+                <h2>Thank you!</h2>
+                <p class="fragment">Questions?</p>
+                <p class="fragment">Slides: <a href="https://kubukoz.github.io/legacy-day1">kubukoz.github.io/legacy-day1</a>
+                </p>
+                <p class="fragment"><br/>Contact me:</p>
+                <a class="fragment">@kubukoz</a>
+                <p class="fragment" style="display: inline-block">
+                    | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+                </p>
+                <p class="fragment" style="display: inline-block">
+                    | <a href="https://kubukoz.com">kubukoz.com</a>
+                </p>
+                <p class="sub">ありがとうございました</p>
+            </section>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+
+    // Full list of configuration options available at:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+        // Optional reveal.js plugins
+        dependencies: [
+            { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+            { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+            { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+            { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+            { src: 'plugin/zoom-js/zoom.js', async: true },
+            { src: 'plugin/notes/notes.js', async: true }
+        ]
+    });
+
+    var slideChanged = function (event) {
+        var targetElem = document.getElementById("subtitles").getElementsByTagName("p")[0];
+
+        var sourceElem = event.currentSlide.getElementsByClassName("sub")[0];
+        targetElem.innerHTML = sourceElem ? sourceElem.innerHTML : "";
+    };
+
+    Reveal.addEventListener('slidechanged', slideChanged);
+
+    function inIframe () {
+        return !!window.frameElement;
+    }
+
+    Reveal.addEventListener('ready', function (event) {
+        slideChanged(event);
+        if(inIframe()) {
+            document.getElementById("subtitles").classList.add("disabled")
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Seven sins of a Scala beginner</title>
+
+		<meta name="description" content="Slides for my talk on the typical mistakes of a Scala beginner">
+		<meta name="author" content="Jakub Kozłowski">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/moon.css" id="theme">
+
+		<!-- Code syntax highlighting -->
+		<link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+                <!--intro-->
+				<section>
+                    <section>
+                        <h2>7* sins of a Scala beginner</h2>
+                        <p>Jakub Kozłowski - Scala Developer, <a href="https://scalac.io" target="_blank">Scalac</a></p>
+                        <small class="fragment">* - actually, 5</small>
+                        <br/><br/>
+                        <small><a href="https://scala.io">ScalaIO</a> | November 2, 2017 | Lyon, France</small><br/>
+                    </section>
+                    <section>
+                        <h2>5 sins of a Scala beginner</h2>
+                        <p>Jakub Kozłowski - Scala Developer, <a href="https://scalac.io" target="_blank">Scalac</a></p>
+                        <br/><br/>
+                        <small><a href="https://scala.io">ScalaIO</a> | November 2, 2017 | Lyon, France</small><br/>
+                    </section>
+                    <section>
+                        <p>Be advised</p>
+                        <h2>No silver bullets</h2>
+                        <p class="fragment">Be pragmatic about your code</p>
+                    </section>
+				</section>
+                <!--readability for conciseness-->
+				<section>
+                    <section>
+                        <h2>Sin 1</h2>
+                        <p>Sacrificing readability for conciseness</p>
+                    </section>
+                    <section>
+                        <p>Sin 1 - Sacrificing readability for conciseness</p>
+                        <pre class="fragment"><code class="scala">Map(...).map(_._1)</code></pre>
+                        <p class="fragment">No context</p>
+                        <div class="fragment">
+                            <hr/>
+                            <pre><code class="scala">Map(...).map { case (name, _) => name }</code></pre>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 1 - Sacrificing readability for conciseness</p>
+                        <pre class="fragment"><code class="scala">val results = elems.map(...).flatMap(...).filter(...).groupBy(_._2)...</code></pre>
+                        <b class="fragment">50 characters later...</b>
+                        <pre class="fragment"><code class="scala">.count(...) + 5</code></pre>
+                        <p class="fragment">Unclear reasoning, hard to read/debug</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>Create intermediate vals with meaningful names</p>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 1 - Sacrificing readability for conciseness</p>
+                        <pre class="fragment"><code class="scala">trait UserInfoService {
+  def fetchUserInfo(userId: UserId) = ...
+}</code></pre>
+                        <p class="fragment"><small>Type leaks implementation details, is too concrete, eases breaking binary compatibility</small></p>
+                        <div class="fragment">
+                            <hr/>
+                            <small>Specify annotation with the right level of abstraction</small>
+                            <pre><code class="scala">def fetchUserInfo(userId: UserId): Future[Option[UserInfo]] = ???</code></pre>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Rule of thumb - if you aren't:</p>
+
+                            <p class="fragment" style="margin: 0"><small>storing your code on a floppy disk</small></p>
+                            <p class="fragment" style="margin: 0"><small>writing a tweet</small></p>
+                            <p class="fragment" style="margin: 0"><small>writing Game of Thrones</small></p>
+
+                        <div class="fragment">
+                            <img src="images/got-faces.jpg" style="border: none; width: 70%;"/>
+                        </div>
+                        <small class="fragment">You don't need to spare characters to make anyone happy</small>
+                    </section>
+                    <section>
+                        <h3>Sin 1 - Sacrificing readability for conciseness</h3>
+                        <q class="fragment">"Programs must be written <a>for people to read</a>, and only incidentally for machines to execute"</q>
+                        <p class="fragment"><br/>Think about how much <a>meaning</a> your code has, not how many characters you save</p>
+                    </section>
+				</section>
+                <!--overusing features-->
+                <section>
+                    <!--what, samples-->
+                    <section>
+                        <h2>Sin 2</h2>
+                        <p>Feature overuse</p>
+                        <img class="fragment" style="border: none; width: 70%" src="images/syntactic-sugar.png"/>
+                    </section>
+                    <section>
+                        <p>Sin 2 - Feature overuse</p>
+                        <pre class="fragment"><code class="scala">case class UserService(http: Http) {
+  def fetchUser(id: UserId): Future[User] = http.get(...)
+}</code></pre>
+                        <div class="fragment">
+                            <hr/>
+                            <p>just use <code>apply</code> or <code>new</code></p>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 2 - Feature overuse</p>
+                        <pre class="fragment"><code class="scala">val resultF = WS url "https://google.com" withHeaders (...)
+  withQueryString (...) get</code></pre>
+                        <small class="fragment">Hard to read, postfix requires feature flag import</small>
+                        <div class="fragment">
+                            <hr/>
+                            <small>Use dot notation for non-symbolic names</small>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 2 - Feature overuse</p>
+                        <pre class="fragment"><code class="scala">def extract(name: String): (String, String)</code></pre>
+                        <small class="fragment">No context, no meaning, no type safety</small>
+                        <div class="fragment">
+                            <hr/>
+                            <pre><code class="scala">def extract(name: String): (FirstName, LastName)</code></pre>
+                            <pre><code class="scala">def extract(name: String): FirstAndLastName</code></pre>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 2 - Feature overuse</p>
+                        <pre class="fragment"><code class="scala">xs.map(f)
+  .flatMap {
+    _.flatMap(g).map(h)
+  }
+  .map(i)</code></pre>
+                        <small class="fragment">Nesting/chaining hell</small>
+                        <div class="fragment">
+                            <hr/>
+                            <small class="fragment">For comprehensions</small>
+                            <small class="fragment"><a>||</a> Applicative builder (cats/scalaz)</small>
+                            <small class="fragment"><a>||</a> Extracting and naming nested functions</small>
+                        </div>
+                    </section>
+                    <section>
+                        <h3>Sin 2 - Feature abuse</h3>
+                        <p class="fragment">always think about readability</p>
+                        <p class="fragment">use the minimal viable solution for the task at hand</p>
+                        <p class="fragment">follow the Principle of Least Power</p>
+                    </section>
+                </section>
+                <!--abusing implicits-->
+                <section>
+                    <section>
+                        <h2>Sin 3</h2>
+                        <p class="fragment">The one about implicits...</p>
+                        <p class="fragment">Presumably the most abused Scala feature</p>
+                    </section>
+                    <section>
+                        <p>Sin 3 - Abusing implicits</p>
+                        <pre class="fragment"><code class="scala">case class UserId(value: Int) extends AnyVal</code></pre>
+                        <pre class="fragment"><code class="scala">implicit def uid2i(uid: UserId): Int = uid.value</code></pre>
+                        <pre class="fragment"><code class="scala">implicit def i2uid(i: Int): UserId = UserId(i)</code></pre>
+                        <p class="fragment">Missing the point of value classes</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>Explicit conversions, e.g.</p>
+                            <pre><code class="scala">10.toUserId</code></pre>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 3 - Abusing implicits</p>
+                        <pre class="fragment"><code class="scala">implicit def s2i(s: String): Int = s.toInt</code></pre>
+                        <small class="fragment">Can throw, brings confusion if used by accident</small>
+                        <div class="fragment">
+                            <hr/>
+                            <p>avoid implicit conversions<a>*</a></p>
+                            <p>implicit classes should be enough, anyway</p>
+                            <small><a>*</a> - unless you have an implicit value class in a trait, or have another good reason</small>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 3 - Abusing implicits</p>
+                        <pre class="fragment"><code class="scala">def doSth(implicit seq: List[String])</code></pre>
+                        <small class="fragment">Brings a dangerous conversion to scope</small>
+                        <pre class="fragment"><code class="scala">implicit val x = List("hello", "world")
+val a: String = 2 // java.lang.IndexOutOfBoundsException: 2</code></pre>
+                        <small class="fragment">Also makes finding the used instance harder</small>
+                        <div class="fragment">
+                            <hr/>
+                            <small>Avoid implicits of standard/common type (<code>Monad[List]</code> is fine, <code>List[HttpHeader]</code> is not</small><br/>
+                            <small>Wrap the type in a value class or come up with an ADT instead</small><br/>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 3 - Abusing implicits</p>
+                        <pre class="fragment"><code class="scala">def doSth(implicit seq: List[String] = List("x"))</code></pre>
+                        <small class="fragment">Pure evil, makes debugging ultra hard</small>
+                        <div class="fragment">
+                            <hr/>
+                            <small>See previous point</small>
+                        </div>
+                    </section>
+                    <section>
+                        <h3>Sin 3 - Abusing implicits</h3>
+                        <p class="fragment">Implicits are a powerful feature - use it with care</p>
+                    </section>
+                </section>
+                <!--trying to outsmart the language-->
+                <section>
+                    <section>
+                        <h2>Sin 4</h2>
+                        <p>Trying to outsmart the language</p>
+                    </section>
+                    <section>
+                        <p>Sin 4 - Trying to outsmart the language</p>
+                        <pre class="fragment"><code class="scala">def printStuff(config: Config, mxn: MxN): String = {
+  var builder = StringBuilder.newBuilder
+  builder = builder.append("\n")
+  for (i <- 0 until mxn._1) {
+    for (y <- 0 until mxn._2) {
+      builder = builder.append("|")
+      if (config.exists(o => o._1 == (i, y))) {
+        config.filter(t => t._1 == (i, y)).
+          map(_._2).foreach(p => {
+            builder = builder.append(p)
+          })
+        } else {
+           builder = builder.append(" ")
+        }
+      }
+    builder = builder.append("|\n")
+  }
+  builder.toString
+}</code></pre>
+                    </section>
+                    <section>
+                        <a>TraversableOnce</a>#<a>mkString</a>
+                        <pre class="fragment"><code class="scala">def mkString(start: String, sep: String, end: String): String = {
+    val b = new StringBuilder()
+    var first = true
+    b append start
+    for (x <- self) {
+      if (first) {
+        b append x
+        first = false
+      }
+      else {
+        b append sep
+        b append x
+      }
+    }
+    b append end
+    b.toString
+}
+                        </code></pre>
+                    </section>
+                    <section>
+                        <p>Sin 4 - Trying to outsmart the language</p>
+                        <p class="fragment">Premature optimization</p>
+                        <p class="fragment">Custom wrappers over libraries</p>
+                        <p class="fragment">and so on</p>
+                        <small class="fragment">Deserves its own talk...</small>
+                    </section>
+                    <section>
+                        <h3>Sin 4 - Trying to outsmart the language</h3>
+                        <p class="fragment">don't reinvent the wheel for performance if you don't need it</p>
+                        <p class="fragment">see how the stdlib is implemented sometimes</p>
+                        <p class="fragment">you can't fix it if you can't understand it</p>
+                    </section>
+                </section>
+                <!--writing java in scala-->
+                <section>
+                    <section>
+                        <h2>Sin 5</h2>
+                        <p>Writing Java in Scala</p>
+                    </section>
+                    <section>
+                        <p>Sin 5 - Writing Java in Scala</p>
+                        <small>Boils down to writing imperative code and ignoring the type system's power</small>
+                        <img src="images/you-underestimate-my-power.gif"/>
+                    </section>
+                    <section>
+                        <p>Sin 5 - Writing Java in Scala</p><br/>
+                        <p class="fragment">nulls, exceptions</p>
+                        <p class="fragment">not explicit enough, dangerous in runtime</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>use Option/Either/Try/Validated etc.</p>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 5 - Writing Java in Scala</p><br/>
+                        <p class="fragment">mutable state, side effects</p>
+                        <p class="fragment">hard to reason about, makes debugging an eternal pain</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>limit the scope of mutability</p>
+                            <p>use more explicit effect types - IO/Free or at least Future ;)</p>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 5 - Writing Java in Scala</p><br/>
+                        <p class="fragment">Stubbornly sticking to OO patterns</p><br/>
+                        <p class="fragment">not always applicable</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>Focus on FP patterns</p>
+                        </div>
+                    </section>
+                    <section>
+                        <p>Sin 5 - Writing Java in Scala</p><br/>
+                        <pre style="font-size: 50px" class="fragment"><code class="scala">return</code></pre><br/>
+                        <p class="fragment">silently throws an exception, is an effect</p>
+                        <div class="fragment">
+                            <hr/>
+                            <p>find, fold, if/else with values in each branch, etc.</p>
+                        </div>
+                    </section>
+                    <section>
+                        <h2>Sin 5 - Writing Java in Scala</h2>
+                        <p class="fragment">Learn the language features thoroughly</p>
+                        <p class="fragment">Use safe error handling techniques</p>
+                        <p class="fragment">Conform to the principles of FP: pure, safe code</p>
+                        <p class="fragment">Practice, learn, rinse and repeat</p>
+                    </section>
+                </section>
+                <!--summary-->
+                <section>
+                    <section>
+                        <h2>Summary</h2>
+                        <p class="fragment">Not just Scala</p>
+                        <p class="fragment">Syntax and features are just the beginning</p>
+                        <p class="fragment">Never stop learning</p>
+                    </section>
+                    <section>
+                        <h2>What next</h2>
+                        <ul>
+                            <li><a href="http://www.lihaoyi.com/post/StrategicScalaStylePrincipleofLeastPower.html" target="_blank">Strategic Scala Style - Principle of Least Power (and others)</a></li>
+                            <li><a href="https://www.youtube.com/watch?v=uHpa1gYxdPA" target="_blank">High quality Scala from day one</a></li>
+                            <li>Pragmatic Programmer</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>Thank you!</h2>
+                        <p class="fragment">Questions?</p>
+                        <p class="fragment">Slides: <a href="http://kubukoz.github.io/seven-sins-slides">kubukoz.github.io/seven-sins-slides</a>
+                        </p>
+                        <p class="fragment"><br/>Contact me:</p>
+                        <a class="fragment">@kubukoz</a>
+                            <p class="fragment" style="display: inline-block">
+                                | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+                            </p>
+                            <p class="fragment" style="display: inline-block">
+                                | <a href="https://kubukoz.com">kubukoz.com</a>
+                            </p>
+                    </section>
+                </section>
+			</div>
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+
+				transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>
