@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Typelevel Alchemist</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h2><a>Typelevel alchemist</a></h2>
+            <h3>Cats ecosystem in practice</h3>
+            <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
+            <small>Scala Wave | September 6, 2018 | Gdańsk, Poland</small>
+        </section>
+        <section>
+            <h2>Samples</h2>
+            <pre><code class="scala" embed="Main.scala"></code></pre>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+<script src="node_modules/axios/dist/axios.min.js"></script>
+
+<script>
+  const Embed = ({ fetchFileContents }) => {
+    return {
+      insertCode: async elem => {
+        const path = elem.getAttribute("embed");
+
+        elem.innerHTML = await fetchFileContents(path);
+      },
+      async init() {
+        const self = this;
+
+        const elems = document.querySelectorAll("[embed]");
+
+        await Promise.all([...elems].map(self.insertCode));
+        console.log(`Inserted code for ${elems.length} node(s)`);
+      }
+    };
+  }
+
+  // More info about config & dependencies:
+  // - https://github.com/hakimel/reveal.js#configuration
+  // - https://github.com/hakimel/reveal.js#dependencies
+
+  Reveal.initialize({
+    dependencies: [
+      {src: 'plugin/markdown/marked.js'},
+      {src: 'plugin/markdown/markdown.js'},
+      {src: 'plugin/notes/notes.js', async: true},
+      {
+        src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+          hljs.initHighlightingOnLoad();
+        }
+      }
+    ]
+  });
+
+
+  axios.defaults.baseURL = 'embeds/src/main/scala/io/typelevel/';
+  Embed({
+    fetchFileContents: path => axios.get(path).then(r => r.data)
+  }).init();
+
+</script>
+</body>
+</html>
