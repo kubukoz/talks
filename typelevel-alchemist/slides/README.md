@@ -11,9 +11,7 @@
 - fs2 - streams, concurrency utils
 - http4s
 - doobie
-- how it all connects in an application (dependency injection, concurrency)
-- testing
-
+- patterns for applications, dependency injection
 
 
 ## Agenda (long, for me - make slides from this)
@@ -54,11 +52,14 @@
   - explanation of Parallel, cats-par
   - where to look for syntax, instances, how to import (reference tweet from impurepics about imports in cats)
 - cats-effect
+  - IO monad for Scala, Cats. Suspended effects and evaluation, stack safety, sync/async, pure/delay/suspend
   - data types (IO, SyncIO, Fiber, Ref, Deferred, Semaphore, Clock (show getting time), ContextShift, Timer (shifting, sleeping) - needed for some instances (e.g. Concurrent - true?), for IO needs implicit EC in scope) - make sure to say these are not type classes so there's no coherency requirement
   - Ref as functional mutable state
   - Resource - functional loan pattern
   - type classes (Sync, Bracket, Async, Concurrent, Effect)
   - IOApp - pure alternative to main function
+  - testing pure applications - series of flatmaps and unsaferunsync at the end. Mention there's no pure testing library but also point out testz is in development
+  - mocking - encapsulating state in Refs, 
 - fs2
   - Stream[F[_], A] - effectful stream of A values suspended in F
   - building streams
@@ -68,31 +69,25 @@
   - pitfalls: Stream *> Stream, `recover` on stream level instead of effect level
   - Queue, Signal, Topic, getting streams from them, publishing to topic
   - Pipe, Sink as type aliases
+  - testing streams
 - http4s  
   - HttpService type, short intro to Kleisli
-  - creating services - default DSL, mention rho as alternative for typed self-documenting routes 
-  - 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- ENDING
- - resources for learning cats, CE, circe, fs2, doobie, http4s (readme, website, gitter)
+  - creating services - builtin DSL, mention rho as alternative for typed self-documenting routes 
+  - building and binding a server with blaze
+  - why are request/response parameterized with the effect - streaming nature of HTTP request/response
+  - reading body as json, writing body as json - http4s-circe
+  - stream input/output in endpoints, client API, testing HttpServices
+- doobie
+  - connecting to a database: creating a transactor.
+  - querying data from the database: doobie DSL + type-safe SQL interpolation
+  - updating rows in a database, updateMany
+  - custom column type mappings
+  - typechecking queries
+  - query streaming, update "streaming" (actually, batching)
+  - "It's still JDBC". Blocking threads. Thoughtful blocking. ContextShift and Linebacker.
+  - testing queries with a real database
+- patterns for applications
+  - dependency injection: argument passing, modules, macwire. Value-level injection with Kleisli. Authenticated[F[_], T] and Configured[T] patterns (monads).
+- Resources for learning cats, CE, circe, fs2, doobie, http4s (readme, website, gitter) + videos
+
+everything by Luka, Fabio, Ross, Rob
