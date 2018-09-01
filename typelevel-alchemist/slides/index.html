@@ -24,15 +24,20 @@
 <body>
 <div class="reveal">
     <div class="slides">
+        <!--main-->
         <section>
-            <h2><a>Typelevel alchemist</a></h2>
-            <h3>Cats ecosystem in practice</h3>
-            <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
-            <small>Scala Wave | September 6, 2018 | Gdańsk, Poland</small>
-        </section>
-        <section>
-            <h2>Samples</h2>
-            <pre><code class="scala" embed="Main.scala"></code></pre>
+            <section>
+                <h2><a>Typelevel alchemist</a></h2>
+                <h3>Cats ecosystem in practice</h3>
+                <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
+                <small>Scala Wave | September 6, 2018 | Gdańsk, Poland</small>
+            </section>
+            <section>
+                <h2>Agenda</h2>
+                <ul>
+
+                </ul>
+            </section>
         </section>
     </div>
 </div>
@@ -42,14 +47,14 @@
 <script src="node_modules/axios/dist/axios.min.js"></script>
 
 <script>
-  const Embed = ({ fetchFileContents }) => {
+  const Embed = ({fetchFileContents}) => {
     return {
       insertCode: async elem => {
         const path = elem.getAttribute("embed");
 
         elem.innerHTML = await fetchFileContents(path);
       },
-      async init() {
+      async init () {
         const self = this;
 
         const elems = document.querySelectorAll("[embed]");
@@ -58,7 +63,7 @@
         console.log(`Inserted code for ${elems.length} node(s)`);
       }
     };
-  }
+  };
 
   // More info about config & dependencies:
   // - https://github.com/hakimel/reveal.js#configuration
