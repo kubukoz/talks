@@ -34,9 +34,143 @@
             </section>
             <section>
                 <h2>Agenda</h2>
+                <ol>
+                    <li>Typeclasses recap</li>
+                    <li>Higher-kinded types</li>
+                    <li>Referential transparency</li>
+                    <li>Tagless Final</li>
+                    <li>Cats intro</li>
+                    <li>Cats-effect</li>
+                    <li>fs2, http4s, doobie</li>
+                    <li>patterns for applications</li>
+                </ol>
+            </section>
+        </section>
+        <!--Typeclasses recap-->
+        <section>
+            <section>
+                <h2>Typeclasses recap</h2>
                 <ul>
-
+                    <li>What's a typeclass?</li>
+                    <li>Examples</li>
+                    <li>Coherence</li>
+                    <li>Alternatives</li>
                 </ul>
+            </section>
+            <section>
+                <h3>What's a typeclass</h3>
+                <p>Example: collapsing a list</p>
+            </section>
+            <section>
+                <h3>Collapsing a list</h3>
+                <pre><code class="scala" embed="typeclasses/collapsing-list.sc"></code></pre>
+                <br/>
+                <small class="fragment">Hard to extend - need a new implementation AND name for every type in list
+                </small>
+                <br/>
+                <small class="fragment">Let's try to make that abstract</small>
+                <br/>
+                <br/>
+                <small>Original idea from <a href="https://typelevel.org/cats/typeclasses" target="_blank">the Cats
+                    documentation</a></small>
+            </section>
+            <section>
+                <h3>Monoid typeclass</h3>
+                <pre><code class="scala" embed="typeclasses/collapsing-monoid.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Usage of new implementation</h3>
+                <pre><code class="scala" embed="typeclasses/collapsing-monoid-usage.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Typeclasses should have laws</h3>
+                <pre><code class="scala" embed="typeclasses/monoid-laws.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Coherence</h3>
+                <ul>
+                    <li class="fragment">Each pairing of (type, typeclass implementation) must be unique</li>
+                    <li class="fragment">Not enforced by Scala</li>
+                </ul>
+                <br/><br/>
+                <p class="fragment">Takeaway: Not all traits with implicit instances are typeclasses</p>
+            </section>
+            <section>
+                <h2>Alternatives</h2>
+            </section>
+            <section>
+                <h3>Runtime reflection</h3>
+                <ul>
+                    <li>e.g. JSON serializers in Jackson or json4s</li>
+                    <li>Hard to extend (registering instances in global scope)</li>
+                    <li>No compile-time checks, no runtime safety</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Pattern matching</h3>
+                <ul>
+                    <li>Non-extensible</li>
+                    <li>No compile-time checks, no runtime safety</li>
+                    <li>Still hard with generics (requires ClassTag, which is... a typeclass)</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Polymorphism via subtyping</h3>
+                <pre><code class="scala" embed="typeclasses/monoid-pair-subtyping.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Subtyping</h3>
+                <ul>
+                    <li>How to collapse an empty list?</li>
+                    <li>Pollutes the implementing classes</li>
+                    <li>All or nothing</li>
+                    <li>Can't implement for types we can't control</li>
+                </ul>
+            </section>
+            <section>
+                <h3>So, typeclasses...</h3>
+                <p>Standard library examples (pre-2.13)</p>
+                <pre><code class="scala" embed="typeclasses/typeclasses-stdlib.scala"></code></pre>
+            </section>
+        </section>
+        <!--HKTs-->
+        <section>
+            <section>
+                <h2>Higher-kinded types</h2>
+            </section>
+            <section>
+                <h3>Types</h3>
+                <p class="fragment">*-kinded</p>
+                <pre class="fragment"><code class="scala">String, Int, Boolean, List[Int]</code></pre>
+                <p class="fragment">higher-kinded (* -> *)</p>
+                <pre class="fragment"><code class="scala">Option[_], List[_], Future[_]</code></pre>
+                <p class="fragment">higher-kinded types are "incomplete" - they have a hole</p>
+                <p class="fragment">also called "type constructors"</p>
+            </section>
+            <section>
+                <h3>Higher-kinded types</h3>
+                <p>Type-level functions</p>
+                <pre><code class="scala"></code>f      = x => f(x)      //function lambda</pre>
+                <pre><code class="scala"></code>Option = A => Option[A] //type lambda</pre>
+                <p class="fragment">Higher-kinded types need to be applied with a type to become a *-kinded type</p>
+            </section>
+            <section>
+                <pre><code class="scala" embed="hkt/hof.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Abstracting on types</h3>
+                <pre><code class="scala" embed="hkt/abstracting.sc"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="hkt/abstracting-id.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Type lambdas</h3>
+                <pre><code class="scala" embed="hkt/lambda.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Why we need type lambdas</h3>
+                <pre><code class="scala" embed="hkt/why-lambdas.sc"></code></pre>
             </section>
         </section>
     </div>

@@ -2,27 +2,34 @@
 
 ## Agenda
 - typeclasses recap
-- functional purity, referential transparency
-- how RT helps write modular, composable code
+- higher kinded types
+- referential transparency
+- how RT helps write modular, composable, refactorable code
 - Tagless Final
-- cats intro (first some TCs like Order, Monoid then Functor and HKTs up to Monad and Traverse)
+- cats intro
 - cats-effect
-- IOApp
-- fs2 - streams, concurrency utils
+- fs2
 - http4s
 - doobie
-- patterns for applications, dependency injection
-
+- patterns for applications
 
 ## Agenda (long, for me - make slides from this)
-- typeclasses recap (what is a typeclass: trait with implementations for types, ad-hoc polymorphism), typeclass coherency!
-- higher kinded types - type-level functions. nullary types, unary types (List, Option, Future, Ordering), binary types (Either) etc.
+- typeclasses recap
+  - what's a typeclass (trait with implementations for types, ad-hoc polymorphism)
+  - examples
+  - typeclass coherence
+  - comparison to pattern matching on types, runtime reflection
+
+
+### - higher kinded types - type-level functions. nullary types, unary types (List, Option, Future, Ordering), binary types (Either) etc.
   - partial unification - 2.11.x plugin, 2.12.x flag, 2.13 default
+
+  
 - referential transparency:
   - definition of a pure function (John de goes's tweet for sure)
   - definition of rt as in a ====== f(x)
   - "effects are good, side effects are bugs" https://twitter.com/hseeberger/status/942774034068049920 (extract screenshot from video)
-- how RT helps write modular, composable, refactorable code
+(in above point) - how RT helps write modular, composable, refactorable code
   - you can inline or extract any expression you want and keep the same semantics/behavior
   - you can treat programs as values and pass them around to functions which can manipulate your programs like data
   - because of that, you can build abstractions like `forever`, `retry`, `loopWhile` for any effect that matches a constraint (i.e. has the expected typeclass instance)
@@ -37,8 +44,8 @@
     - (a, b) => b
     - (Boolean, Boolean, Boolean) => Unit
     - Any => Unit
-    - as soon as we return IO we get pretty much infinite possibilities: IO[Unit] can be pretty much any action
-- tagless final
+    - as soon as we return IO we get pretty much infinite possibilities: IO[Unit] can be pretty much any action. (Show comparison to impure function returning String - again infinite possibilities)
+- Tagless Final
   - type lambdas (comparison to value-level function lambdas), kind projector, natural transformations (plus kind projector syntax)
   - with typeclasses: show some simple repository algebra
   - with normal code: show some service algebra using other algebras
@@ -53,7 +60,7 @@
   - where to look for syntax, instances, how to import (reference tweet from impurepics about imports in cats)
 - cats-effect
   - IO monad for Scala, Cats. Suspended effects and evaluation, stack safety, sync/async, pure/delay/suspend
-  - data types (IO, SyncIO, Fiber, Ref, Deferred, Semaphore, Clock (show getting time), ContextShift, Timer (shifting, sleeping) - needed for some instances (e.g. Concurrent - true?), for IO needs implicit EC in scope) - make sure to say these are not type classes so there's no coherency requirement
+  - data types (IO, SyncIO, Fiber, Ref, Deferred, Semaphore, Clock (show getting time), ContextShift, Timer (shifting, sleeping) - needed for some instances (e.g. Concurrent - true?), for IO needs implicit EC in scope) - make sure to say these are not type classes so there's no coherence requirement
   - Ref as functional mutable state
   - Resource - functional loan pattern
   - type classes (Sync, Bracket, Async, Concurrent, Effect)
@@ -87,7 +94,8 @@
   - "It's still JDBC". Blocking threads. Thoughtful blocking. ContextShift and Linebacker.
   - testing queries with a real database
 - patterns for applications
-  - dependency injection: argument passing, modules, macwire. Value-level injection with Kleisli. Authenticated[F[_], T] and Configured[T] patterns (monads).
+  - dependency injection: argument passing, modules, macwire.
+  - Value-level injection with Kleisli. Authenticated[F[_], T] and Configured[T].
 - Resources for learning cats, CE, circe, fs2, doobie, http4s (readme, website, gitter) + videos
 
 everything by Luka, Fabio, Ross, Rob
