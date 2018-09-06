@@ -12,6 +12,12 @@
     <!-- Theme used for syntax highlighting of code -->
     <link rel="stylesheet" href="lib/css/solarized-dark.css">
 
+    <style>
+        code.smaller {
+            font-size: 0.6em;
+            line-height: 1.2em;
+        }
+    </style>
     <!-- Printing and PDF exports -->
     <script>
         const link = document.createElement('link');
@@ -348,8 +354,7 @@ val a = f(x)
             </section>
             <section>
                 <h3>A wild implicit side effect appears!</h3>
-                <pre><code class="scala" embed="rt/implicit-side-effect.sc"
-                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <pre><code class="scala smaller" embed="rt/implicit-side-effect.sc"></code></pre>
                 <p class="fragment">Find the side effect</p>
                 <small class="fragment">(line 13, limit)</small>
             </section>
@@ -446,6 +451,11 @@ val a = f(x)
                 <small>Comparison, ordering</small>
             </section>
             <section>
+                <h3>Show</h3>
+                <pre><code class="scala" embed="cats/show.scala"></code></pre>
+                <small>Text representation - type-safe <code>toString</code></small>
+            </section>
+            <section>
                 <h3>Semigroup, Monoid</h3>
                 <pre><code class="scala" embed="cats/semigroup-monoid.scala"></code></pre>
                 <small>binary operation + (with monoid) identity element</small>
@@ -493,8 +503,7 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             </section>
             <section>
                 <h3>MonadError</h3>
-                <pre><code class="scala" style="font-size: 0.6em; line-height: 1.3em;"
-                           embed="cats/monaderr.scala"></code></pre>
+                <pre><code class="scala smaller" embed="cats/monaderr.scala"></code></pre>
                 <small>Running predicates, transforming errors, un-recovering</small>
             </section>
             <section>
@@ -559,8 +568,7 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             <section>
                 <h3>Applicative builder syntax</h3>
                 <small>No need to call `product`, `map2` or `ap` directly</small>
-                <pre><code class="scala" embed="cats-data/applicative-builder.sc"
-                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <pre><code class="scala smaller" embed="cats-data/applicative-builder.sc"></code></pre>
             </section>
             <section>
                 <h3>FunctionK</h3>
@@ -588,8 +596,7 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             </section>
             <section>
                 <h3>Parallel applicative syntax</h3>
-                <pre><code class="scala" embed="cats-data/parallel-builder.sc"
-                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <pre><code class="scala smaller" embed="cats-data/parallel-builder.sc"></code></pre>
                 <small>Later - parallel IO</small>
             </section>
             <section>
@@ -617,7 +624,152 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                 <pre><code class="scala" embed="cats-data/eithert-problem-solution.sc"></code></pre>
             </section>
         </section>
-        <section>section 7</section>
+        <!--cats-effect-->
+        <section>
+            <section>
+                <h3>Cats-effect</h3>
+                <p>An IO monad for cats (and more)</p>
+            </section>
+            <section>
+                <h3>Cats-effect</h3>
+                <ul>
+                    <li>More data types (IO, concurrency primitives)</li>
+                    <li>More instances</li>
+                </ul>
+            </section>
+        </section>
+        <!--IO-->
+        <section>
+            <section>
+                <h3>IO[A]</h3>
+                <ul>
+                    <li class="fragment">Just a data structure</li>
+                    <li class="fragment">A pure, immutable value</li>
+                    <li class="fragment">Preserves referential transparency</li>
+                    <li class="fragment">When evaluated, can perform effects before returning a value of type A</li>
+                </ul>
+                <br/>
+                <br/>
+                <small class="fragment">Supports synchronous AND asynchronous effects</small>
+            </section>
+            <section>
+                <h3>IO[A] is not a stream</h3>
+                <p>An IO, when evaluated, will do one of these:</p>
+                <ul>
+                    <li>Eventually complete with a value of type A</li>
+                    <li>fail with a Throwable</li>
+                    <li>never complete (e.g. <code>IO.never</code>)</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Creating IOs</h3>
+                <pre><code class="scala" embed="io/creating-io.sc"></code></pre>
+            </section>
+            <section>
+                <h3>IO - example</h3>
+                <pre><code class="scala" embed="io/io-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>IO - more examples</h3>
+                <pre><code class="scala smaller" embed="io/io-examples-mutable.sc"></code></pre>
+                <pre class="fragment"><code class="scala smaller" embed="io/io-examples-inc-random.sc"></code></pre>
+            </section>
+            <section>
+                <h3>IO - echo name</h3>
+                <small>The "hello world" of IOs</small>
+                <pre><code class="scala" embed="io/io-echo.sc"></code></pre>
+            </section>
+            <section>
+                <h3>IO - another example</h3>
+                <pre class="fragment"><code class="scala smaller" embed="io/io-heisenberg.sc"></code></pre>
+            </section>
+            <section>
+                <h3>IO gotchas</h3>
+                <pre><code class="scala" embed="io/io-gotchas.sc"></code></pre>
+            </section>
+            <section>
+                <h3>How to run?</h3>
+                <pre><code class="scala" embed="io/ioapp.sc"></code></pre>
+            </section>
+            <section>
+                <h3>How to run?</h3>
+                <pre><code class="scala" embed="io/ioapp-usage.sc"></code></pre>
+            </section>
+        </section>
+        <!--CE TCs-->
+        <section>
+            <section>
+                <h3>Cats-effect typeclasses</h3>
+                <ul>
+                    <li>Bracket</li>
+                    <li>Sync</li>
+                    <li>LiftIO</li>
+                    <li>Async</li>
+                    <li>Effect</li>
+                    <li>Concurrent</li>
+                    <li>ConcurrentEffect</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Bracket</h3>
+                <small>Ensuring resource safety - loan pattern in Scala</small>
+                <pre><code class="scala" embed="ce-tc/bracket.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Bracket - example</h3>
+                <pre><code class="scala" embed="ce-tc/bracket-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Bracket - more</h3>
+                <pre><code class="scala" embed="ce-tc/bracket-concrete.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Resource data type</h3>
+                <pre><code class="scala smaller" embed="ce-tc/resource.scala"></code></pre>
+                <pre class="fragment"><code class="scala smaller" embed="ce-tc/resource-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Sync typeclass</h3>
+                <small>Suspend side effects in F[_]</small>
+                <pre><code class="scala" embed="ce-tc/sync.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Sync - example</h3>
+                <pre><code class="scala" embed="ce-tc/sync-usage.sc"></code></pre>
+            </section>
+            <section>
+                <h3>LiftIO</h3>
+                <small>Convert an IO to F[_]</small>
+                <pre><code class="scala" embed="ce-tc/liftio.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Async</h3>
+                <small>Execute asynchronous effects</small>
+                <pre><code class="scala" embed="ce-tc/async.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Async - example</h3>
+                <pre><code class="scala smaller" embed="ce-tc/async-example.sc"></code></pre>
+            </section>
+        </section>
+        <!--CE DTs-->
+        <section>
+            <section>
+                <h3>Cats-effect datatypes</h3>
+                <ul>
+                    <li>IO</li>
+                    <li>SyncIO</li>
+                    <li>Fiber</li>
+                    <li>Ref</li>
+                    <li>Deferred</li>
+                    <li>Semaphore</li>
+                    <li>Clock</li>
+                    <li>ContextShift</li>
+                    <li>Timer</li>
+                </ul>
+            </section>
+        </section>
+        <section>section 9</section>
     </div>
 </div>
 

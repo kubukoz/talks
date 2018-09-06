@@ -60,10 +60,10 @@
   - where to look for syntax, instances, how to import (reference tweet from impurepics about imports in cats)
 - cats-effect
   - IO monad for Scala, Cats. Suspended effects and evaluation, stack safety, sync/async, pure/delay/suspend
+  - type classes (Sync, Bracket, Async, Concurrent, Effect)
   - data types (IO, SyncIO, Fiber, Ref, Deferred, Semaphore, Clock (show getting time), ContextShift, Timer (shifting, sleeping) - needed for some instances (e.g. Concurrent - true?), for IO needs implicit EC in scope) - make sure to say these are not type classes so there's no coherence requirement
   - Ref as functional mutable state
   - Resource - functional loan pattern
-  - type classes (Sync, Bracket, Async, Concurrent, Effect)
   - IOApp - pure alternative to main function
   - testing pure applications - series of flatmaps and unsaferunsync at the end. Mention there's no pure testing library but also point out testz is in development
   - mocking - encapsulating state in Refs, 
