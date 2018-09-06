@@ -521,12 +521,8 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                     <li>NonEmptyList</li>
                     <li>Validated</li>
                     <li>FunctionK</li>
-                    <li>Eval</li>
-                    <li>Nested</li>
-                    <li>Const</li>
                     <li>OptionT</li>
                     <li>EitherT</li>
-                    <li>State...</li>
                 </ul>
             </section>
             <section>
@@ -537,7 +533,7 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             </section>
             <section>
                 <h3>Validated</h3>
-                <pre><code class="scala" embed="cats-data/validated-src.scala"></code></pre>
+                <pre><code class="scala" embed="cats-data/validated.scala"></code></pre>
                 <small>like Either, but with error accumulation</small>
             </section>
             <section>
@@ -563,16 +559,53 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             <section>
                 <h3>Applicative builder syntax</h3>
                 <small>No need to call `product`, `map2` or `ap` directly</small>
-                <pre><code class="scala" embed="cats-data/applicative-builder.sc" style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <pre><code class="scala" embed="cats-data/applicative-builder.sc"
+                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
             </section>
             <section>
                 <h3>FunctionK</h3>
                 <pre><code class="scala" embed="cats-data/functionk.scala"></code></pre>
+                <pre class="fragment"><code class="scala" embed="cats-data/functionk-example.sc"></code></pre>
             </section>
             <section>
                 <h3>One more typeclass - Parallel</h3>
                 <small>Not just parallelism</small>
                 <pre><code class="scala" embed="cats-data/parallel.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Parallel explained</h3>
+                <ul>
+                    <li class="fragment">A bi-directional transformation between two isomorphic types with
+                        applicatives
+                    </li>
+                    <li class="fragment">One has a monad, the other one can't</li>
+                </ul>
+                <br/><br/>
+                <small class="fragment">
+                    An applicative that can't be a monad does e.g. parallel execution of <code>IO</code>, or error&nbsp;accumulation
+                    like <code>Validated</code>
+                </small>
+            </section>
+            <section>
+                <h3>Parallel applicative syntax</h3>
+                <pre><code class="scala" embed="cats-data/parallel-builder.sc"
+                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <small>Later - parallel IO</small>
+            </section>
+            <section>
+                <h3>OptionT</h3>
+                <small>Problem:</small>
+                <pre><code class="scala" embed="cats-data/optiont-problem.sc"></code></pre>
+                <pre class="fragment"><code class="scala" embed="cats-data/optiont-problem-naive.sc"></code></pre>
+            </section>
+            <section>
+                <small>Solution:</small>
+                <pre><code class="scala" embed="cats-data/optiont-problem.sc"></code></pre>
+                <pre class="fragment"><code class="scala" embed="cats-data/optiont-problem-solution.sc"></code></pre>
+            </section>
+            <section>
+                <h3>OptionT</h3>
+                <pre><code class="scala" embed="cats-data/optiont.scala"></code></pre>
             </section>
         </section>
         <section>section 7</section>
