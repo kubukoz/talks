@@ -1,4 +1,3 @@
-//naive approach
 def findUsersCarManufacturerOwner(
   name: String): Future[Option[Owner]] = {
 
