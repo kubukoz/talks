@@ -14,11 +14,11 @@
 
     <!-- Printing and PDF exports -->
     <script>
-      const link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.type = 'text/css';
-      link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
-      document.getElementsByTagName('head')[0].appendChild(link);
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
     </script>
 </head>
 <body>
@@ -30,7 +30,7 @@
                 <h2><a>Typelevel alchemist</a></h2>
                 <h3>Cats ecosystem in practice</h3>
                 <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
-                <small>Scala Wave | September 6, 2018 | Gdańsk, Poland</small>
+                <small>Scala Wave | September 7, 2018 | Gdańsk, Poland</small>
             </section>
             <section>
                 <h2>Agenda</h2>
@@ -44,6 +44,17 @@
                     <li>fs2, http4s, doobie</li>
                     <li>patterns for applications</li>
                 </ol>
+            </section>
+            <section>
+                <h3>About me</h3>
+                <ul>
+                    <li>Live in Wrocław, Poland</li>
+                    <li>Doing Scala for 3 years</li>
+                    <li>Worked @ <a href="https://scalac.io" target="_blank">Scalac</a> all that time</li>
+                    <li>now @ <a href="https://ocadotechnology.com" target="_blank">Ocado Technology</a></li>
+                    <li>I love ramen</li>
+                    <li>Running and lifting when not injured</li>
+                </ul>
             </section>
         </section>
         <!--Typeclasses recap-->
@@ -102,7 +113,7 @@
                 <h3>Runtime reflection</h3>
                 <ul>
                     <li>e.g. JSON serializers in Jackson or json4s</li>
-                    <li>Hard to extend (registering instances in global scope)</li>
+                    <li>Hard to extend (registering instances in global, mutable scope)</li>
                     <li>No compile-time checks, no runtime safety</li>
                 </ul>
             </section>
@@ -113,6 +124,41 @@
                     <li>No compile-time checks, no runtime safety</li>
                     <li>Still hard with generics (requires ClassTag, which is... a typeclass)</li>
                 </ul>
+            </section>
+            <section>
+                <h3>Comparison</h3>
+                <table>
+                    <tr>
+                        <td></td>
+                        <td>Extensible</td>
+                        <td>Generics</td>
+                        <td>Runtime safe</td>
+                    </tr>
+                    <tr>
+                        <td>Reflection</td>
+                        <td title="Users can usually register custom instances for their types">✅</td>
+                        <td>✅</td>
+                        <td title="Not checked in compile time">❌</td>
+                    </tr>
+                    <tr>
+                        <td>Pattern matching</td>
+                        <td title="Users can't add support for their types">❌</td>
+                        <td title="Requires classtag (typeclass and a bit of reflection)">❌</td>
+                        <td title="Exhaustivity checking">✅</td>
+                    </tr>
+                    <tr>
+                        <td>Subtyping</td>
+                        <td title="Impossible to add an instance to a type we can't or don't want to extend">❌</td>
+                        <td title="Type erasure">❌</td>
+                        <td title="A missing implementation is a compile-time error">✅</td>
+                    </tr>
+                    <tr>
+                        <td>Typeclasses</td>
+                        <td title="Users can provide instances for their types and foreign types">✅</td>
+                        <td title="Working, even with induction (Show of `List[T : Show]`)">✅</td>
+                        <td title="If it compiles, it's safe">✅</td>
+                    </tr>
+                </table>
             </section>
             <section>
                 <h3>Polymorphism via subtyping</h3>
@@ -150,12 +196,22 @@
             <section>
                 <h3>Higher-kinded types</h3>
                 <p>Type-level functions</p>
-                <pre><code class="scala"></code>f      = x => f(x)      //function lambda</pre>
-                <pre><code class="scala"></code>Option = A => Option[A] //type lambda</pre>
+                <pre><code class="scala"></code>f      =  x  => f(x)      //function lambda</pre>
+                <pre><code class="scala"></code>Option = [A] => Option[A] //type lambda</pre>
                 <p class="fragment">Higher-kinded types need to be applied with a type to become a *-kinded type</p>
             </section>
             <section>
-                <pre><code class="scala" embed="hkt/hof.sc"></code></pre>
+                <table>
+                    <h3>Functions vs higher-kinded types</h3>
+                    <tr>
+                        <td>
+                            <pre style="width: auto;"><code class="scala" embed="hkt/hof.sc"></code></pre>
+                        </td>
+                        <td>
+                            <pre style="width: auto;"><code class="scala" embed="hkt/hof-2.sc"></code></pre>
+                        </td>
+                    </tr>
+                </table>
             </section>
             <section>
                 <h3>Abstracting on types</h3>
@@ -166,13 +222,360 @@
             </section>
             <section>
                 <h3>Type lambdas</h3>
+                <small>With <a href="https://github.com/non/kind-projector" target="_blank">kind-projector</a></small>
                 <pre><code class="scala" embed="hkt/lambda.sc"></code></pre>
             </section>
             <section>
                 <h3>Why we need type lambdas</h3>
                 <pre><code class="scala" embed="hkt/why-lambdas.sc"></code></pre>
             </section>
+            <section>
+                <h3>Partial unification</h3>
+                <small>The compiler can infer this <a href="https://github.com/typelevel/cats#getting-started"
+                                                      target="_blank">(with a flag, by default in 2.13)</a>:
+                </small>
+                <pre><code class="scala" embed="hkt/partial-unification.sc"></code></pre>
+                <small class="fragment">Unfortunately, IDEA can't (yet) :(</small>
+                <img class="fragment" src="images/idea-punif-fail.png"/>
+            </section>
+            <section>
+                <h3>Tagless Final</h3>
+                <small>Fancy name for abstracting on types*</small>
+                <pre><code class="scala" embed="tf/tf-example.scala"></code></pre>
+                <small>* - not a precise definition, but it'll suffice</small>
+            </section>
+            <section>
+                <h3>Why tagless?</h3>
+                <ul>
+                    <li>We don't couple ourselves to a specific effect like IO</li>
+                    <li>We can easily swap effects for testing or if we decide to switch</li>
+                    <li>Easier to work with monad transformers (explained later)</li>
+                    <li>Sometimes allows for not leaking implementation details</li>
+                    <li>More power to users of your library</li>
+                </ul>
+            </section>
         </section>
+        <!--RT-->
+        <section>
+            <section>
+                <h2>Referential transparency</h2>
+                <small>If an expression <code>t</code> can be substituted by its value <code>a</code>, then it's
+                    referentially transparent
+                </small>
+                <pre><code class="scala">//if a function f(x) is referentially transparent
+//and x is referentially transparent
+
+val a = f(x)
+
+(a, a) <-> (f(x), f(x))</code></pre>
+            </section>
+            <section>
+                <h3>Breaking RT - Future</h3>
+                <pre><code class="scala" embed="rt/future-breaks.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Future breaks most of the time</h3>
+                <pre><code class="scala" embed="rt/future-breaks-time.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Future can break even more</h3>
+                <pre><code class="scala" embed="rt/future-breaks-time-2.sc"></code></pre>
+            </section>
+            <section>
+                <h3>It hurts</h3>
+                <pre><code class="scala" embed="rt/side-effects-break.sc"></code></pre>
+            </section>
+            <section>
+                <h3>It also breaks in the other direction</h3>
+                <pre><code class="scala" embed="rt/future-breaks-other-side.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Throwing breaks too</h3>
+                <pre><code class="scala" embed="rt/exceptions-break.sc"></code></pre>
+            </section>
+            <section>
+                <h3>What's a (pure) function?</h3>
+                <a href="https://twitter.com/jdegoes/status/936301872066977792" target="_blank"><img
+                        src="images/jdg-functions.png" style="width: 500px"/></a>
+            </section>
+            <section>
+                <h3>Meet <code>IO</code></h3>
+                <pre><code class="scala" embed="rt/io-doesnt-break.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Measure time with IO</h3>
+                <pre><code class="scala" embed="rt/io-measure.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Predictable nukes with IO</h3>
+                <pre><code class="scala" embed="rt/io-doesnt-break-other-side.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Why go referentially transparent?</h3>
+                <ul>
+                    <li>Equational reasoning</li>
+                    <li>Programs as values</li>
+                    <li>Testing</li>
+                    <li>Local reasoning</li>
+                    <li>Explicit effects, predictable code</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Equational reasoning</h3>
+                <small>Refactor fearlessly</small>
+                <pre><code class="scala" embed="rt/equational-reasoning.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Programs as values</h3>
+                <small>Pass your programs to others so that they add meaning</small>
+                <pre><code class="scala" embed="rt/programs-values.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Testing</h3>
+                <pre><code class="scala" embed="rt/testing.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Local reasoning</h3>
+                <ul>
+                    <li>Split programs more easily</li>
+                    <li>Compose smaller functions into larger ones</li>
+                    <li>Reason independently</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Local reasoning</h3>
+                <pre><code class="scala" embed="rt/local-reasoning.sc"></code></pre>
+            </section>
+            <section>
+                <h3>A wild implicit side effect appears!</h3>
+                <pre><code class="scala" embed="rt/implicit-side-effect.sc"
+                           style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+                <p class="fragment">Find the side effect</p>
+                <small class="fragment">(line 13, limit)</small>
+            </section>
+            <section>
+                <h3>Explicit effects</h3>
+                <pre><code class="scala" embed="rt/explicit-effects.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Checklist</h3>
+                <ul>
+                    <li>Is it calling the DB?</li>
+                    <li>Is it calling HTTP?</li>
+                    <li>Is it logging?</li>
+                    <li>Is it caching?</li>
+                    <li>Is it changing state?</li>
+                    <li>Is it reading from a cache?</li>
+                    <li>Can it throw?</li>
+                    <li>Can it have a different result if you call it tomorrow?</li>
+                </ul>
+                <br/>
+                <br/>
+                <small class="fragment">If you have ≥1 checks, it's effectful - slap an IO on it</small>
+            </section>
+            <section>
+                <h3>Predictable results</h3>
+                <small>A pure function can have a limited number of implementations</small>
+                <pre><code class="scala">def f[A](a: A): A</code></pre>
+                <p class="fragment">has one</p>
+            </section>
+            <section>
+                <h3>How many implementations?</h3>
+                <pre><code class="scala" embed="rt/how-many.sc"></code></pre>
+                <pre class="fragment"><code class="scala">def f9: IO[Unit]</code></pre>
+            </section>
+            <section>
+                <h3>How many implementations?</h3>
+                <pre><code class="scala" embed="rt/how-many-answered.sc"></code></pre>
+                <pre><code class="scala">def f9: IO[Unit]</code></pre>
+            </section>
+            <section>
+                <h3>How many implementations?</h3>
+                <pre><code class="scala" embed="rt/how-many-complex.sc"></code></pre>
+            </section>
+            <section>
+                <h3>How many implementations?</h3>
+                <pre><code class="scala" embed="rt/how-many-complex-answered.sc"></code></pre>
+            </section>
+        </section>
+        <!--cats-->
+        <section>
+            <section>
+                <h2>Cats</h2>
+            </section>
+            <section>
+                <h3>Cats</h3>
+                <p>Core typelevel project</p>
+                <ul>
+                    <li>Typeclasses</li>
+                    <li>Data types</li>
+                    <li>Syntax</li>
+                </ul>
+            </section>
+        </section>
+        <!--cats TCs-->
+        <section>
+            <section>
+                <h3>Typeclasses in cats</h3>
+                <ul>
+                    <li>Eq</li>
+                    <li>Order</li>
+                    <li>Monoid</li>
+                    <li>Functor</li>
+                    <li>Applicative</li>
+                    <li>Monad</li>
+                    <li>ApplicativeError</li>
+                    <li>MonadError</li>
+                    <li>Traverse...</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Eq</h3>
+                <pre><code class="scala" embed="cats/eq.scala"></code></pre>
+                <p>Multiversal equality</p>
+                <small>Note: typeclass definitions in the slides are simplified</small>
+            </section>
+            <section>
+                <h3>Syntax for Cats typeclasses</h3>
+                <pre><code class="scala" embed="cats/syntax.sc"></code></pre>
+                <small>Tip: use consistent import style to avoid conflicts</small>
+            </section>
+            <section>
+                <h3>Order</h3>
+                <pre><code class="scala" embed="cats/order.scala"></code></pre>
+                <small>Comparison, ordering</small>
+            </section>
+            <section>
+                <h3>Semigroup, Monoid</h3>
+                <pre><code class="scala" embed="cats/semigroup-monoid.scala"></code></pre>
+                <small>binary operation + (with monoid) identity element</small>
+            </section>
+            <section>
+                <h3>Functor</h3>
+                <pre><code class="scala" embed="cats/functor.scala"></code></pre>
+                <small><code>map</code>, abstracted</small>
+            </section>
+            <section>
+                <h3>Functor laws</h3>
+                <p>There are two rules of the functor club.</p>
+                <pre class="fragment"><code class="scala">//identity law
+fa.map(id) == fa</code></pre>
+                <pre class="fragment"><code class="scala">//composition law
+fa.map(f).map(g) == fa.map(f.andThen(g))</code></pre>
+            </section>
+            <section>
+                <h3>Applicative</h3>
+                <pre><code class="scala" embed="cats/applicative.scala"></code></pre>
+                <small>(potentially parallel) combination of independent effects, wrapping value in effect</small>
+            </section>
+            <section>
+                <h3>The more real Applicative</h3>
+                <pre><code class="scala" embed="cats/realer-applicative.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Monad</h3>
+                <pre><code class="scala" embed="cats/monad.scala"></code></pre>
+                <small>Sequential composition of effects</small>
+            </section>
+            <section>
+                <h3>Monad laws</h3>
+                <pre class="fragment"><code class="scala">//left identity
+pure(a).flatMap(f) == f(a)</code></pre>
+                <pre class="fragment"><code class="scala">//right identity
+fa.flatMap(pure) == fa</code></pre>
+                <pre class="fragment"><code class="scala">//associativity
+fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
+            </section>
+            <section>
+                <h3>ApplicativeError</h3>
+                <pre><code class="scala" embed="cats/aperr.scala"></code></pre>
+                <small>raising errors, recovering from them</small>
+            </section>
+            <section>
+                <h3>MonadError</h3>
+                <pre><code class="scala" style="font-size: 0.6em; line-height: 1.3em;"
+                           embed="cats/monaderr.scala"></code></pre>
+                <small>Running predicates, transforming errors, un-recovering</small>
+            </section>
+            <section>
+                <h3>Traverse</h3>
+                <pre><code class="scala" embed="cats/traverse.scala"></code></pre>
+                <small><code>sequence</code> flips effects</small>
+            </section>
+            <section>
+                <h3>Traverse examples</h3>
+                <pre><code class="scala" embed="cats/sequence-samples.sc"></code></pre>
+                <pre class="fragment"><code class="scala" embed="cats/traverse-samples.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Traverse vs sequence</h3>
+                <pre><code class="scala">fa.traverse(f) == fa.map(f).sequence</code></pre>
+                <pre><code class="scala">fa.sequence == fa.traverse(identity)</code></pre>
+            </section>
+        </section>
+        <!--cats DTs-->
+        <section>
+            <section>
+                <h2>Data types</h2>
+                <ul>
+                    <li>NonEmptyList</li>
+                    <li>Validated</li>
+                    <li>FunctionK</li>
+                    <li>Eval</li>
+                    <li>Nested</li>
+                    <li>Const</li>
+                    <li>OptionT</li>
+                    <li>EitherT</li>
+                    <li>State...</li>
+                </ul>
+            </section>
+            <section>
+                <h3>NonEmptyList (NEL)</h3>
+                <pre><code class="scala" embed="cats-data/nel.scala"></code></pre>
+                <p>A list that's guaranteed not to be empty</p>
+                <small>With safe `head`, `tail` operations</small>
+            </section>
+            <section>
+                <h3>Validated</h3>
+                <pre><code class="scala" embed="cats-data/validated-src.scala"></code></pre>
+                <small>like Either, but with error accumulation</small>
+            </section>
+            <section>
+                <h3>ValidatedNel</h3>
+                <pre><code class="scala">type ValidatedNel[+E, +A] = Validated[NonEmptyList[E], A]</code></pre>
+                <small>Useful for error accumulation, because NEL has a semigroup</small>
+                <pre><code class="scala">type EitherNel[+E, +A] = Either[NonEmptyList[E], A]</code></pre>
+                <small></small>
+            </section>
+            <section>
+                <h3>Either vs Validated: Applicative</h3>
+                <pre><code class="scala" embed="cats-data/either-validated-product.sc"></code></pre>
+            </section>
+            <section>
+                <h3>In "plain English"</h3>
+                <ul>
+                    <li>Applicative: if the first one fails, we fail with its error. Otherwise se check the second
+                        one.
+                    </li>
+                    <li>Validated: if both are failed, errors are combined using the semigroup instance.</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Applicative builder syntax</h3>
+                <small>No need to call `product`, `map2` or `ap` directly</small>
+                <pre><code class="scala" embed="cats-data/applicative-builder.sc" style="font-size: 0.6em; line-height: 1.2em"></code></pre>
+            </section>
+            <section>
+                <h3>FunctionK</h3>
+                <pre><code class="scala" embed="cats-data/functionk.scala"></code></pre>
+            </section>
+            <section>
+                <h3>One more typeclass - Parallel</h3>
+                <small>Not just parallelism</small>
+                <pre><code class="scala" embed="cats-data/parallel.scala"></code></pre>
+            </section>
+        </section>
+        <section>section 7</section>
     </div>
 </div>
 
@@ -181,46 +584,46 @@
 <script src="node_modules/axios/dist/axios.min.js"></script>
 
 <script>
-  const Embed = ({fetchFileContents}) => {
-    return {
-      insertCode: async elem => {
-        const path = elem.getAttribute("embed");
+    const Embed = ({fetchFileContents}) => {
+        return {
+            insertCode: async elem => {
+                const path = elem.getAttribute("embed");
 
-        elem.innerHTML = await fetchFileContents(path);
-      },
-      async init () {
-        const self = this;
+                elem.innerHTML = await fetchFileContents(path);
+            },
+            async init() {
+                const self = this;
 
-        const elems = document.querySelectorAll("[embed]");
+                const elems = document.querySelectorAll("[embed]");
 
-        await Promise.all([...elems].map(self.insertCode));
-        console.log(`Inserted code for ${elems.length} node(s)`);
-      }
+                await Promise.all([...elems].map(self.insertCode));
+                console.log(`Inserted code for ${elems.length} node(s)`);
+            }
+        };
     };
-  };
 
-  // More info about config & dependencies:
-  // - https://github.com/hakimel/reveal.js#configuration
-  // - https://github.com/hakimel/reveal.js#dependencies
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
 
-  Reveal.initialize({
-    dependencies: [
-      {src: 'plugin/markdown/marked.js'},
-      {src: 'plugin/markdown/markdown.js'},
-      {src: 'plugin/notes/notes.js', async: true},
-      {
-        src: 'plugin/highlight/highlight.js', async: true, callback: function () {
-          hljs.initHighlightingOnLoad();
-        }
-      }
-    ]
-  });
+    Reveal.initialize({
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/notes/notes.js', async: true},
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
 
 
-  axios.defaults.baseURL = 'embeds/src/main/scala/io/typelevel/';
-  Embed({
-    fetchFileContents: path => axios.get(path).then(r => r.data)
-  }).init();
+    axios.defaults.baseURL = 'embeds/src/main/scala/io/typelevel/';
+    Embed({
+        fetchFileContents: path => axios.get(path).then(r => r.data)
+    }).init();
 
 </script>
 </body>

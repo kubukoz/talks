@@ -1,6 +1,6 @@
 def f[F[_]]: Int = 0
 
-f[({type L[A] = Either[String, A]})#L]
+f[({ type L[A] = Either[String, A] })#L]
 
 //equivalent to
 

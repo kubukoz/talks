@@ -1,4 +1,5 @@
-implicit val intMonoid: Monoid[Int] = Monoid.instance(0, _ + _)
+implicit val intMonoid: Monoid[Int] =
+  Monoid.instance(0, _ + _)
 
 implicit def setMonoid[T]: Monoid[Set[T]] =
   Monoid.instance(Set.empty, _ ++ _)

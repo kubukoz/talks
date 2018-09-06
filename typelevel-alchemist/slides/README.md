@@ -20,8 +20,7 @@
   - typeclass coherence
   - comparison to pattern matching on types, runtime reflection
 
-
-### - higher kinded types - type-level functions. nullary types, unary types (List, Option, Future, Ordering), binary types (Either) etc.
+- higher kinded types - type-level functions. nullary types, unary types (List, Option, Future, Ordering), binary types (Either) etc.
   - partial unification - 2.11.x plugin, 2.12.x flag, 2.13 default
 
   
@@ -29,7 +28,8 @@
   - definition of a pure function (John de goes's tweet for sure)
   - definition of rt as in a ====== f(x)
   - "effects are good, side effects are bugs" https://twitter.com/hseeberger/status/942774034068049920 (extract screenshot from video)
-(in above point) - how RT helps write modular, composable, refactorable code
+(in above point)
+- how RT helps write modular, composable, refactorable code
   - you can inline or extract any expression you want and keep the same semantics/behavior
   - you can treat programs as values and pass them around to functions which can manipulate your programs like data
   - because of that, you can build abstractions like `forever`, `retry`, `loopWhile` for any effect that matches a constraint (i.e. has the expected typeclass instance)

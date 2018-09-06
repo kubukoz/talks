@@ -4,9 +4,12 @@ trait Monoid[T] {
 }
 
 object Monoid {
-  def instance[T](emptyT: T, combineT: (T, T) => T): Monoid[T] =
-  /* exercise for the reader*/ ???
+
+  def instance[T](emptyT: T,
+                  combineT: (T, T) => T): Monoid[T] =
+    /* exercise for the reader*/ ???
 }
 
-def collapseList[T](list: List[T])(implicit M: Monoid[T]): T =
+def collapseList[T](list: List[T])(
+  implicit M: Monoid[T]): T =
   list.foldRight(M.empty)(M.combine)
