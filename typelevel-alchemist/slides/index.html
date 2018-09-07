@@ -695,6 +695,10 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                 <h3>How to run?</h3>
                 <pre><code class="scala" embed="io/ioapp-usage.sc"></code></pre>
             </section>
+            <section>
+                <h3>SyncIO</h3>
+                <p>IO without async capabilities</p>
+            </section>
         </section>
         <!--CE TCs-->
         <section>
@@ -744,12 +748,32 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
             </section>
             <section>
                 <h3>Async</h3>
-                <small>Execute asynchronous effects</small>
+                <small>Create asynchronous effects</small>
                 <pre><code class="scala" embed="ce-tc/async.scala"></code></pre>
             </section>
             <section>
                 <h3>Async - example</h3>
-                <pre><code class="scala smaller" embed="ce-tc/async-example.sc"></code></pre>
+                <pre><code class="scala smaller" embed="ce-tc/async-example-io.sc"></code></pre>
+                <pre class="fragment"><code class="scala smaller" embed="ce-tc/async-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Effect</h3>
+                <small>Run your effect</small>
+                <pre><code class="scala" embed="ce-tc/effect.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Concurrent</h3>
+                <small>Start an effect with the ability to cancel</small>
+                <pre><code class="scala" embed="ce-tc/concurrent.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Concurrent example</h3>
+                <pre><code class="scala" embed="ce-tc/concurrent-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>ConcurrentEffect</h3>
+                <small>Run a (potentially asynchronus) effect synchronously with the ability to cancel it</small>
+                <pre><code class="scala" embed="ce-tc/concurrenteffect.scala"></code></pre>
             </section>
         </section>
         <!--CE DTs-->
