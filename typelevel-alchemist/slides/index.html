@@ -911,7 +911,7 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
     });
 
 
-    axios.defaults.baseURL = 'embeds/src/main/scala/io/typelevel/';
+    axios.defaults.baseURL = './embeds/src/main/scala/io/typelevel/';
     Embed({
         fetchFileContents: path => axios.get(path).then(r => r.data)
     }).init();
