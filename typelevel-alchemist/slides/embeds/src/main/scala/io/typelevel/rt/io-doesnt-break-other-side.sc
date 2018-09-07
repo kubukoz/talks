@@ -1,13 +1,14 @@
 val launchNukes: IO[Unit]
 
-//nukes once
+//nukes twice
 val myProgram: IO[Unit] = {
   val result = launchNukes
 
-  result *> IO(println("foo")) *> IO(println("bar"))
+  result *> result *> IO(println("foo")) *> IO(println("bar"))
 }
 
 //inline `result`
-//still nukes once
+//still nukes twice
 val myProgram2: IO[Unit] =
-  launchNukes *> IO(println("foo")) *> IO(println("bar"))
+  launchNukes *> launchNukes *>
+    IO(println("foo")) *> IO(println("bar"))

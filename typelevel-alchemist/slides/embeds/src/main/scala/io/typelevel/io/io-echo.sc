@@ -8,7 +8,7 @@ val readLn: IO[String] =
 def putStrLn(s: String): IO[Unit] = IO(println(s))
 
 val program = for {
-  _ <- putStrLn("What's your name?")
+  _    <- putStrLn("What's your name?")
   name <- readLn
-  _ <- putStrLn(show"Your name was $name")
+  _    <- putStrLn(show"Your name was $name")
 } yield ()

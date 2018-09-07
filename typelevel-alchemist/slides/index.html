@@ -62,6 +62,21 @@
                     <li>Running and lifting when not injured</li>
                 </ul>
             </section>
+            <section>
+                <h3>Links</h3>
+                <ul>
+                    <li>
+                        <a href="https://github.com/kubukoz/playground" target="_blank">https://github.com/kubukoz/playground</a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/kubukoz/brick-store" target="_blank">https://github.com/kubukoz/brick-store</a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/kubukoz/talks/tree/typelevel-alchemist/typelevel-alchemist/slides"
+                           target="_blank">slides</a>
+                    </li>
+                </ul>
+            </section>
         </section>
         <!--Typeclasses recap-->
         <section>
@@ -557,9 +572,9 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                 <pre><code class="scala" embed="cats-data/either-validated-product.sc"></code></pre>
             </section>
             <section>
-                <h3>In "plain English"</h3>
+                <h3>In English</h3>
                 <ul>
-                    <li>Applicative: if the first one fails, we fail with its error. Otherwise se check the second
+                    <li>Either: if the first one fails, we fail with its error. Otherwise se check the second
                         one.
                     </li>
                     <li>Validated: if both are failed, errors are combined using the semigroup instance.</li>
@@ -684,11 +699,17 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                 <pre class="fragment"><code class="scala smaller" embed="io/io-heisenberg.sc"></code></pre>
             </section>
             <section>
+                <h3>IO in parallel</h3>
+                <pre class="fragment"><code class="scala" embed="io/io-parallel.sc"></code></pre>
+            </section>
+            <section>
                 <h3>IO gotchas</h3>
                 <pre><code class="scala" embed="io/io-gotchas.sc"></code></pre>
+                <pre class="fragment"><code class="scala" embed="io/io-gotchas-fixed.sc"></code></pre>
             </section>
             <section>
                 <h3>How to run?</h3>
+                <small>at end of world, e.g. IOApp</small>
                 <pre><code class="scala" embed="io/ioapp.sc"></code></pre>
             </section>
             <section>
@@ -784,16 +805,65 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
                     <li>IO</li>
                     <li>SyncIO</li>
                     <li>Fiber</li>
-                    <li>Ref</li>
-                    <li>Deferred</li>
-                    <li>Semaphore</li>
+                    <li>Ref & friends</li>
                     <li>Clock</li>
                     <li>ContextShift</li>
                     <li>Timer</li>
                 </ul>
             </section>
+            <section>
+                <h3>Ref</h3>
+                <small>Thread-safe, purely functional mutable state</small>
+                <pre><code class="scala" embed="ce-dt/ref.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Ref - example</h3>
+                <pre><code class="scala" embed="ce-dt/ref-example.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Clock</h3>
+                <small>Provides time</small>
+                <pre><code class="scala" embed="ce-dt/clock.scala"></code></pre>
+            </section>
+            <section>
+                <h3>ContextShift</h3>
+                <p>Shifts execution to a thread pool</p>
+                <pre><code class="scala" embed="ce-dt/cs.scala"></code></pre>
+                <small>Usually created with an EC (for IO)</small>
+            </section>
+            <section>
+                <h3>Timer</h3>
+                <p>Schedules delayed tasks (sleep), has a clock</p>
+                <pre><code class="scala" embed="ce-dt/timer.scala"></code></pre>
+            </section>
         </section>
-        <section>section 9</section>
+        <section>
+            <section>
+                <h2>fs2</h2>
+                <p><code>Stream[F[_], A]</code></p>
+                <small>A stream of effects in <code>F[_]</code> producing <code>0..infinity</code> values of type A
+                </small>
+            </section>
+            <section>
+                <h3>fs2 - example</h3>
+                <pre><code class="scala smaller" embed="fs2/sample.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Building streams</h3>
+                <pre><code class="scala smaller" embed="fs2/building-streams.sc"></code></pre>
+            </section>
+            <section>
+                <h3>Actually running a stream</h3>
+                <pre><code class="scala" embed="fs2/running.sc"></code></pre>
+            </section>
+        </section>
+        <section>brick-store project</section>
+        <section>
+            <h2>Thank you!</h2>
+            <p>Get in touch</p>
+            <p><a href="https://twitter.com/kubukoz" target="_blank">@kubukoz</a> | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+            </p>
+        </section>
     </div>
 </div>
 

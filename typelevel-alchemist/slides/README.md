@@ -76,7 +76,6 @@
   - pitfalls: Stream *> Stream, `recover` on stream level instead of effect level
   - Queue, Signal, Topic, getting streams from them, publishing to topic
   - Pipe, Sink as type aliases
-  - testing streams
 - http4s  
   - HttpService type, short intro to Kleisli
   - creating services - builtin DSL, mention rho as alternative for typed self-documenting routes 
