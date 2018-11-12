@@ -464,14 +464,26 @@ val a = f(x)
                 <small>Tip: use consistent import style to avoid conflicts</small>
             </section>
             <section>
+                <h3>Eq exercise</h3>
+                <p>Write a function that checks if all elements of a <code>List[T]</code> are equal</p>
+            </section>
+            <section>
                 <h3>Order</h3>
                 <pre><code class="scala" embed="cats/order.scala"></code></pre>
                 <small>Comparison, ordering</small>
             </section>
             <section>
+                <h3>Order exercise</h3>
+                <p>Write a function that finds the largest element of a <code>List[T]</code></p>
+            </section>
+            <section>
                 <h3>Show</h3>
                 <pre><code class="scala" embed="cats/show.scala"></code></pre>
                 <small>Text representation - type-safe <code>toString</code></small>
+            </section>
+            <section>
+                <h3>Show exercise</h3>
+                <p>Write an instance of <code>Show[List[T]]</code></p>
             </section>
             <section>
                 <h3>Semigroup, Monoid</h3>
@@ -490,6 +502,10 @@ val a = f(x)
 fa.map(id) == fa</code></pre>
                 <pre class="fragment"><code class="scala">//composition law
 fa.map(f).map(g) == fa.map(f.andThen(g))</code></pre>
+            </section>
+            <section>
+                <h3>Functor exercise</h3>
+                <p>Write a function that adds <code>42</code> to all elements in a functor</p>
             </section>
             <section>
                 <h3>Applicative</h3>
@@ -872,7 +888,8 @@ fa.flatMap(f).flatMap(g) == fa.flatMap(a => f(a).flatMap(g))</code></pre>
 
 <script src="lib/js/head.min.js"></script>
 <script src="js/reveal.js"></script>
-<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!--<script src="https://unpkg.com/axios/dist/axios.min.js"></script>-->
+<script src="./node_modules/axios/dist/axios.min.js"></script>
 
 <script>
     const Embed = ({fetchFileContents}) => {
