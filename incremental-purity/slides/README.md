@@ -17,7 +17,7 @@ In the light of the hard work performed by countless people in the open-source S
 - explicit ordering and concurrency
 
 ## Commonly found impure patterns (overview)
-- local state (strange loops)
+- local state (strange loops, incremental filtering)
 - throwing exceptions
 - raw actors API (mutable state, concurrency control aka locks/semaphores, asynchronous message processing, distributed computing, akka persistence aka event sourcing)
 - Futures (akka-http routes, akka streams, Play controllers, Slick database calls)

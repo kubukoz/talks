@@ -38,13 +38,6 @@
                 <small>Scala Dublin | November 27, 2018 | Dublin, Ireland</small>
             </section>
             <section>
-                <h2>Agenda</h2>
-                <ol>
-                    <li>Foo</li>
-                    <li>Bar</li>
-                </ol>
-            </section>
-            <section>
                 <h3>About me</h3>
                 <ul>
                     <li>Live in Wrocław, Poland</li>
@@ -53,6 +46,41 @@
                     <li>I love ramen</li>
                     <li>Running and lifting when not injured</li>
                 </ul>
+            </section>
+            <section>
+                <h2>Agenda</h2>
+                <ol>
+                    <li>Foo</li>
+                    <li>Bar</li>
+                </ol>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Local mutable state</h3>
+                <pre><code class="scala smaller" embed="localstate/imperative/FlightsImperative.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsPure.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state (nicer)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsNice.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state (faster)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsFaster.scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Local mutable state</h3>
+                <pre><code class="scala smaller" embed="localstate2/Imperative.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state</h3>
+                <pre><code class="scala smaller" embed="localstate2/Pure.scala"></code></pre>
             </section>
         </section>
         <section>
@@ -106,7 +134,7 @@
     });
 
 
-    axios.defaults.baseURL = './embeds/src/main/scala/io/typelevel/';
+    axios.defaults.baseURL = './embeds/src/main/scala/io/example/';
     Embed({
         fetchFileContents: path => axios.get(path).then(r => r.data)
     }).init();
