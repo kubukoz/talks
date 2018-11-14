@@ -1,53 +1,60 @@
 package io.example.localstate2
 
-import cats.Monad
-import cats.data.StateT
+import cats.{Apply, FlatMap, Monad, Monoid}
+import cats.effect.concurrent.Ref
 import cats.implicits._
-import cats.effect.{Console, ExitCode, IO, IOApp, SyncConsole}
+import cats.effect.{Console, ExitCode, IO, IOApp}
 import cats.mtl.MonadState
+import com.olegpy.meow.effects._
+import com.olegpy.meow.hierarchy._
+import cats.mtl.instances.all._
 
 import scala.concurrent.duration._
 
 object Pure extends IOApp {
-  import com.olegpy.meow.hierarchy._
-  import cats.mtl.instances.all._
 
   def solveTasksPure(tasks: List[Task]): IO[FiniteDuration] = {
 
-    def work[F[_]: HasSkillState: Monad: Console](task: Task): F[Unit] = {
-      SkillState[F].get.flatMap { skills =>
-        if (skills.contains(task.skill)) {
-          val info = Console[F].putStrLn(s"I know how to do ${task.skill.name}! Adding only 1 second")
+    def work[F[_]: HasSkillState: Monad: Console](task: Task): F[FiniteDuration] = {
+      val knowsRequiredSkill: F[Boolean] = SkillState[F].get.map(_.contains(task.skill))
 
-          info *> TimeState[F].modify(_ + 1.second)
-        } else {
-          val learnSkill =
-            AttemptState[F].get.map(_.get(task.skill)).flatMap {
-              case Some(attemptsSoFar) if attemptsSoFar >= 4 => SkillState[F].modify(_ + task.skill)
-              case _                                         => AttemptState[F].modify(_ |+| Map(task.skill -> 1))
-            }
-
-          val info = Console[F].putStrLn(s"Adding 10 secs for ${task.skill.name}")
-
-          info *> learnSkill *> TimeState[F].modify(_ + 10.seconds)
-        }
-      }
+      knowsRequiredSkill.ifM(
+        useKnownSkill[F](task),
+        solveAndLearnSkill[F](task)
+      )
     }
 
-    implicit val console = new SyncConsole[StateT[IO, SkillState, ?]]
+    implicit val console: Console[IO] = Console.io
 
-    tasks
-      .traverse(work[StateT[IO, SkillState, ?]])
-      .runS(SkillState(0.seconds, Set.empty, Map.empty))
-      .value
-      .map(_.timeSoFar)
+    Ref[IO]
+      .of(MyState(Set.empty, Map.empty))
+      .flatMap {
+        _.runState { implicit RS =>
+          tasks.foldMapM(work[IO])
+        }
+      }
   }
 
-  case class SkillState(timeSoFar: FiniteDuration, skillsKnown: Set[Skill], attempts: Map[Skill, Int])
-  type HasSkillState[F[_]] = MonadState[F, SkillState]
+  private def useKnownSkill[F[_]: Console: Apply](task: Task): F[FiniteDuration] = {
+    val info = Console[F].putStrLn(s"I know how to do ${task.skill.name}! Adding only 1 second")
 
-  type TimeState[F[_]] = MonadState[F, FiniteDuration]
-  def TimeState[F[_]](implicit F: TimeState[F]): TimeState[F] = F
+    info.as(1.second)
+  }
+
+  private def solveAndLearnSkill[F[_]: HasSkillState: FlatMap: Console](task: Task): F[FiniteDuration] = {
+    val info = Console[F].putStrLn(s"Adding 10 secs for ${task.skill.name}")
+
+    val learnSkill =
+      AttemptState[F].get.map(_.get(task.skill)).flatMap {
+        case Some(attemptsSoFar) if attemptsSoFar >= 4 => SkillState[F].modify(_ + task.skill)
+        case _                                         => AttemptState[F].modify(_ |+| Map(task.skill -> 1))
+      }
+
+    info *> learnSkill.as(10.seconds)
+  }
+
+  case class MyState(skillsKnown: Set[Skill], attempts: Map[Skill, Int])
+  type HasSkillState[F[_]] = MonadState[F, MyState]
 
   type SkillState[F[_]] = MonadState[F, Set[Skill]]
   def SkillState[F[_]](implicit F: SkillState[F]): SkillState[F] = F
@@ -55,9 +62,15 @@ object Pure extends IOApp {
   type AttemptState[F[_]] = MonadState[F, Map[Skill, Int]]
   def AttemptState[F[_]](implicit F: AttemptState[F]): AttemptState[F] = F
 
+  implicit val durationMonoid: Monoid[FiniteDuration] = new Monoid[FiniteDuration] {
+    override val empty: FiniteDuration                                         = 0.seconds
+    override def combine(x: FiniteDuration, y: FiniteDuration): FiniteDuration = x + y
+  }
+
   override def run(args: List[String]): IO[ExitCode] = {
     solveTasksPure(Imperative.tasks)
       .flatMap(duration => IO(println(duration)))
       .as(ExitCode.Success)
   }
+
 }
