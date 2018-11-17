@@ -48,11 +48,77 @@
                 </ul>
             </section>
             <section>
+                <h3>TODO slides for motivation</h3>
+            </section>
+            <section>
                 <h2>Agenda</h2>
                 <ol>
-                    <li>Foo</li>
-                    <li>Bar</li>
+                    <li>Flavors of side effects</li>
+                    <li>Why FP</li>
+                    <li>Making effects first-class</li>
+                    <li>Summary</li>
                 </ol>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Flavors of side effects</h3>
+            </section>
+            <section>
+                <h3>Definition of a side effect</h3>
+                <p>Lack of referential transparency</p>
+            </section>
+            <section>
+                <h3>Referential transparency</h3>
+                <pre><code>for any `a`
+given `x = a`
+(x, x) === (a, a)</code></pre>
+            </section>
+            <section>
+                <h3>Pure expressions are RT</h3>
+                <pre><code embed="rt/rt-expressions.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Side effects break RT</h3>
+                <pre><code embed="rt/impure-sideeffects.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Future breaks RT</h3>
+                <pre><code embed="rt/impure-future.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>IO is RT</h3>
+                <pre><code embed="rt/rt-io.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Impure programs</h3>
+                <pre><code embed="rt/impure-program.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Pure programs</h3>
+                <pre><code embed="rt/pure-program.sc" class="scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Flavors of side effects</h3>
+                <ul>
+                    <li class="fragment">Local mutable state</li>
+                    <li class="fragment"><code>throw</code></li>
+                    <li class="fragment">Calling Java APIs</li>
+                    <li class="fragment">Logging, metrics, caches</li>
+                    <li class="fragment">Reading from/writing to files</li>
+                    <li class="fragment">Databases, HTTP</li>
+                    <li class="fragment">Futures</li>
+                    <li class="fragment">Streaming data</li>
+                    <li class="fragment">Actors (concurrent mutable state, concurrency control, asynchronous processing, distributed
+                        computing, event sourcing)
+                    </li>
+                </ul>
+            </section>
+            <section>
+                <h3>Local mutable state</h3>
+                <a href="https://www.youtube.com/watch?v=Pgo73GfHk0U" target="_blank">https://www.youtube.com/watch?v=Pgo73GfHk0U</a>
             </section>
         </section>
         <section>
