@@ -3,16 +3,14 @@ import java.time.LocalDate
 
 import fs2._
 
-object FlightsNice {
+object FlightsStreams {
 
-  def findCheapestFlightsForUser(date: LocalDate,
-                                 user: User): List[Flight] = {
-    def skipCheapest[F[_]](
-      allCount: Int): Pipe[F, Flight, Flight] =
+  def findCheapestFlightsForUser(date: LocalDate, user: User): List[Flight] = {
+    def skipCheapest(allCount: Int): Pipe[Pure, Flight, Flight] =
       if (isMacbookUser(user)) _.drop(allCount / 2)
       else identity
 
-    def expensify[F[_]]: Pipe[F, Flight, Flight] =
+    val expensify: Pipe[Pure, Flight, Flight] =
       if (isDateSoon(date))
         _.map(Flight.price.modify(_ * 6))
           .map(Flight.iconColor.set(Color.Red))

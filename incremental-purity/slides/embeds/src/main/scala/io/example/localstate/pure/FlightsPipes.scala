@@ -5,7 +5,7 @@ import cats.data.NonEmptyList
 import cats.implicits._
 import cats.{Endo, SemigroupK}
 
-object FlightsFaster {
+object FlightsPipes {
 
   def findCheapestFlightsForUser(date: LocalDate,
                                  user: User): List[Flight] = {
@@ -32,6 +32,7 @@ object FlightsFaster {
       skipCheapest(allFlights.size)
     )
 
+    //equivalent to `expensify(skipCheapest(allFlights.size)(allFlights)`
     mods.reduceK.apply(allFlights)
   }
 }

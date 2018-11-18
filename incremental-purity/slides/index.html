@@ -47,14 +47,26 @@
                     <li>Running and lifting when not injured</li>
                 </ul>
             </section>
+        </section>
+        <!--motivation-->
+        <section>
             <section>
-                <h3>TODO slides for motivation</h3>
+                <h3>Functional programming is great</h3>
+                <p class="fragment">Take it from these guys</p>
+                <div class="fragment" style="display: flex; justify-items: stretch">
+                    <div><img src="./images/john.png"/></div>
+                    <div><img src="./images/fabio.png"/></div>
+                </div>
+            </section>
+            <section>
+                <h3>How to do pure FP?</h3>
+                <img src="./images/how-to-draw-owl.jpg"/>
             </section>
             <section>
                 <h2>Agenda</h2>
                 <ol>
-                    <li>Flavors of side effects</li>
                     <li>Why FP</li>
+                    <li>Flavors of side effects</li>
                     <li>Making effects first-class</li>
                     <li>Summary</li>
                 </ol>
@@ -62,7 +74,7 @@
         </section>
         <section>
             <section>
-                <h3>Flavors of side effects</h3>
+                <h2>Why FP?</h2>
             </section>
             <section>
                 <h3>Definition of a side effect</h3>
@@ -91,12 +103,37 @@ given `x = a`
                 <pre><code embed="rt/rt-io.sc" class="scala"></code></pre>
             </section>
             <section>
+                <h3>Referential transparency == Pure FP</h3>
+                <p>Richest link you'll see today: <a href="https://typelevel.org/cats-effect/datatypes/io.html"
+                                                     target="_blank">Documentation&nbsp;of&nbsp;cats.effect.IO</a></p>
+            </section>
+            <section>
                 <h3>Impure programs</h3>
                 <pre><code embed="rt/impure-program.sc" class="scala"></code></pre>
             </section>
             <section>
                 <h3>Pure programs</h3>
                 <pre><code embed="rt/pure-program.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Why is referential transparency important?</h3>
+                <ul>
+                    <li>Equational reasoning</li>
+                    <li>Programs as values</li>
+                    <li>Local reasoning</li>
+                    <li>Explicit effects, predictable code</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Why is RT (in Scala) hard?</h3>
+                <ul>
+                    <li>Initial learning curve</li>
+                    <li>Takes discipline</li>
+                    <li>Tooling (tracing, debugging)</li>
+                    <li>Harder in PoC</li><!--resource allocation, unsafeRunSync()-->
+                    <li>Non-straightforward migration</li>
+                    <li>Mostly impure ecosystem</li>
+                </ul>
             </section>
         </section>
         <section>
@@ -111,16 +148,14 @@ given `x = a`
                     <li class="fragment">Databases, HTTP</li>
                     <li class="fragment">Futures</li>
                     <li class="fragment">Streaming data</li>
-                    <li class="fragment">Actors (concurrent mutable state, concurrency control, asynchronous processing, distributed
+                    <li class="fragment">Actors (concurrent mutable state, concurrency control, asynchronous processing,
+                        distributed
                         computing, event sourcing)
                     </li>
                 </ul>
             </section>
-            <section>
-                <h3>Local mutable state</h3>
-                <a href="https://www.youtube.com/watch?v=Pgo73GfHk0U" target="_blank">https://www.youtube.com/watch?v=Pgo73GfHk0U</a>
-            </section>
         </section>
+        <!--local mutable state-->
         <section>
             <section>
                 <h3>Local mutable state</h3>
@@ -131,22 +166,113 @@ given `x = a`
                 <pre><code class="scala smaller" embed="localstate/pure/FlightsPure.scala"></code></pre>
             </section>
             <section>
-                <h3>Local, immutable state (nicer)</h3>
-                <pre><code class="scala smaller" embed="localstate/pure/FlightsNice.scala"></code></pre>
+                <h3>Local, immutable state (pipes)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsPipes.scala"></code></pre>
             </section>
             <section>
-                <h3>Local, immutable state (faster)</h3>
-                <pre><code class="scala smaller" embed="localstate/pure/FlightsFaster.scala"></code></pre>
+                <h3>Local, immutable state (with streams)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsStreams.scala"></code></pre>
+            </section>
+            <section>
+                <h3>What about effects?</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsStreamsEffects.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local mutable state: case 2</h3>
+                <pre><code class="scala smaller" embed="localstate2/Imperative.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state: case 2</h3>
+                <pre><code class="scala smaller" embed="localstate2/Pure.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Tools</h3>
+                <ul>
+                    <li>Lenses</li>
+                    <li>Classy lenses</li>
+                    <li>State monad</li>
+                    <li>fs2 Streams</li>
+                </ul>
+            </section>
+            <section>
+                <h3>How to do this?</h3>
+                <ul>
+                    <li><a href="https://julien-truffaut.github.io/Monocle" target="_blank">Monocle lenses</a></li>
+                    <li><a href="https://www.youtube.com/watch?v=Pgo73GfHk0U" target="_blank">State monad</a></li>
+                    <li>cats-mtl (<a href="https://typelevel.org/blog/2018/10/06/intro-to-mtl.html" target="_blank">intro</a>,
+                        <a href="https://typelevel.org/cats-mtl/" target="_blank">website</a>)
+                    </li>
+                    <li>Next level MTL (<a href="https://www.youtube.com/watch?v=GZPup5Iuaqw" target="_blank">talk</a>,
+                        <a href="https://github.com/oleg-py/meow-mtl">lib for Scala</a>)
+                    </li>
+                    <li><a href="https://typelevel.org/blog/2018/08/25/http4s-error-handling-mtl.html" target="_blank">Another
+                        tutorial for MTL style</a></li>
+                    <li><a href="http://fs2.io/guide.html" target="_blank">fs2 guide</a></li>
+                </ul>
+            </section>
+        </section>
+        <!--throw-->
+        <section>
+            <section>
+                <h3><code>throw</code></h3>
+                <pre><code class="scala" embed="throww/Throws.scala"></code></pre>
+            </section>
+            <section>
+                <h3><code>no-throw</code></h3>
+                <pre><code class="scala" embed="throww/NoThrows.scala"></code></pre>
+                <p><code>NoThrows.scala</code></p>
+            </section>
+            <section>
+                <h3><code>no-throw (mtl)</code></h3>
+                <pre><code class="scala" embed="throww/NoThrowsMtl.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Tools</h3>
+                <ul>
+                    <li>Either</li>
+                    <li>cats-mtl</li>
+                    <li>cats-effect (Sync[F])</li>
+                </ul>
             </section>
         </section>
         <section>
             <section>
-                <h3>Local mutable state</h3>
-                <pre><code class="scala smaller" embed="localstate2/Imperative.scala"></code></pre>
+                <h2>Java APIs</h2>
+                <ul>
+                    <li>Side effects</li>
+                    <li>Manual resource management</li>
+                    <li>Asynchronous callbacks</li>
+                </ul>
             </section>
             <section>
-                <h3>Local, immutable state</h3>
-                <pre><code class="scala smaller" embed="localstate2/Pure.scala"></code></pre>
+                <h3>Side effects, resource management</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisImpure.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Effects & resources with Bracket</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisBracket.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Composable resources with Resource</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisResource.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Async callbacks & resources: case study (ActiveMQ)</h3>
+                <pre><code class="scala smaller" embed="javaapis/ActiveMqResource.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Learning resources</h3>
+                <ul>
+                    <li>
+                        <a href="https://typelevel.org/cats-effect/datatypes/io.html#asynchronous-effects--ioasync--iocancelable"
+                           target="_blank">Huge page on IO
+                            (mentioned earlier), async section</a></li>
+                    <li><a href="https://typelevel.org/cats-effect/typeclasses/bracket.html" target="_blank">Bracket
+                        documentation</a></li>
+                    <li><a href="https://typelevel.org/cats-effect/datatypes/resource.html" target="_blank">Resource
+                        documentation</a></li>
+                    <li><a href="http://fs2.io/guide.html#asynchronous-effects-callbacks-invoked-multiple-times" target="_blank">fs2 guide (<code>Asynchronous effects</code> section)</a></li>
+                </ul>
             </section>
         </section>
         <section>

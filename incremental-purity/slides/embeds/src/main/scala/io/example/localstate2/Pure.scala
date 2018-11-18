@@ -1,11 +1,10 @@
 package io.example.localstate2
 
+import cats.data._
 import cats.{Apply, FlatMap, Monad, Monoid}
-import cats.effect.concurrent.Ref
 import cats.implicits._
 import cats.effect.{Console, ExitCode, IO, IOApp}
 import cats.mtl.MonadState
-import com.olegpy.meow.effects._
 import com.olegpy.meow.hierarchy._
 import cats.mtl.instances.all._
 
@@ -13,9 +12,9 @@ import scala.concurrent.duration._
 
 object Pure extends IOApp {
 
-  def solveTasksPure(tasks: List[Task]): IO[FiniteDuration] = {
+  def solveTasksPure(tasks: List[Task]): (Chain[String], FiniteDuration) = {
 
-    def work[F[_]: HasSkillState: Monad: Console](task: Task): F[FiniteDuration] = {
+    def work[F[_]: HasSkillState: Monad: Log](task: Task): F[FiniteDuration] = {
       val knowsRequiredSkill: F[Boolean] = SkillState[F].get.map(_.contains(task.skill))
 
       knowsRequiredSkill.ifM(
@@ -24,25 +23,23 @@ object Pure extends IOApp {
       )
     }
 
-    implicit val console: Console[IO] = Console.io
+    type S[A] = WriterT[State[MyState, ?], Chain[String], A]
 
-    Ref[IO]
-      .of(MyState(Set.empty, Map.empty))
-      .flatMap {
-        _.runState { implicit RS =>
-          tasks.foldMapM(work[IO])
-        }
-      }
+    //the compiler just can't derive this one automatically
+    implicit val monad: Monad[S] = WriterT.catsDataMonadForWriterT
+    implicit val console: Log[S] = s => WriterT.tell(Chain.one(s))
+
+    tasks.foldMapM(work[S]).run.runA(MyState(Set.empty, Map.empty)).value
   }
 
-  private def useKnownSkill[F[_]: Console: Apply](task: Task): F[FiniteDuration] = {
-    val info = Console[F].putStrLn(s"I know how to do ${task.skill.name}! Adding only 1 second")
+  private def useKnownSkill[F[_]: Log: Apply](task: Task): F[FiniteDuration] = {
+    val info = Log[F].putStrLn(s"I know how to do ${task.skill.name}! Adding only 1 second")
 
     info.as(1.second)
   }
 
-  private def solveAndLearnSkill[F[_]: HasSkillState: FlatMap: Console](task: Task): F[FiniteDuration] = {
-    val info = Console[F].putStrLn(s"Adding 10 secs for ${task.skill.name}")
+  private def solveAndLearnSkill[F[_]: HasSkillState: FlatMap: Log](task: Task): F[FiniteDuration] = {
+    val info = Log[F].putStrLn(s"Adding 10 secs for ${task.skill.name}")
 
     val learnSkill =
       AttemptState[F].get.map(_.get(task.skill)).flatMap {
@@ -68,9 +65,11 @@ object Pure extends IOApp {
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
-    solveTasksPure(Imperative.tasks)
-      .flatMap(duration => IO(println(duration)))
-      .as(ExitCode.Success)
+    val (logs, time) = solveTasksPure(Imperative.tasks)
+
+    logs.traverse_(Console.io.putStrLn(_)) *>
+      IO(println(time))
+        .as(ExitCode.Success)
   }
 
 }
