@@ -72,6 +72,7 @@
                 </ol>
             </section>
         </section>
+        <!--rt-->
         <section>
             <section>
                 <h2>Why FP?</h2>
@@ -105,7 +106,8 @@ given `x = a`
             <section>
                 <h3>Referential transparency == Pure FP</h3>
                 <p>Richest link you'll see today: <a href="https://typelevel.org/cats-effect/datatypes/io.html"
-                                                     target="_blank">Documentation&nbsp;of&nbsp;cats.effect.IO</a></p>
+                                                     target="_blank">Documentation&nbsp;of&nbsp;cats.effect.IO</a>
+                    (concurrency, parallelism, threadpools, referential transparency, everything)</p>
             </section>
             <section>
                 <h3>Impure programs</h3>
@@ -136,14 +138,15 @@ given `x = a`
                 </ul>
             </section>
         </section>
+        <!--flavors-->
         <section>
             <section>
                 <h3>Flavors of side effects</h3>
                 <ul>
-                    <li class="fragment">Local mutable state</li>
-                    <li class="fragment"><code>throw</code></li>
-                    <li class="fragment">Calling Java APIs</li>
+                    <li class="fragment">Local mutable state, exceptions</li>
+                    <li class="fragment">Calling Java APIs, callbacks-based APIs</li>
                     <li class="fragment">Logging, metrics, caches</li>
+                    <li class="fragment">Shared, concurrent in-memory state</li>
                     <li class="fragment">Reading from/writing to files</li>
                     <li class="fragment">Databases, HTTP</li>
                     <li class="fragment">Futures</li>
@@ -215,16 +218,16 @@ given `x = a`
         <section>
             <section>
                 <h3><code>throw</code></h3>
-                <pre><code class="scala" embed="throww/Throws.scala"></code></pre>
+                <pre><code class="scala smaller" embed="throww/Throws.scala"></code></pre>
             </section>
             <section>
                 <h3><code>no-throw</code></h3>
-                <pre><code class="scala" embed="throww/NoThrows.scala"></code></pre>
+                <pre><code class="scala smaller" embed="throww/NoThrows.scala"></code></pre>
                 <p><code>NoThrows.scala</code></p>
             </section>
             <section>
                 <h3><code>no-throw (mtl)</code></h3>
-                <pre><code class="scala" embed="throww/NoThrowsMtl.scala"></code></pre>
+                <pre><code class="scala smaller" embed="throww/NoThrowsMtl.scala"></code></pre>
             </section>
             <section>
                 <h3>Tools</h3>
@@ -235,6 +238,7 @@ given `x = a`
                 </ul>
             </section>
         </section>
+        <!--java-apis-->
         <section>
             <section>
                 <h2>Java APIs</h2>
@@ -249,6 +253,29 @@ given `x = a`
                 <pre><code class="scala smaller" embed="javaapis/JavaApisImpure.scala"></code></pre>
             </section>
             <section>
+                <h3>Just wrap in IO?</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisIO.scala"></code></pre>
+                <p class="fragment">What about effects?</p>
+            </section>
+            <section>
+                <h3>Just wrap in IO?</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisIOEffects.scala"></code></pre>
+                <p class="fragment">Doesn't work</p>
+            </section>
+            <section>
+                <img src="./images/john-try-finally.jpg_large"/>
+                <a href="https://twitter.com/jdegoes/status/990334671853535232" target="_blank">Source: John A De
+                    Goes</a>
+            </section>
+            <section>
+                <h3><code>try/finally</code> isn't suitable for effects</h3>
+                <ul>
+                    <li>Doesn't work with async</li>
+                    <li>Non-compositional</li>
+                    <li>Easy to get wrong</li>
+                </ul>
+            </section>
+            <section>
                 <h3>Effects & resources with Bracket</h3>
                 <pre><code class="scala smaller" embed="javaapis/JavaApisBracket.scala"></code></pre>
             </section>
@@ -257,8 +284,17 @@ given `x = a`
                 <pre><code class="scala smaller" embed="javaapis/JavaApisResource.scala"></code></pre>
             </section>
             <section>
+                <h3>Async callbacks</h3>
+                <pre><code class="scala smaller" embed="javaapis/SleepFuture.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Async callbacks: IO</h3>
+                <pre><code class="scala smaller" embed="javaapis/SleepIO.scala"></code></pre>
+            </section>
+            <section>
                 <h3>Async callbacks & resources: case study (ActiveMQ)</h3>
                 <pre><code class="scala smaller" embed="javaapis/ActiveMqResource.scala"></code></pre>
+                <code>ActiveMqResource.scala</code>
             </section>
             <section>
                 <h3>Learning resources</h3>
@@ -271,9 +307,91 @@ given `x = a`
                         documentation</a></li>
                     <li><a href="https://typelevel.org/cats-effect/datatypes/resource.html" target="_blank">Resource
                         documentation</a></li>
-                    <li><a href="http://fs2.io/guide.html#asynchronous-effects-callbacks-invoked-multiple-times" target="_blank">fs2 guide (<code>Asynchronous effects</code> section)</a></li>
+                    <li><a href="http://fs2.io/guide.html#asynchronous-effects-callbacks-invoked-multiple-times"
+                           target="_blank">fs2 guide (<code>Asynchronous effects</code> section)</a></li>
                 </ul>
             </section>
+        </section>
+        <!--logging, metrics, caches-->
+        <section>
+            <section><h2>Logging, metrics, caches</h2></section>
+            <section>
+                <h3>Logging</h3>
+                <p><a href="https://github.com/ChristopherDavenport/log4cats" target="_blank">log4cats</a></p>
+                <pre><code class="scala" embed="logging/MessageLogger.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Logging</h3>
+                <pre><code class="scala smaller" embed="logging/LoggedService.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Metrics</h3>
+                <ul>
+                    <li>Just another effect</li>
+                    <li><a href="https://github.com/tek/cattrix" target="_blank">tek/cattrix</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Metrics</h3>
+                <pre><code class="scala">import cattrix.Metrics
+import dbframework.DatabaseQuery
+
+def databaseQuery: IO[DatabaseQuery] = ???
+
+val prog: Metrics.Step[IO, DatabaseQuery] = for {
+  t <- Metrics.timer("time")
+  _ <- Metrics.incCounter("active")
+  query <- Metrics.run(() => database.query("12345"))
+  _ <- Metrics.decCounter("active")
+  _ <- Metrics.time(t)
+  _ <- Metrics.mark("success")
+} yield query</code></pre>
+                <p class="fragment">Or roll your own</p>
+            </section>
+            <section>
+                <h3>Caching</h3>
+                <ul>
+                    <li><a href="http://cb372.github.io/scalacache/docs/" target="_blank">cb372/scalacache</a></li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>File IO</h3>
+                <pre><code class="scala smaller" embed="fileio/Converter.scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Databases/HTTP</h3>
+                todo
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Futures</h3>
+                <pre><code class="scala" embed="futures/futures.scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Streaming data</h3>
+                <p>Just use <code>fs2</code></p>
+                <p class="fragment">Or <a href="https://github.com/scalaz/scalaz-zio" target="_blank">scalaz-zio</a> <a
+                        href="https://github.com/scalaz/scalaz-zio/pull/374" target="_blank">stream</a> (when it's ready
+                    ;))</p>
+            </section>
+            <section>
+                <h3>fs2 integrations</h3>
+                <img src="./images/fs2-integrations.png" style="width: 600px"/>
+            </section>
+        </section>
+        <section>
+            <h2>Acknowledgements</h2>
+            <p>This talk wouldn't be possible without countless hours of work of:</p>
+            <b>Alex Nedelcu, Fabio Labella, John A De Goes, Michael Pilquist, Daniel Spiewak, Ross A. Baker, Paul
+                Chiusano, Pavel Chlupacek</b>
+            <p>and many others</p>
         </section>
         <section>
             <h2>Thank you!</h2>
