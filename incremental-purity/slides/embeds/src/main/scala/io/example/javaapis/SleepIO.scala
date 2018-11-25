@@ -28,6 +28,6 @@ object SleepIO {
     }
 
   //the real version, use this in real applications
-  //also works with TestContext.tick()
+  //also works with TestContext.tick() and cancelation
   def sleepStandard(finiteDuration: FiniteDuration)(implicit timer: Timer[IO]): IO[Unit] = timer.sleep(finiteDuration)
 }

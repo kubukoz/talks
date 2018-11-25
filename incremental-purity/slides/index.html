@@ -124,9 +124,7 @@ prog1 == prog2</code></pre>
             <section>
                 <h3>Running IO</h3>
                 <p>If nothing has happened yet, how do we actually run an IO?</p>
-                <p>
                 <pre><code embed="rt/run-io.sc" class="scala" data-noescape></code></pre>
-                </p>
             </section>
             <section>
                 <h3>Running IO</h3>
@@ -387,7 +385,7 @@ case class Skill(name: String)</code></pre>
             <section>
                 <h3>Async callbacks & resources: case study (ActiveMQ)</h3>
                 <pre><code class="scala smaller" embed="javaapis/ActiveMqResource.scala"></code></pre>
-                <p>Demo time? (<code>ActiveMqResource.scala</code>)</p>
+                <p>Demo time? <code>ActiveMqResource.scala</code></p>
             </section>
             <section>
                 <h3>Learning resources</h3>
@@ -412,6 +410,10 @@ case class Skill(name: String)</code></pre>
                 <h3>Logging</h3>
                 <p><a href="https://github.com/ChristopherDavenport/log4cats" target="_blank">log4cats</a></p>
                 <pre><code class="scala" embed="logging/MessageLogger.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Logging</h3>
+                <p>TODO small sample of logging directly</p>
             </section>
             <section>
                 <h3>Logging</h3>
@@ -444,9 +446,14 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             <section>
                 <h3>Caching</h3>
                 <ul>
-                    <li><a href="https://github.com/ChristopherDavenport/mules" target="_blank">ChristopherDavenport/mules</a></li>
+                    <li><a href="https://github.com/ChristopherDavenport/mules" target="_blank">ChristopherDavenport/mules</a>
+                    </li>
                     <li><a href="http://cb372.github.io/scalacache/docs/" target="_blank">cb372/scalacache</a></li>
                 </ul>
+            </section>
+            <section>
+                <h3>Creating a cache is effectful</h3>
+                <p>TODO przykład i link do talka fabia</p>
             </section>
         </section>
         <section>
@@ -458,7 +465,7 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
         <section>
             <section>
                 <h3>Databases/HTTP</h3>
-                todo
+                todo przykłady z doobiego, przykłady z http4s client+server, slick DBIO ~> F
             </section>
         </section>
         <section>
@@ -479,6 +486,17 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
                 <h3>fs2 integrations</h3>
                 <img src="./images/fs2-integrations.png" style="width: 600px"/>
             </section>
+        </section>
+        <section>
+            <h3>FAQ</h3>
+            <p>
+                <small>Code is red in IntelliJ? <a
+                        href="https://impurepics.com/posts/2018-08-09-troubleshoot-cats.html">https://impurepics.com/posts/2018-08-09-troubleshoot-cats.html</a>
+                </small>
+                <small>Code doesn't compile? <a href="https://github.com/typelevel/cats#getting-started">Turn on
+                    partial unification</a>, don't import conflicting syntax implicits
+                </small>
+            </p>
         </section>
         <section>
             <h2>Acknowledgements</h2>
