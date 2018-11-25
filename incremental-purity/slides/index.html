@@ -63,6 +63,13 @@
                 <h3>How to do pure FP?</h3>
                 <img src="./images/how-to-draw-owl.jpg"/>
             </section>
+            <section data-background-color="white">
+                <p>We'll use <a href="https://typelevel.org/cats/" target="_blank">cats</a> and <a
+                        href="https://typelevel.org/cats-effect/" target="_blank">cats-effect</a>, <a
+                        href="https://typelevel.org/" target="_blank">Typelevel</a> projects</p>
+                <img class="fragment" src="./images/typelevel-logo.svg"
+                     style="background: none; border: none; box-shadow: none">
+            </section>
             <section>
                 <h2>Agenda</h2>
                 <ol>
@@ -79,30 +86,53 @@
                 <h2>Why FP?</h2>
             </section>
             <section>
+                <h2>What's FP?</h2>
+                <p>Lack of side effects</p>
+            </section>
+            <section>
                 <h3>Definition of a side effect</h3>
                 <p>Lack of referential transparency</p>
             </section>
             <section>
                 <h3>Referential transparency</h3>
-                <pre><code>for any `a`
+                <pre><code>for any expression `a`
 given `x = a`
-(x, x) === (a, a)</code></pre>
+
+All occurrences of `x` in a program `p` can be replaced with `a`
+
+val prog1 = (x, x)
+val prog2 = (a, a)
+
+prog1 == prog2</code></pre>
             </section>
             <section>
                 <h3>Pure expressions are RT</h3>
-                <pre><code embed="rt/rt-expressions.sc" class="scala"></code></pre>
+                <pre><code embed="rt/rt-expressions.sc" class="scala" data-noescape></code></pre>
             </section>
             <section>
-                <h3>Side effects break RT</h3>
-                <pre><code embed="rt/impure-sideeffects.sc" class="scala"></code></pre>
+                <h3>Side effects?</h3>
+                <pre><code embed="rt/impure-sideeffects.sc" class="scala" data-noescape></code></pre>
             </section>
             <section>
-                <h3>Future breaks RT</h3>
-                <pre><code embed="rt/impure-future.sc" class="scala"></code></pre>
+                <h3>Future</h3>
+                <pre><code embed="rt/impure-future.sc" class="scala" data-noescape></code></pre>
             </section>
             <section>
-                <h3>IO is RT</h3>
-                <pre><code embed="rt/rt-io.sc" class="scala"></code></pre>
+                <h3>IO</h3>
+                <pre><code embed="rt/rt-io.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Running IO</h3>
+                <p>If nothing has happened yet, how do we actually run an IO?</p>
+                <p>
+                <pre><code embed="rt/run-io.sc" class="scala" data-noescape></code></pre>
+                </p>
+            </section>
+            <section>
+                <h3>Running IO</h3>
+                <q>Do we really need to do <code>unsafe</code>?</q>
+                <p class="fragment">No ;)</p>
+                <pre class="fragment"><code embed="rt/Main.scala" class="scala"></code></pre>
             </section>
             <section>
                 <h3>Referential transparency == Pure FP</h3>
@@ -112,11 +142,33 @@ given `x = a`
             </section>
             <section>
                 <h3>Impure programs</h3>
-                <pre><code embed="rt/impure-program.sc" class="scala"></code></pre>
+                <pre><code embed="rt/impure-program.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Run action in repository</h3>
+                <ol>
+                    <li class="fragment">Prepare repository</li>
+                    <li class="fragment">Run action in repository</li>
+                    <li class="fragment">Regardless of the result, clean up</li>
+                </ol>
             </section>
             <section>
                 <h3>Pure programs</h3>
-                <pre><code embed="rt/pure-program.sc" class="scala"></code></pre>
+                <pre><code class="scala" data-noescape>(<span class="fragment">prepareRepo</span> <span
+                        class="fragment">*> runInRepo</span>)<span
+                        class="fragment">.guarantee(cleanup)</span></code></pre>
+                <p>
+                <pre><code class="scala fragment">a *> b == a.flatMap(_ => b) //import cats.syntax.apply._</code></pre>
+                </p>
+            </section>
+            <section>
+                <h3>Pure programs</h3>
+                <pre><code embed="rt/pure-program.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Order of evaluation</h3>
+                <p>Depends solely on how you compose pieces</p>
+                <pre><code embed="rt/pure-program-composition.sc" class="scala" data-noescape></code></pre>
             </section>
             <section>
                 <h3>Why is referential transparency important?</h3>
@@ -159,6 +211,10 @@ given `x = a`
                 </ul>
             </section>
         </section>
+        <!--first-class-->
+        <section>
+            <h2>Making effects first-class</h2>
+        </section>
         <!--local mutable state-->
         <section>
             <section>
@@ -182,12 +238,41 @@ given `x = a`
                 <pre><code class="scala smaller" embed="localstate/pure/FlightsStreamsEffects.scala"></code></pre>
             </section>
             <section>
+                <h3>Case 2</h3>
+                <p>Given a list of tasks:</p>
+                <pre class="fragment"><code class="scala">case class Task(skill: Skill)
+case class Skill(name: String)</code></pre>
+                <p class="fragment">Execute all of them and return the total time.</p>
+                <p class="fragment">Rules:</p>
+                <ul>
+                    <li class="fragment">if the skill needed is already known, it takes 1 second</li>
+                    <li class="fragment">otherwise, it takes 10 seconds + you get 1 skill point</li>
+                    <li class="fragment">it takes 5 skill points to learn a skill</li>
+                </ul>
+            </section>
+            <section>
                 <h3>Local mutable state: case 2</h3>
-                <pre><code class="scala smaller" embed="localstate2/Imperative.scala"></code></pre>
+                <pre><code class="scala smaller" embed="localstate2/Imperative.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Immutable version</h3>
+                <pre><code class="scala" embed="localstate2/pure/tasks.sc"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/solveTasksPure.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/work.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/MonadState.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/skills.sc" data-noescape></code></pre>
             </section>
             <section>
                 <h3>Local, immutable state: case 2</h3>
-                <pre><code class="scala smaller" embed="localstate2/Pure.scala"></code></pre>
+                <pre><code class="scala smaller" embed="localstate2/pure/Pure.scala"></code></pre>
             </section>
             <section>
                 <h3>Tools</h3>
@@ -195,6 +280,7 @@ given `x = a`
                     <li>Lenses</li>
                     <li>Classy lenses</li>
                     <li>State monad</li>
+                    <li>Writer monad</li>
                     <li>fs2 Streams</li>
                 </ul>
             </section>
@@ -222,12 +308,12 @@ given `x = a`
                 <pre><code class="scala smaller" embed="throww/Throws.scala"></code></pre>
             </section>
             <section>
-                <h3><code>no-throw</code></h3>
+                <h3><code>Either</code></h3>
                 <pre><code class="scala smaller" embed="throww/NoThrows.scala"></code></pre>
                 <p><code>NoThrows.scala</code></p>
             </section>
             <section>
-                <h3><code>no-throw (mtl)</code></h3>
+                <h3><code>tagless final + MTL</code></h3>
                 <pre><code class="scala smaller" embed="throww/NoThrowsMtl.scala"></code></pre>
             </section>
             <section>
@@ -267,6 +353,12 @@ given `x = a`
                 <img src="./images/john-try-finally.jpg_large"/>
                 <a href="https://twitter.com/jdegoes/status/990334671853535232" target="_blank">Source: John A De
                     Goes</a>
+            </section>
+            <section>
+                <img src="./images/squeryl-try.png" style="width: 600px"/>
+                <p>
+                    <a href="https://github.com/squeryl/squeryl/blob/6b893646976598be436f93f91bd67bfd21b8dc01/src/main/scala/org/squeryl/Session.scala#L56">Session.scala
+                        (squeryl)</a></p>
             </section>
             <section>
                 <h3><code>try/finally</code> isn't suitable for effects</h3>
@@ -352,6 +444,7 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             <section>
                 <h3>Caching</h3>
                 <ul>
+                    <li><a href="https://github.com/ChristopherDavenport/mules" target="_blank">ChristopherDavenport/mules</a></li>
                     <li><a href="http://cb372.github.io/scalacache/docs/" target="_blank">cb372/scalacache</a></li>
                 </ul>
             </section>
@@ -393,6 +486,45 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             <b>Alex Nedelcu, Fabio Labella, John A De Goes, Michael Pilquist, Daniel Spiewak, Ross A. Baker, Paul
                 Chiusano, Pavel Chlupacek</b>
             <p>and many others</p>
+        </section>
+        <section>
+            <h3>Links</h3>
+            <p>Slides: <a href="https://git.io/fp017" target="_blank">https://git.io/fp017</a></p>
+            <p>Code: <a href="https://git.io/fp01d" target="_blank">https://git.io/fp01d</a></p>
+        </section>
+        <section>
+            <h3>More links</h3>
+            <pre><code class="markdown">
+https://vimeo.com/294736344
+https://www.youtube.com/watch?v=x3GLwl1FxcA
+https://twitter.com/jdegoes/status/936301872066977792
+https://twitter.com/impurepics/status/983407934574153728
+https://github.com/pauljamescleary/scala-pet-store
+https://www.youtube.com/watch?v=oFk8-a1FSP0
+https://www.youtube.com/watch?v=sxudIMiOo68
+https://www.youtube.com/watch?v=GZPup5Iuaqw
+https://www.youtube.com/watch?v=EL3xy9DKhno
+https://www.youtube.com/watch?v=X-cEGEJMx_4
+https://www.youtube.com/watch?v=0jIaeXMaH2c
+https://www.youtube.com/watch?v=po3wmq4S15A
+https://www.youtube.com/watch?v=7xSfLPD6tiQ
+https://www.youtube.com/watch?v=5S03zTekRJc
+https://typelevel.org/blog/2018/10/06/intro-to-mtl.html
+https://typelevel.org/blog/2018/08/25/http4s-error-handling-mtl.html
+https://typelevel.org/blog/2018/08/07/refactoring-monads.html
+https://typelevel.org/blog/2018/06/07/shared-state-in-fp.html
+https://www.reddit.com/r/scala/comments/8ygjcq/can_someone_explain_to_me_the_benefits_of_io/e2jfp9b/
+https://github.com/gvolpe/typelevel-stack.g8
+https://github.com/gvolpe/http4s-good-practices
+https://github.com/gvolpe/advanced-http4s
+https://github.com/kubukoz/brick-store
+https://github.com/kubukoz/classy-playground
+https://github.com/ChristopherDavenport/log4cats
+https://github.com/ChristopherDavenport/linebacker
+https://github.com/ChristopherDavenport/cats-par
+https://github.com/ChristopherDavenport/log4cats-writer-example
+https://github.com/SystemFw/upperbound
+            </code></pre>
         </section>
         <section>
             <h2>Thank you!</h2>

@@ -4,13 +4,13 @@ def withCloned[T](repoName: String)
                  (action: Repository => IO[T]): IO[T] = {
 
   val prepareRepo =
-    cloneRepository(repoName) *>
+    <span class="fragment">cloneRepository(repoName) *>
       prepareDirectory *>
       checkoutMaster *>
-      log.info("prepared")
+      log.info("prepared")</span>
 
-  val runInRepo = repoInfo(repoName).flatMap(action)
-  val cleanup = removeDirectory
+  val runInRepo = <span class="fragment">repoInfo(repoName).flatMap(action)</span>
+  val cleanup = <span class="fragment">removeDirectory</span>
 
   (prepareRepo *> runInRepo).guarantee(cleanup)
 }

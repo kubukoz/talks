@@ -22,7 +22,7 @@ val embeds = project
       "org.apache.activemq"        % "activemq-client"      % "5.15.7",
       "com.olegpy"                 %% "meow-mtl"            % "0.2.0",
       "io.chrisdavenport"          %% "cats-par"            % "0.2.0",
-      "com.github.gvolpe"          %% "console4cats"        % "0.4",
+      "com.github.gvolpe"          %% "console4cats"        % "0.5",
       "com.github.julien-truffaut" %% "monocle-macro"       % "1.5.0-cats",
       "org.typelevel"              %% "cats-tagless-macros" % "0.1.0",
     ) ++ plugins,

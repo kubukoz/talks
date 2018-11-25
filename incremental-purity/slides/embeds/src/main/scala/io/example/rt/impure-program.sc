@@ -1,13 +1,13 @@
 def withCloned[T](repoName: String)
                  (action: Repository => T): T = {
   try {
-    cloneRepository(repoName)
-    prepareDirectory()
-    checkoutMaster()
-    log.info("prepared")
-    action(repoInfo(repoName))
+    <span class="fragment">cloneRepository(repoName)</span>
+    <span class="fragment">prepareDirectory()</span>
+    <span class="fragment">checkoutMaster()</span>
+    <span class="fragment">log.info("prepared")</span>
+    <span class="fragment">action(repoInfo(repoName))</span>
   } finally {
-    removeDirectory()
+    <span class="fragment">removeDirectory()</span>
   }
 }
 
