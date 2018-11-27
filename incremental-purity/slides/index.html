@@ -1,6 +1,15 @@
 <!doctype html>
 <html>
 <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55943015-7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-55943015-7');
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
@@ -34,26 +43,582 @@
         <section>
             <section>
                 <h2><a>Incremental purity</a></h2>
+                <h3>Moving to functional&nbsp;programming&nbsp;principles</h3>
                 <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
                 <small>Scala Dublin | November 27, 2018 | Dublin, Ireland</small>
             </section>
             <section>
-                <h2>Agenda</h2>
-                <ol>
-                    <li>Foo</li>
-                    <li>Bar</li>
-                </ol>
-            </section>
-            <section>
                 <h3>About me</h3>
                 <ul>
-                    <li>Live in Wrocław, Poland</li>
+                    <li>Living in Wrocław, Poland</li>
                     <li>Doing Scala for 3 years</li>
                     <li>Working @ <a href="https://ocadotechnology.com" target="_blank">Ocado Technology</a></li>
-                    <li>I love ramen</li>
+                    <li>Loves ramen</li>
                     <li>Running and lifting when not injured</li>
                 </ul>
             </section>
+        </section>
+        <!--motivation-->
+        <section>
+            <section>
+                <h3>Functional programming is great</h3>
+                <p class="fragment">Take it from these guys</p>
+                <div class="fragment" style="display: flex; justify-items: stretch">
+                    <div><img src="./images/john.png"/></div>
+                    <div><img src="./images/fabio.png"/></div>
+                </div>
+            </section>
+            <section>
+                <h3>How to do pure FP?</h3>
+                <img src="./images/how-to-draw-owl.jpg" class="fragment"/>
+            </section>
+            <section data-background-color="white">
+                <p>We'll use <a href="https://typelevel.org/cats/" target="_blank">cats</a> and <a
+                        href="https://typelevel.org/cats-effect/" target="_blank">cats-effect</a>, <a
+                        href="https://typelevel.org/" target="_blank">Typelevel</a> projects</p>
+                <img class="fragment" src="./images/typelevel-logo.svg"
+                     style="background: none; border: none; box-shadow: none">
+            </section>
+            <section>
+                <h2>Agenda</h2>
+                <ol>
+                    <li>Why FP</li>
+                    <li>Flavors of side effects</li>
+                    <li>Making effects first-class</li>
+                    <li>Summary</li>
+                </ol>
+            </section>
+        </section>
+        <!--rt-->
+        <section>
+            <section>
+                <h2>Why FP?</h2>
+            </section>
+            <section>
+                <h2>What's FP?</h2>
+                <p>Lack of side effects</p>
+            </section>
+            <section>
+                <h3>Definition of a side effect</h3>
+                <p>Lack of referential transparency</p>
+            </section>
+            <section>
+                <h3>Referential transparency</h3>
+                <pre><code>for any expression `a`
+given `x = a`
+
+All occurrences of `x` in a program `p` can be replaced with `a`
+
+val prog1 = (x, x)
+val prog2 = (a, a)
+
+prog1 == prog2</code></pre>
+            </section>
+            <section>
+                <h3>Pure expressions are RT</h3>
+                <pre><code embed="rt/rt-expressions.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Side effects?</h3>
+                <pre><code embed="rt/impure-sideeffects.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Future</h3>
+                <pre><code embed="rt/impure-future.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>IO</h3>
+                <pre><code embed="rt/rt-io.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Running IO</h3>
+                <p>If nothing has happened yet, how do we actually run an IO?</p>
+                <pre><code embed="rt/run-io.sc" class="scala smaller" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Running IO</h3>
+                <q>Do we really need to do <code>unsafe</code>?</q>
+                <p class="fragment">No ;) <small>(but it depends™)</small></p>
+                <pre class="fragment"><code embed="rt/Main.scala" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Referential transparency == Pure FP</h3>
+                <p>Richest link you'll see today: <a href="https://typelevel.org/cats-effect/datatypes/io.html"
+                                                     target="_blank">Documentation&nbsp;of&nbsp;cats.effect.IO</a></p>
+                <p>(concurrency, parallelism, threadpools, referential transparency, everything)</p>
+            </section>
+            <section>
+                <h3>Impure programs</h3>
+                <pre><code embed="rt/impure-program.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Run action in repository</h3>
+                <ol>
+                    <li class="fragment">Prepare repository</li>
+                    <li class="fragment">Run action in repository</li>
+                    <li class="fragment">Regardless of the result, clean up</li>
+                </ol>
+            </section>
+            <section>
+                <h3>Pure programs</h3>
+                <pre><code class="scala" data-noescape>(<span class="fragment">prepareRepo</span> <span
+                        class="fragment">*> runInRepo</span>)<span
+                        class="fragment">.guarantee(cleanup)</span></code></pre>
+                <pre><code class="scala fragment">a *> b == a.flatMap(_ => b) //import cats.syntax.apply._</code></pre>
+            </section>
+            <section>
+                <h3>Pure programs</h3>
+                <pre><code embed="rt/pure-program.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Order of evaluation</h3>
+                <p>Depends solely on how you compose pieces</p>
+                <pre><code embed="rt/pure-program-composition.sc" class="scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Why is referential transparency important?</h3>
+                <ul>
+                    <li>Equational reasoning</li>
+                    <li>Programs as values</li>
+                    <li>Local reasoning</li>
+                    <li>Explicit effects, predictable code</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Why is RT (in Scala) hard?</h3>
+                <ul>
+                    <li>Initial learning curve</li>
+                    <li>Takes discipline</li>
+                    <li>Tooling (tracing, debugging)</li>
+                    <li>Harder in PoC</li><!--resource allocation, unsafeRunSync()-->
+                    <li>Non-straightforward migration</li>
+                    <li>Mostly impure ecosystem</li>
+                    <li>Some boilerplate, because Scala</li>
+                </ul>
+            </section>
+        </section>
+        <!--flavors-->
+        <section>
+            <section>
+                <h3>Flavors of side effects include</h3>
+                <ul>
+                    <li class="fragment">Local mutable state, exceptions</li>
+                    <li class="fragment">Calling Java APIs, callbacks-based APIs</li>
+                    <li class="fragment">Logging, metrics, caches</li>
+                    <li class="fragment">Shared, concurrent in-memory state</li>
+                    <li class="fragment">Reading from/writing to files</li>
+                    <li class="fragment">Databases, HTTP</li>
+                    <li class="fragment">Futures</li>
+                    <li class="fragment">Streaming data</li>
+                    <li class="fragment">Actors (concurrent mutable state, concurrency control, asynchronous processing,
+                        distributed
+                        computing, event sourcing)
+                    </li>
+                </ul>
+            </section>
+        </section>
+        <!--first-class-->
+        <section>
+            <h2>Making effects first-class</h2>
+        </section>
+        <!--local mutable state-->
+        <section>
+            <section>
+                <h3>Local mutable state</h3>
+                <pre><code class="scala smaller" embed="localstate/imperative/FlightsImperative.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsPure.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/pipe.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/skipCheapest.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/expensify.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/mods.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state (pipes)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsPipes.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state (with streams)</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsStreams.scala"></code></pre>
+            </section>
+            <section>
+                <h3>What about effects?</h3>
+                <pre><code class="scala smaller" embed="localstate/pure/FlightsStreamsEffects.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Case 2</h3>
+                <p>Given a list of tasks:</p>
+                <pre class="fragment"><code class="scala">case class Task(skill: Skill)
+case class Skill(name: String)</code></pre>
+                <p class="fragment">Execute all of them and return the total time.</p>
+                <p class="fragment">Rules:</p>
+                <ul>
+                    <li class="fragment">if the skill needed is already known, it takes 1 second</li>
+                    <li class="fragment">otherwise, it takes 10 seconds + you get 1 skill point</li>
+                    <li class="fragment">it takes 5 skill points to learn a skill</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Local mutable state: case 2</h3>
+                <pre><code class="scala smaller" embed="localstate2/Imperative.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Immutable version</h3>
+                <pre><code class="scala" embed="localstate2/pure/tasks.sc"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/solveTasksPure.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/work.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/MonadState.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="localstate2/pure/skills.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Local, immutable state: case 2</h3>
+                <pre><code class="scala smaller" embed="localstate2/pure/Pure.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Tools</h3>
+                <ul>
+                    <li>Lenses</li>
+                    <li>Classy lenses</li>
+                    <li>State monad</li>
+                    <li>Writer monad</li>
+                    <li>fs2 Streams</li>
+                </ul>
+            </section>
+            <section>
+                <h3>How to do this?</h3>
+                <ul>
+                    <li><a href="https://julien-truffaut.github.io/Monocle" target="_blank">Monocle lenses</a></li>
+                    <li><a href="https://www.youtube.com/watch?v=Pgo73GfHk0U" target="_blank">State monad</a></li>
+                    <li>cats-mtl (<a href="https://typelevel.org/blog/2018/10/06/intro-to-mtl.html" target="_blank">intro</a>,
+                        <a href="https://typelevel.org/cats-mtl/" target="_blank">website</a>)
+                    </li>
+                    <li>Next level MTL (<a href="https://www.youtube.com/watch?v=GZPup5Iuaqw" target="_blank">talk</a>,
+                        <a href="https://github.com/oleg-py/meow-mtl">lib for Scala</a>)
+                    </li>
+                    <li><a href="https://typelevel.org/blog/2018/08/25/http4s-error-handling-mtl.html" target="_blank">Another
+                        tutorial for MTL style</a></li>
+                    <li><a href="http://fs2.io/guide.html" target="_blank">fs2 guide</a></li>
+                </ul>
+            </section>
+        </section>
+        <!--throw-->
+        <section>
+            <section>
+                <h3><code>throw</code></h3>
+                <pre><code class="scala smaller" embed="throww/Throws.scala"></code></pre>
+            </section>
+            <section>
+                <h3><code>Either</code></h3>
+                <pre><code class="scala smaller" embed="throww/NoThrows.scala"></code></pre>
+                <p><code>NoThrows.scala</code></p>
+            </section>
+            <section>
+                <h3><code>tagless final + MTL</code></h3>
+                <pre><code class="scala smaller" embed="throww/NoThrowsMtl.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Tools</h3>
+                <ul>
+                    <li>Either</li>
+                    <li>cats-mtl</li>
+                    <li>cats-effect (Sync[F])</li>
+                </ul>
+            </section>
+        </section>
+        <!--java-apis-->
+        <section>
+            <section>
+                <h2>Java APIs</h2>
+                <ul>
+                    <li>Side effects</li>
+                    <li>Manual resource management</li>
+                    <li>Asynchronous callbacks</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Side effects, resource management</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisImpure.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Just wrap in IO?</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisIO.scala"></code></pre>
+                <p class="fragment">What about effects?</p>
+            </section>
+            <section>
+                <h3>Just wrap in IO?</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisIOEffects.scala"></code></pre>
+                <p class="fragment">Doesn't work</p>
+            </section>
+            <section>
+                <img src="./images/john-try-finally.jpg_large"/>
+                <a href="https://twitter.com/jdegoes/status/990334671853535232" target="_blank">Source: John A De
+                    Goes</a>
+            </section>
+            <section>
+                <img src="./images/squeryl-try.png" style="width: 600px"/>
+                <p>
+                    <a href="https://github.com/squeryl/squeryl/blob/6b893646976598be436f93f91bd67bfd21b8dc01/src/main/scala/org/squeryl/Session.scala#L56">Session.scala
+                        (squeryl)</a></p>
+            </section>
+            <section>
+                <h3><code>try/finally</code> isn't suitable for effects</h3>
+                <ul>
+                    <li>Doesn't work with async</li>
+                    <li>Non-compositional</li>
+                    <li>Easy to get wrong</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Effects & resources with Bracket</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisBracket.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Composable resources with Resource</h3>
+                <pre><code class="scala smaller" embed="javaapis/JavaApisResource.scala"></code></pre>
+                <code>JavaApisResource.scala</code>
+            </section>
+            <section>
+                <h3>Async callbacks</h3>
+                <pre><code class="scala smaller" embed="javaapis/SleepFuture.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Async callbacks: IO</h3>
+                <pre><code class="scala smaller" embed="javaapis/SleepIO.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Async callbacks & resources: case study (ActiveMQ)</h3>
+                <pre><code class="scala smaller" embed="javaapis/ActiveMqResource.scala"></code></pre>
+                <p>Demo time? <code>ActiveMqResource.scala</code></p>
+            </section>
+            <section>
+                <h3>Learning resources</h3>
+                <ul>
+                    <li>
+                        <a href="https://typelevel.org/cats-effect/datatypes/io.html#asynchronous-effects--ioasync--iocancelable"
+                           target="_blank">Huge page on IO
+                            (mentioned earlier), async section</a></li>
+                    <li><a href="https://typelevel.org/cats-effect/typeclasses/bracket.html" target="_blank">Bracket
+                        documentation</a></li>
+                    <li><a href="https://typelevel.org/cats-effect/datatypes/resource.html" target="_blank">Resource
+                        documentation</a></li>
+                    <li><a href="http://fs2.io/guide.html#asynchronous-effects-callbacks-invoked-multiple-times"
+                           target="_blank">fs2 guide (<code>Asynchronous effects</code> section)</a></li>
+                </ul>
+            </section>
+        </section>
+        <!--logging, metrics, caches-->
+        <section>
+            <section><h2>Logging, metrics, caches</h2></section>
+            <section>
+                <h3>Logging</h3>
+                <p><a href="https://github.com/ChristopherDavenport/log4cats" target="_blank">log4cats</a></p>
+                <pre><code class="scala" embed="logging/MessageLogger.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Logging</h3>
+                <pre><code class="scala smaller" embed="logging/LoggingExample.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="logging/LoggedTimedService.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Metrics</h3>
+                <ul>
+                    <li>Just another effect</li>
+                    <li><a href="https://github.com/tek/cattrix" target="_blank">tek/cattrix</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Metrics</h3>
+                <pre><code class="scala">import cattrix.Metrics
+import dbframework.DatabaseQuery
+
+def databaseQuery: IO[DatabaseQuery] = ???
+
+val prog: Metrics.Step[IO, DatabaseQuery] = for {
+  t <- Metrics.timer("time")
+  _ <- Metrics.incCounter("active")
+  query <- Metrics.run(() => database.query("12345"))
+  _ <- Metrics.decCounter("active")
+  _ <- Metrics.time(t)
+  _ <- Metrics.mark("success")
+} yield query</code></pre>
+                <p class="fragment">Or roll your own</p>
+            </section>
+            <section>
+                <h3>Caching</h3>
+                <ul>
+                    <li><a href="https://github.com/ChristopherDavenport/mules" target="_blank">ChristopherDavenport/mules</a>
+                    </li>
+                    <li><a href="http://cb372.github.io/scalacache/docs/" target="_blank">cb372/scalacache</a></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Creating a cache is effectful</h3>
+                <pre><code class="scala smaller" embed="logging/cache.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Why?</h3>
+                <small>Caches will usually use cats.effect.concurrent.Ref</small>
+                <pre class="fragment"><code class="scala smaller" embed="logging/ref.sc" data-noescape></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>File IO</h3>
+                <pre><code class="scala smaller" embed="fileio/Converter.scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Databases/HTTP</h3>
+            </section>
+            <section>
+                <h3>Sticking with Slick?</h3>
+                <p>Carry around a `DBIO ~> F`</p>
+                <pre><code class="scala smaller" embed="dbhttp/slick.sc"></code></pre>
+            </section>
+            <section>
+                <h3>tpolecat/doobie</h3>
+                <pre><code class="scala smaller" embed="dbhttp/doobie.sc"></code></pre>
+            </section>
+            <section>
+                <h3>tpolecat/skunk (WIP)</h3>
+                <small>non-blocking postgres client</small>
+                <pre><code class="scala smaller" embed="dbhttp/skunk.sc"></code></pre>
+            </section>
+            <section>
+                <h3>http4s</h3>
+                <pre><code class="scala smaller" embed="dbhttp/http4s.scala"></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Futures</h3>
+                <pre><code class="scala" embed="futures/futures.sc" data-noescape></code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Streaming data</h3>
+                <p>Just use <code>fs2</code></p>
+                <p class="fragment">Or <a href="https://github.com/scalaz/scalaz-zio" target="_blank">scalaz-zio</a> <a
+                        href="https://github.com/scalaz/scalaz-zio/pull/374" target="_blank">stream</a> (when it's ready
+                    ;))</p>
+            </section>
+            <section>
+                <h3>fs2 integrations</h3>
+                <img src="./images/fs2-integrations.png" style="width: 600px"/>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Actors</h3>
+                <ul>
+                    <li class="fragment">Concurrent mutable state</li>
+                    <li class="fragment">Concurrency control</li>
+                    <li class="fragment">Asynchronous message processing (fire and forget)</li>
+                    <li class="fragment">Distributed computing</li>
+                    <li class="fragment">Event sourcing</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Concurrent mutable state</h3>
+                <p>Use Ref/Deferred/MVar</p>
+                <img src="https://impurepics.com/images/concurrency-ref.png" style="width: 600px"/>
+                <p><small>Source: <a href="https://twitter.com/impurepics" target="_blank">@impurepics</a></small></p>
+            </section>
+            <section>
+                <h3>Concurrency control</h3>
+                <p>Use Semaphore</p>
+                <pre><code class="scala smaller" embed="actors/semaphore.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Asynchronous message processing</h3>
+                <p>Use fs2 Queue/Topic</p>
+                <pre><code class="scala smaller" embed="actors/queue.scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Distributed computing, event sourcing</h3>
+                <p class="fragment">¯\_(ツ)_/¯</p>
+                <p class="fragment">No apparent pure solution in sight</p>
+                <p class="fragment">Stick to Akka (for now)</p>
+            </section>
+        </section>
+        <section>
+            <h3>FAQ</h3>
+            <p>
+                <small>Code is red in IntelliJ? <a
+                        href="https://impurepics.com/posts/2018-08-09-troubleshoot-cats.html">https://impurepics.com/posts/2018-08-09-troubleshoot-cats.html</a>
+                </small>
+                <small>Code doesn't compile? <a href="https://github.com/typelevel/cats#getting-started">Turn on
+                    partial unification</a>, don't import conflicting syntax implicits
+                </small>
+            </p>
+        </section>
+        <section>
+            <h2>Acknowledgements</h2>
+            <p>This talk wouldn't be possible without countless hours of work of:</p>
+            <b>Alex Nedelcu, Fabio Labella, John A De Goes, Michael Pilquist, Daniel Spiewak, Ross A. Baker, Paul
+                Chiusano, Pavel Chlupacek</b>
+            <p>and many others</p>
+        </section>
+        <section>
+            <h3>Links</h3>
+            <p>Slides: <a href="https://git.io/fp017" target="_blank">https://git.io/fp017</a></p>
+            <p>Code: <a href="https://git.io/fp01d" target="_blank">https://git.io/fp01d</a></p>
+        </section>
+        <section>
+            <h3>More links</h3>
+            <pre><code class="markdown">https://fs2.io/concurrency-primitives.html
+https://vimeo.com/294736344
+https://www.youtube.com/watch?v=x3GLwl1FxcA
+https://twitter.com/jdegoes/status/936301872066977792
+https://twitter.com/impurepics/status/983407934574153728
+https://github.com/pauljamescleary/scala-pet-store
+https://www.youtube.com/watch?v=oFk8-a1FSP0
+https://www.youtube.com/watch?v=sxudIMiOo68
+https://www.youtube.com/watch?v=GZPup5Iuaqw
+https://www.youtube.com/watch?v=EL3xy9DKhno
+https://www.youtube.com/watch?v=X-cEGEJMx_4
+https://www.youtube.com/watch?v=0jIaeXMaH2c
+https://www.youtube.com/watch?v=po3wmq4S15A
+https://www.youtube.com/watch?v=7xSfLPD6tiQ
+https://www.youtube.com/watch?v=5S03zTekRJc
+https://typelevel.org/blog/2018/10/06/intro-to-mtl.html
+https://typelevel.org/blog/2018/08/25/http4s-error-handling-mtl.html
+https://typelevel.org/blog/2018/08/07/refactoring-monads.html
+https://typelevel.org/blog/2018/06/07/shared-state-in-fp.html
+https://www.reddit.com/r/scala/comments/8ygjcq/can_someone_explain_to_me_the_benefits_of_io/e2jfp9b/
+https://github.com/gvolpe/typelevel-stack.g8
+https://github.com/gvolpe/http4s-good-practices
+https://github.com/gvolpe/advanced-http4s
+https://github.com/kubukoz/brick-store
+https://github.com/kubukoz/classy-playground
+https://github.com/ChristopherDavenport/log4cats
+https://github.com/ChristopherDavenport/linebacker
+https://github.com/ChristopherDavenport/cats-par
+https://github.com/ChristopherDavenport/log4cats-writer-example
+https://github.com/SystemFw/upperbound
+            </code></pre>
         </section>
         <section>
             <h2>Thank you!</h2>
@@ -106,7 +671,7 @@
     });
 
 
-    axios.defaults.baseURL = './embeds/src/main/scala/io/typelevel/';
+    axios.defaults.baseURL = './embeds/src/main/scala/io/example/';
     Embed({
         fetchFileContents: path => axios.get(path).then(r => r.data)
     }).init();
