@@ -11,7 +11,11 @@ val foo: IO[Int] = IO(println("Foo!")).as(5)
 }</span>
 
 <span class="fragment">import scala.concurrent.duration._
+//limits the duration of a single async block
 val maybeResult: Option[Int] = foo.unsafeRunTimed(5.seconds)</span>
+
+<span class="fragment">//good for tests
+val result = foo.timeout(5.seconds).unsafeRunSync()</span>
 
 <span class="fragment">foo.unsafeToFuture()</span>
 

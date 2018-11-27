@@ -7,13 +7,15 @@ val derivations = Seq(
 )
 
 val plugins = Seq(
-  compilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
-  compilerPlugin("org.scalameta"  % "paradise"        % "3.0.0-M11" cross CrossVersion.full)
+  compilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.3.0-M4"),
+  compilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.7"),
+  compilerPlugin("org.scalameta"  % "paradise"            % "3.0.0-M11" cross CrossVersion.full)
 ) ++ derivations
 
 val embeds = project
   .settings(
     libraryDependencies ++= Seq(
+      "ch.qos.logback"             % "logback-classic"      % "1.2.3",
       "com.typesafe.akka"          %% "akka-actor"          % "2.5.18",
       "co.fs2"                     %% "fs2-core"            % "1.0.0",
       "co.fs2"                     %% "fs2-io"              % "1.0.0",

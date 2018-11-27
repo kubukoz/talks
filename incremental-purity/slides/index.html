@@ -124,12 +124,12 @@ prog1 == prog2</code></pre>
             <section>
                 <h3>Running IO</h3>
                 <p>If nothing has happened yet, how do we actually run an IO?</p>
-                <pre><code embed="rt/run-io.sc" class="scala" data-noescape></code></pre>
+                <pre><code embed="rt/run-io.sc" class="scala smaller" data-noescape></code></pre>
             </section>
             <section>
                 <h3>Running IO</h3>
                 <q>Do we really need to do <code>unsafe</code>?</q>
-                <p class="fragment">No ;)</p>
+                <p class="fragment">No ;) <small>(but it depends™)</small></p>
                 <pre class="fragment"><code embed="rt/Main.scala" class="scala"></code></pre>
             </section>
             <section>
@@ -155,9 +155,7 @@ prog1 == prog2</code></pre>
                 <pre><code class="scala" data-noescape>(<span class="fragment">prepareRepo</span> <span
                         class="fragment">*> runInRepo</span>)<span
                         class="fragment">.guarantee(cleanup)</span></code></pre>
-                <p>
                 <pre><code class="scala fragment">a *> b == a.flatMap(_ => b) //import cats.syntax.apply._</code></pre>
-                </p>
             </section>
             <section>
                 <h3>Pure programs</h3>
@@ -186,13 +184,14 @@ prog1 == prog2</code></pre>
                     <li>Harder in PoC</li><!--resource allocation, unsafeRunSync()-->
                     <li>Non-straightforward migration</li>
                     <li>Mostly impure ecosystem</li>
+                    <li>Some boilerplate, because Scala</li>
                 </ul>
             </section>
         </section>
         <!--flavors-->
         <section>
             <section>
-                <h3>Flavors of side effects</h3>
+                <h3>Flavors of side effects include</h3>
                 <ul>
                     <li class="fragment">Local mutable state, exceptions</li>
                     <li class="fragment">Calling Java APIs, callbacks-based APIs</li>
@@ -222,6 +221,18 @@ prog1 == prog2</code></pre>
             <section>
                 <h3>Local, immutable state</h3>
                 <pre><code class="scala smaller" embed="localstate/pure/FlightsPure.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/pipe.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/skipCheapest.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/expensify.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="localstate/pure/pipes/mods.sc" data-noescape></code></pre>
             </section>
             <section>
                 <h3>Local, immutable state (pipes)</h3>
@@ -373,6 +384,7 @@ case class Skill(name: String)</code></pre>
             <section>
                 <h3>Composable resources with Resource</h3>
                 <pre><code class="scala smaller" embed="javaapis/JavaApisResource.scala"></code></pre>
+                <code>JavaApisResource.scala</code>
             </section>
             <section>
                 <h3>Async callbacks</h3>
@@ -413,11 +425,10 @@ case class Skill(name: String)</code></pre>
             </section>
             <section>
                 <h3>Logging</h3>
-                <p>TODO small sample of logging directly</p>
+                <pre><code class="scala smaller" embed="logging/LoggingExample.scala"></code></pre>
             </section>
             <section>
-                <h3>Logging</h3>
-                <pre><code class="scala smaller" embed="logging/LoggedService.scala"></code></pre>
+                <pre><code class="scala smaller" embed="logging/LoggedTimedService.scala"></code></pre>
             </section>
             <section>
                 <h3>Metrics</h3>
@@ -453,7 +464,8 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             </section>
             <section>
                 <h3>Creating a cache is effectful</h3>
-                <p>TODO przykład i link do talka fabia</p>
+                <pre><code class="scala smaller" embed="logging/cache.sc"></code></pre>
+                <!--todo something something Ref, something something actors...-->
             </section>
         </section>
         <section>

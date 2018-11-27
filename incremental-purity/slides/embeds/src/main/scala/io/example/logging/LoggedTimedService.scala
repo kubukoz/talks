@@ -12,15 +12,15 @@ import scalaz.deriving
 
 import scala.concurrent.duration._
 
-trait LoggedService[F[_]] {
+trait LoggedTimedService[F[_]] {
   def findUsers: F[List[User]]
 }
 
-object LoggedService {
+object LoggedTimedService {
 
-  def create[F[_]: Sync](implicit timer: Timer[F]): F[LoggedService[F]] =
+  def create[F[_]: Sync](implicit timer: Timer[F]): F[LoggedTimedService[F]] =
     Slf4jLogger.create[F].map { implicit L: Logger[F] =>
-      new LoggedService[F] {
+      new LoggedTimedService[F] {
         override val findUsers: F[List[User]] = {
           val action = timer.sleep(1.second).as(List(User("foo"), User("bar")))
 
@@ -56,7 +56,7 @@ object LoggedServiceApp extends IOApp {
   import cats.effect.Console.io.putStrLn
 
   override def run(args: List[String]): IO[ExitCode] =
-    LoggedService
+    LoggedTimedService
       .create[IO]
       .flatMap(_.findUsers)
       .flatMap {

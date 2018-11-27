@@ -7,7 +7,8 @@ import scala.concurrent.duration.FiniteDuration
 
 object SleepIO {
 
-  def sleep(finiteDuration: FiniteDuration)(implicit scheduler: ScheduledExecutorService): IO[Unit] = {
+  def sleep(finiteDuration: FiniteDuration)
+           (implicit scheduler: ScheduledExecutorService): IO[Unit] = {
     IO.async { callback =>
       val runnable = new Runnable { override def run(): Unit = callback(Right(())) }
 
@@ -16,7 +17,8 @@ object SleepIO {
   }
 
   //more like the real version
-  def sleepCancelable(finiteDuration: FiniteDuration)(implicit scheduler: ScheduledExecutorService): IO[Unit] =
+  def sleepCancelable(finiteDuration: FiniteDuration)
+                     (implicit scheduler: ScheduledExecutorService): IO[Unit] =
     IO.cancelable { callback =>
       val runnable = new Runnable { override def run(): Unit = callback(Right(())) }
 
@@ -29,5 +31,6 @@ object SleepIO {
 
   //the real version, use this in real applications
   //also works with TestContext.tick() and cancelation
-  def sleepStandard(finiteDuration: FiniteDuration)(implicit timer: Timer[IO]): IO[Unit] = timer.sleep(finiteDuration)
+  def sleepStandard(finiteDuration: FiniteDuration)(implicit timer: Timer[IO]): IO[Unit] =
+    timer.sleep(finiteDuration)
 }
