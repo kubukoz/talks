@@ -72,21 +72,21 @@ object Pure extends IOApp {
   val dishes  = Task(Skill("Dishes"))
   val laundry = Task(Skill("Laundry"))
 
-  val tasks: SyncIO[List[Task]] = {
+  val tasks: IO[List[Task]] = {
     val taskList = List.fill(10)(dishes) ::: List.fill(6)(laundry)
 
-    SyncIO(scala.util.Random.shuffle(taskList))
+    IO(scala.util.Random.shuffle(taskList))
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
-    val console = SyncConsole.stdio[SyncIO]
+    val console = Console.io
 
     tasks
       .map(solveTasksPure)
       .flatMap {
         case (logs, time) =>
-          logs.traverse_(console.putStrLn(_)) *>
+          logs.traverse_(console.putStrLn) *>
             console.putStrLn(time.toString)
       }
-  }.as(ExitCode.Success).toIO
+  }.as(ExitCode.Success)
 }
