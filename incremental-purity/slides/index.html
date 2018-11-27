@@ -392,7 +392,7 @@ case class Skill(name: String)</code></pre>
             </section>
             <section>
                 <h3>Async callbacks: IO</h3>
-                <pre><code class="scala smaller" embed="javaapis/SleepIO.scala"></code></pre>
+                <pre><code class="scala smaller" embed="javaapis/SleepIO.sc" data-noescape></code></pre>
             </section>
             <section>
                 <h3>Async callbacks & resources: case study (ActiveMQ)</h3>
@@ -464,8 +464,12 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             </section>
             <section>
                 <h3>Creating a cache is effectful</h3>
-                <pre><code class="scala smaller" embed="logging/cache.sc"></code></pre>
-                <!--todo something something Ref, something something actors...-->
+                <pre><code class="scala smaller" embed="logging/cache.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Why?</h3>
+                <small>Caches will usually use cats.effect.concurrent.Ref</small>
+                <pre class="fragment"><code class="scala smaller" embed="logging/ref.sc" data-noescape></code></pre>
             </section>
         </section>
         <section>
@@ -477,13 +481,30 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
         <section>
             <section>
                 <h3>Databases/HTTP</h3>
-                todo przykłady z doobiego, przykłady z http4s client+server, slick DBIO ~> F
+            </section>
+            <section>
+                <h3>Sticking with Slick?</h3>
+                <p>Carry around a `DBIO ~> F`</p>
+                <pre><code class="scala smaller" embed="dbhttp/slick.sc"></code></pre>
+            </section>
+            <section>
+                <h3>tpolecat/doobie</h3>
+                <pre><code class="scala smaller" embed="dbhttp/doobie.sc"></code></pre>
+            </section>
+            <section>
+                <h3>tpolecat/skunk (WIP)</h3>
+                <small>non-blocking postgres client</small>
+                <pre><code class="scala smaller" embed="dbhttp/skunk.sc"></code></pre>
+            </section>
+            <section>
+                <h3>http4s</h3>
+                <pre><code class="scala smaller" embed="dbhttp/http4s.scala"></code></pre>
             </section>
         </section>
         <section>
             <section>
                 <h3>Futures</h3>
-                <pre><code class="scala" embed="futures/futures.sc"></code></pre>
+                <pre><code class="scala" embed="futures/futures.sc" data-noescape></code></pre>
             </section>
         </section>
         <section>
@@ -497,6 +518,40 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
             <section>
                 <h3>fs2 integrations</h3>
                 <img src="./images/fs2-integrations.png" style="width: 600px"/>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Actors</h3>
+                <ul>
+                    <li class="fragment">Concurrent mutable state</li>
+                    <li class="fragment">Concurrency control</li>
+                    <li class="fragment">Asynchronous message processing (fire and forget)</li>
+                    <li class="fragment">Distributed computing</li>
+                    <li class="fragment">Event sourcing</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Concurrent mutable state</h3>
+                <p>Use Ref/Deferred/MVar</p>
+                <img src="https://impurepics.com/images/concurrency-ref.png" style="width: 600px"/>
+                <p><small>Source: <a href="https://twitter.com/impurepics" target="_blank">@impurepics</a></small></p>
+            </section>
+            <section>
+                <h3>Concurrency control</h3>
+                <p>Use Semaphore</p>
+                <pre><code class="scala smaller" embed="actors/semaphore.sc" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Asynchronous message processing</h3>
+                <p>Use fs2 Queue/Topic</p>
+                <pre><code class="scala smaller" embed="actors/queue.scala" data-noescape></code></pre>
+            </section>
+            <section>
+                <h3>Distributed computing, event sourcing</h3>
+                <p class="fragment">¯\_(ツ)_/¯</p>
+                <p class="fragment">No apparent pure solution in sight</p>
+                <p class="fragment">Stick to Akka (for now)</p>
             </section>
         </section>
         <section>
@@ -524,7 +579,7 @@ val prog: Metrics.Step[IO, DatabaseQuery] = for {
         </section>
         <section>
             <h3>More links</h3>
-            <pre><code class="markdown">
+            <pre><code class="markdown">https://fs2.io/concurrency-primitives.html
 https://vimeo.com/294736344
 https://www.youtube.com/watch?v=x3GLwl1FxcA
 https://twitter.com/jdegoes/status/936301872066977792

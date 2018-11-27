@@ -15,6 +15,9 @@ val plugins = Seq(
 val embeds = project
   .settings(
     libraryDependencies ++= Seq(
+      "org.http4s"                 %% "http4s-dsl"          % "0.20.0-M3",
+      "org.http4s"                 %% "http4s-blaze-server" % "0.20.0-M3",
+      "org.http4s"                 %% "http4s-blaze-client" % "0.20.0-M3",
       "ch.qos.logback"             % "logback-classic"      % "1.2.3",
       "com.typesafe.akka"          %% "akka-actor"          % "2.5.18",
       "co.fs2"                     %% "fs2-core"            % "1.0.0",
