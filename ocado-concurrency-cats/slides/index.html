@@ -1,0 +1,322 @@
+<!doctype html>
+<html>
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-55943015-7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-55943015-7');
+    </script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Concurrency with Cats</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+    <style>
+        code.smaller {
+            font-size: 0.6em;
+            line-height: 1.2em;
+        }
+    </style>
+    <!-- Printing and PDF exports -->
+    <script>
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <!--main-->
+        <section>
+            <section>
+                <h2><a>Concurrency with Cats</a></h2>
+                <h3>And other difficult questions</h3>
+                <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
+                <small>December 6, 2018 | Wrocław, Szewska 8, 5. floor, Church Room</small>
+                <br/><br/>
+                <small>Slides: <a href="https://git.io/fp1Ag" target="_blank">git.io/fp1Ag</a></small>
+            </section>
+        </section>
+        <!--
+        fibers
+        threading model
+
+        business error handling
+        error handling with MTL/IO
+
+        finding the right typeclass
+        finding least powerful abstraction
+        -->
+        <!--motivation-->
+        <section>
+            <section>
+                <h2>Agenda</h2>
+                <ol>
+                    <li>Applicative, Monad, Parallel</li>
+                    <li>Parallel + IO</li>
+                    <li>Race conditions, cancelation</li>
+                    <li>Forking, fibers</li>
+                    <li>What thread am I running on?</li><!--single thread until async/shift, etc-->
+                </ol>
+            </section>
+        </section>
+        <!--parallel-->
+        <section>
+            <section>
+                <h3>Typeclass recap: Functor</h3>
+                <pre><code class="scala" embed="fake/Functor.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Applicative</h3>
+                <pre><code class="scala" embed="fake/Applicative.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="samples/ApplicativeUsage.scala"></code></pre>
+            </section>
+            <section>
+                <h3>But wait, there's more!</h3>
+                <pre><code class="scala" embed="fake/realer/Apply.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="samples/ApplicativeUsage.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Why?</h3>
+                <p>Some types don't have `pure`</p>
+                <pre><code class="scala smaller" embed="samples/MapApply.scala"></code></pre>
+            </section>
+            <section>
+                <pre><code class="scala smaller" embed="samples/ApplyUsage.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Apply doesn't have to be sequential</h3>
+                <p>What's the order of operations here?</p>
+                <pre><code class="scala" embed="samples/OperationOrder.scala"></code></pre>
+                <p class="fragment">Could be anything</p>
+            </section>
+            <section>
+                <h3>Some applicatives support parallel composition</h3>
+                <pre><code class="scala smaller" embed="samples/ParallelApplicatives.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Some applicatives are Monads!!!</h3>
+                <pre><code class="scala" embed="fake/Monad.scala"></code></pre>
+                <p class="fragment">Inherently sequential</p>
+            </section>
+            <section>
+                <h3>Real monads</h3>
+                <pre><code class="scala" embed="fake/realer/FlatMap.scala"></code></pre>
+            </section>
+            <section>
+                <p>What's the order of operations here?</p>
+                <pre><code class="scala" embed="samples/OperationOrderFlatmap.scala"></code></pre>
+                <p class="fragment">Sequential (left to right)</p>
+            </section>
+            <section>
+                <h3>How to enforce parallel execution?</h3>
+                <p>We'll get to that</p>
+            </section>
+            <section>
+                <p>Parallel applicatives can't have FlatMap</p>
+                <pre><code class="scala smaller" embed="samples/ValidatedNotMonadic.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Applicatives that don't have <code>flatMap</code></h3>
+                <ul>
+                    <li><code>Validated</code></li>
+                    <li><code>ZipList</code></li>
+                    <li><code>cats.effect.IO.Par</code></li>
+                    <li>...</li>
+                </ul>
+            </section>
+            <section>
+                <h3>How to enforce parallel execution?</h3>
+                <p class="fragment"><code>cats.Parallel</code></p>
+            </section>
+            <section>
+                <pre><code class="scala">/**
+ * Some types that form a FlatMap,
+ * are also capable of forming an Apply
+ * that supports parallel composition.
+ */</code></pre>
+            </section>
+            <section>
+                <pre><code class="scala" embed="fake/NonEmptyParallel.scala"></code></pre>
+            </section>
+            <section>
+                <h3>What is <code>Parallel[M, F]</code>?</h3>
+                <ul>
+                    <li class="fragment">A pair of <code>Monad[M]</code>, <code>Applicative[F]</code></li>
+                    <li class="fragment">A bi-directional mapping between them</li>
+                </ul>
+            </section>
+            <section>
+                <p>How it's used</p>
+                <pre><code class="scala smaller" embed="samples/ParallelUsage.scala"></code></pre>
+            </section>
+            <section>
+                <p>How it works</p>
+                <pre><code class="scala smaller" embed="samples/ParallelUnderTheHood.scala"></code></pre>
+            </section>
+            <section>
+                <p>How Parallel.parProduct works</p>
+                <ol>
+                    <li class="fragment">Convert both sequential <code>M[_]</code> to parallel <code>F[_]</code></li>
+                    <li class="fragment">Apply <code>product</code> using the <code>Apply[F]</code></li>
+                    <li class="fragment">Convert back to <code>M[_]</code></li>
+                </ol>
+            </section>
+            <section>
+                <h3>Tagless style?</h3>
+                <pre><code class="scala smaller" embed="samples/TaglessBinaryParallel.scala"></code></pre>
+                <p class="fragment">Two type parameters :(</p>
+            </section>
+            <section>
+                <h3><code>cats-par</code></h3>
+                <a href="https://github.com/ChristopherDavenport/cats-par" target="_blank">github.com/ChristopherDavenport/cats-par</a>
+                <pre><code class="scala">"io.chrisdavenport" %% "cats-par" % "0.2.0"</code></pre>
+                <pre><code class="scala">import cats.temp.par._</code></pre>
+            </section>
+            <section>
+                <h3>Tagless style!</h3>
+                <pre><code class="scala smaller" embed="samples/TaglessUnaryParallel.scala"></code></pre>
+            </section>
+        </section>
+        <!--IO + Parallel-->
+        <section>
+            <section>
+                <h3>IO + Parallel</h3>
+                <p>IO has an instance: <code>Parallel[IO, IO.Par]</code></p>
+                <p class="fragment">Requires implicit <code>cats.effect.ContextShift[IO]</code></p>
+            </section>
+            <section>
+                <h3>ContextShift[F]</h3>
+                <p>Purely functional Executor</p>
+                <pre><code class="scala" embed="fake/ContextShift.scala"></code></pre>
+            </section>
+            <section>
+                <p>Getting an instance</p>
+                <pre><code class="scala smaller" embed="samples/ContextShiftCreation.scala"></code></pre>
+            </section>
+            <section>
+                <p>Usage</p>
+                <pre><code class="scala smaller" embed="samples/ContextShiftUsage.scala"></code></pre>
+            </section>
+        </section>
+        <!--concurrency-->
+        <section>
+            <section>
+                <h3>Handling concurrency with cats-effect</h3>
+                <ul>
+                    <li>Cancelation</li>
+                    <li>Races</li>
+                    <li>Forking, fibers</li>
+                    <li>What thread am I on?</li>
+                    <li>What ExecutionContext to use?</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Cancelation</h3>
+                <p>Happens only after asynchronous boundaries, which can be achieved by:</p>
+                <ul>
+                    <li class="fragment">Building an asynchronous IO with <code>IO.cancelable, IO.async, IO.bracket</code> (!)</li>
+                    <li class="fragment">Using <code>IO.cancelBoundary</code> or <code>IO.shift</code></li>
+                </ul>
+            </section>
+            <section>
+                <h3>Races</h3>
+                <pre><code class="scala" embed="samples/IORace.scala"></code></pre>
+            </section>
+            <section>
+                <h3>Manual logical fork - <code>start</code></h3>
+                <pre><code class="scala smaller" embed="samples/IOStart.scala"></code></pre>
+                <p>Fiber - pure "green thread"</p>
+            </section>
+            <section>
+                <h3>What thread am I on?</h3>
+                <p class="fragment">Unless you're creating async boundaries, the same one all the time</p>
+                <p class="fragment"><code>ContextShift/Async/Timer/start/parMapN</code> insert async boundaries</p>
+            </section>
+            <section>
+                <h3>What ExecutionContext to use?</h3>
+                <img src="./images/concurrency-thread-pools.png" style="width: 600px">
+                <p><small><a href="https://typelevel.org/cats-effect/concurrency/basics.html#concurrency" target="_blank">Source</a></small></p>
+            </section>
+        </section>
+        <section>
+            <h3>Links</h3>
+            <p>Slides: <a href="https://git.io/fp1Ag" target="_blank">https://git.io/fp1Ag</a></p>
+            <p>Code: <a href="https://git.io/fp1Ao" target="_blank">https://git.io/fp01Ao</a></p>
+        </section>
+        <section>
+            <h2>Thank you!</h2>
+            <p>Get in touch</p>
+            <p><a href="https://twitter.com/kubukoz" target="_blank">@kubukoz</a> | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+            </p>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!--<script src="./node_modules/axios/dist/axios.min.js"></script>-->
+
+<script>
+    const Embed = ({fetchFileContents}) => {
+        return {
+            insertCode: async elem => {
+                const path = elem.getAttribute("embed");
+
+                elem.innerHTML = await fetchFileContents(path);
+            },
+            async init() {
+                const self = this;
+
+                const elems = document.querySelectorAll("[embed]");
+
+                await Promise.all([...elems].map(self.insertCode));
+                console.log(`Inserted code for ${elems.length} node(s)`);
+            }
+        };
+    };
+
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+
+    Reveal.initialize({
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/notes/notes.js', async: true},
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
+
+
+    axios.defaults.baseURL = './embeds/src/main/scala/io/example/';
+    Embed({
+        fetchFileContents: path => axios.get(path).then(r => r.data)
+    }).init();
+
+</script>
+</body>
+</html>
