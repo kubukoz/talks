@@ -12,9 +12,9 @@ object JavaApisResource extends IOApp {
   }
 
   def reader(file: File): Resource[IO, BufferedReader] = {
-    val printOpening = IO(println(s"Opening file: $file"))
-    val openReader   = IO(new BufferedReader(new FileReader(file)))
-    val printClosing = IO(println(s"Closing file: $file"))
+    val printOpening                    = IO(println(s"Opening file: $file"))
+    val openReader                      = IO(new BufferedReader(new FileReader(file)))
+    val printClosing                    = IO(println(s"Closing file: $file"))
     def closeReader(br: BufferedReader) = IO(br.close())
 
     Resource.make(printOpening *> openReader)(printClosing *> closeReader(_))

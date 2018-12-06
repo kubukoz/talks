@@ -1,5 +1,7 @@
 import sbt.compilerPlugin
 
+val `incremental-purity-slides` = project.in(file("."))
+
 val derivations = Seq(
   "org.typelevel" %% "kittens"        % "1.2.0",
   "org.scalaz"    %% "deriving-macro" % "1.0.0",
@@ -15,6 +17,7 @@ val plugins = Seq(
 val embeds = project
   .settings(
     libraryDependencies ++= Seq(
+      "org.typelevel"              %% "cats-core"           % "1.5.0",
       "org.http4s"                 %% "http4s-dsl"          % "0.20.0-M3",
       "org.http4s"                 %% "http4s-blaze-server" % "0.20.0-M3",
       "org.http4s"                 %% "http4s-blaze-client" % "0.20.0-M3",

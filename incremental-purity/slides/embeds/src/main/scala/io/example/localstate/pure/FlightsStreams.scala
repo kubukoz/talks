@@ -22,7 +22,6 @@ object FlightsStreams {
       .emits(allFlights)
       .through(skipCheapest(allFlights.size))
       .through(expensify)
-      .compile
       .toList
   }
 }
