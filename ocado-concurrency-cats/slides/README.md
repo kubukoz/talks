@@ -1,3 +1,3 @@
-# Incremental purity - transitioning systems to functional programming principles
+# ocado-concurrency-cats
 
-In the light of the hard work performed by countless people in the open-source Scala community, including creators and contributors of cats-effect, fs2, scalaz-zio and alike, there's been an influx of the language's users who want to take part in the journey to purely functional programming in Scala. Sometimes, though, it might not be as straightforward to apply the newly gained knowledge as we wish, especially in existing, mission-critical production systems. In this talk, I want to exhibit the typical obstacles one can encounter when trying to make their application code pure, ways to overcome these obstacles, as well as some mistakes and "gotchas" frequently confronted.
+A short talk I did internally about parallelism and concurrency with Cats/Cats-effect.
