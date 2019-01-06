@@ -1,6 +1,6 @@
 import sbt.compilerPlugin
 
-val `ocado-concurrency-cats` = project in file(".")
+val `http4s-doobie-micro` = project in file(".")
 
 val derivations = Seq(
   compilerPlugin("org.scalaz" %% "deriving-plugin" % "1.0.0")
@@ -21,7 +21,6 @@ val embeds = project
       "co.fs2"                     %% "fs2-io"              % "1.0.0",
       "org.http4s"                 %% "http4s-dsl"          % "0.20.0-M3",
       "org.http4s"                 %% "http4s-blaze-server" % "0.20.0-M3",
-      "org.http4s"                 %% "http4s-blaze-client" % "0.20.0-M3",
       "org.http4s"                 %% "http4s-blaze-client" % "0.20.0-M3",
       "io.chrisdavenport"          %% "cats-par"            % "0.2.0",
       "io.chrisdavenport"          %% "log4cats-slf4j"      % "0.2.0",
