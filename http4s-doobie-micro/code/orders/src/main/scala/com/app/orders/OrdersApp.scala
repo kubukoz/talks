@@ -3,12 +3,11 @@ package com.app.orders
 import cats.data.{EitherT, NonEmptyList, OptionT}
 import cats.effect._
 import cats.implicits._
-import cats.temp.par.{nonEmptyParToNonEmptyParallel, NonEmptyPar}
-import cats.{~>, Applicative, Monad, MonadError}
+import cats.temp.par.{NonEmptyPar, nonEmptyParToNonEmptyParallel}
+import cats.{Applicative, Monad, MonadError, ~>}
 import com.app.orders.OrderError.{AmountNotPositive, SetNotDivisible, SushiKindNotFound}
 import com.app.payments.PaymentMade
 import com.app.sushi.SushiKind
-import com.orders.OrderedSushi
 import io.circe.{Decoder, Encoder}
 import org.http4s.circe._
 import org.http4s.client.{Client, UnexpectedStatus}

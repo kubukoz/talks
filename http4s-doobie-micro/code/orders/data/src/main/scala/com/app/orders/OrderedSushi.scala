@@ -1,7 +1,7 @@
-package com.orders
+package com.app.orders
 
-import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto._
+import io.circe.{Decoder, Encoder}
 
 case class OrderedSushi(amount: Int, kind: String, price: Long)
 
