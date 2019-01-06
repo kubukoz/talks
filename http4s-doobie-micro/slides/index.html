@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Lightweight, functional microservices with http4s and doobie</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/solarized-dark.css">
+
+    <style>
+        code.smaller {
+            font-size: 0.6em;
+            line-height: 1.2em;
+        }
+    </style>
+    <!-- Printing and PDF exports -->
+    <script>
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.type = 'text/css';
+        link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    </script>
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <!--main-->
+        <section>
+            <section>
+                <h3><a>Lightweight, functional microservices</a></h3>
+                <h2>with http4s and doobie</h2>
+                <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
+                <small>f(by) | January 25, 2019 | Minsk, Belarus</small>
+                <br/><br/>
+                <small>Slides: <a href="https://git.io/fhsW5" target="_blank">git.io/fhsW5</a></small>
+            </section>
+        </section>
+        <!--motivation-->
+        <section>
+            <section>
+                <h2>Agenda</h2>
+            </section>
+        </section>
+        <!--parallel-->
+        <section>
+            <h3>Links</h3>
+            <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>
+            <p>Code: <a href="https://git.io/fhsWd" target="_blank">https://git.io/fhsWd</a></p>
+        </section>
+        <section>
+            <h2>Thank you!</h2>
+            <p>Get in touch</p>
+            <p><a href="https://twitter.com/kubukoz" target="_blank">@kubukoz</a> | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
+            </p>
+        </section>
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<!--<script src="./node_modules/axios/dist/axios.min.js"></script>-->
+
+<script>
+    const Embed = ({fetchFileContents}) => {
+        return {
+            insertCode: async elem => {
+                const path = elem.getAttribute("embed");
+
+                elem.innerHTML = await fetchFileContents(path);
+            },
+            async init() {
+                const self = this;
+
+                const elems = document.querySelectorAll("[embed]");
+
+                await Promise.all([...elems].map(self.insertCode));
+                console.log(`Inserted code for ${elems.length} node(s)`);
+            }
+        };
+    };
+
+    // More info about config & dependencies:
+    // - https://github.com/hakimel/reveal.js#configuration
+    // - https://github.com/hakimel/reveal.js#dependencies
+
+    Reveal.initialize({
+        dependencies: [
+            {src: 'plugin/markdown/marked.js'},
+            {src: 'plugin/markdown/markdown.js'},
+            {src: 'plugin/notes/notes.js', async: true},
+            {
+                src: 'plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
+
+
+    axios.defaults.baseURL = './embeds/src/main/scala/io/example/';
+    Embed({
+        fetchFileContents: path => axios.get(path).then(r => r.data)
+    }).init();
+
+</script>
+</body>
+</html>
