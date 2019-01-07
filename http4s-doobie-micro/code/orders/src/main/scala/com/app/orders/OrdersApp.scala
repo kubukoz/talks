@@ -4,7 +4,7 @@ import cats.data.{EitherT, NonEmptyList}
 import cats.effect._
 import cats.implicits._
 import cats.temp.par.{nonEmptyParToNonEmptyParallel, NonEmptyPar}
-import cats.{~>, Applicative, ApplicativeError, MonadError}
+import cats.{~>, Applicative, ApplicativeError, ErrorControl, MonadError}
 import com.app.orders.OrderError.{AmountNotPositive, PaymentFailed, SetNotDivisible, SushiKindNotFound}
 import com.app.payments.PaymentMade
 import com.app.sushi.SushiKind
@@ -62,34 +62,17 @@ trait OrderRoutes[F[_]] {
   def routes: HttpRoutes[F]
 }
 
-trait ErrorHandler[E[_], F[_], A] {
-  def handle[B](eb: E[B])(f: A => F[B]): F[B]
-  def lift[B](fb: F[B]): E[B]
-  def absorb[B](fb: F[Either[A, B]]): E[B]
-}
-
-object ErrorHandler {
-  implicit def handleEitherT[F[_]: Sync, E]: ErrorHandler[EitherT[F, E, ?], F, E] = {
-
-    new ErrorHandler[EitherT[F, E, ?], F, E] with Http4sDsl[F] {
-      override def handle[B](eb: EitherT[F, E, B])(f: E => F[B]): F[B] = eb.valueOrF(f)
-      override def lift[B](fb: F[B]): EitherT[F, E, B]                 = EitherT.liftF(fb)
-      override def absorb[B](fb: F[Either[E, B]]): EitherT[F, E, B]    = EitherT(fb)
-    }
-  }
-}
-
 object OrderRoutes {
   implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
 
   def instance[E[_]: OrderService: Sync, F[_]: Sync, Err: Encoder](
-    implicit handler: ErrorHandler[E, F, Err]): OrderRoutes[F] =
+    implicit handler: ErrorControl[E, F, Err]): OrderRoutes[F] =
     new OrderRoutes[F] with Http4sDsl[F] {
       override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
         case POST -> Root / "order" / sushiKind / IntVar(amount) =>
-          handler.handle {
+          handler.controlError {
             OrderService[E].order(sushiKind, amount).flatMap { totalPrice =>
-              handler.lift(Ok(OrderedSushi(amount, sushiKind, totalPrice)))
+              handler.accept(Ok(OrderedSushi(amount, sushiKind, totalPrice)))
             }
           }(BadRequest(_))
       }
@@ -125,7 +108,7 @@ object OrderService {
       (requested > 0).guard[Option].liftTo[F](NonEmptyList.one(AmountNotPositive(requested)))
     }
 
-    def makePayment(price: Long): F[PaymentMade] = handler.absorb {
+    def makePayment(price: Long): F[PaymentMade] = handler.absolve {
       PaymentsClient[G]
         .pay(price)
         .map(_.asRight[NonEmptyList[OrderError]])
@@ -193,7 +176,7 @@ object OrderError {
   type NelMonad[F[_]] = MonadError[F, NonEmptyList[OrderError]]
   def NelMonad[F[_]](implicit F: NelMonad[F]): NelMonad[F] = F
 
-  type NelErrorHandler[F[_], G[_]] = ErrorHandler[F, G, NonEmptyList[OrderError]]
+  type NelErrorHandler[F[_], G[_]] = ErrorControl[F, G, NonEmptyList[OrderError]]
 
   case class SushiKindNotFound(name: String)                               extends OrderError
   case class SetNotDivisible(requested: Int, setSize: Int, remainder: Int) extends OrderError
