@@ -3,6 +3,8 @@ package com.app.payments
 import cats.effect._
 import cats.implicits._
 import cats.{Applicative, Functor}
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.syntax._
 import io.circe.Encoder
 import org.http4s.circe._
@@ -18,8 +20,9 @@ object PaymentsApp extends IOApp {
 }
 
 class PaymentsServer[F[_]: Timer: ContextShift](implicit F: ConcurrentEffect[F]) {
-  private val serverResource: Resource[F, Unit] =
-    BlazeServerBuilder[F].bindHttp(port = 4000).withHttpApp(PaymentsModule.make[F].routes.orNotFound).resource.void
+  private val serverResource: Resource[F, Unit] = Resource.liftF(PaymentsModule.make[F]).flatMap { module =>
+    BlazeServerBuilder[F].bindHttp(port = 4000).withHttpApp(module.routes.orNotFound).resource.void
+  }
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)
 }
@@ -30,7 +33,7 @@ trait PaymentsModule[F[_]] {
 
 object PaymentsModule {
 
-  def make[F[_]: Sync]: PaymentsModule[F] = {
+  def make[F[_]: Sync]: F[PaymentsModule[F]] = {
     implicit val mockPaypalClient: Client[F] = {
       val dsl = new Http4sDsl[F] {}
       import dsl._
@@ -50,8 +53,10 @@ object PaymentsModule {
 
     implicit val paymentService: PaymentService[F] = PaymentService.paypalPaymentService
 
-    new PaymentsModule[F] {
-      override val routes: HttpRoutes[F] = PaymentRoutes.instance[F].routes
+    Slf4jLogger.fromClass(classOf[PaymentRoutes[F]]).map { implicit logger =>
+      new PaymentsModule[F] {
+        override val routes: HttpRoutes[F] = PaymentRoutes.instance[F].routes
+      }
     }
   }
 }
@@ -63,13 +68,13 @@ trait PaymentRoutes[F[_]] {
 object PaymentRoutes {
   implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
 
-  def instance[F[_]: Sync: PaymentService]: PaymentRoutes[F] = new PaymentRoutes[F] with Http4sDsl[F] {
+  def instance[F[_]: Sync: PaymentService: Logger]: PaymentRoutes[F] = new PaymentRoutes[F] with Http4sDsl[F] {
     override val routes: HttpRoutes[F] = HttpRoutes.of {
       case POST -> Root / "pay" / LongVar(amount) =>
-        for {
-          _        <- PaymentService[F].pay(amount)
-          response <- Ok(PaymentMade(amount))
-        } yield response
+        Logger[F].info(show"Trying to pay $amount") *>
+          PaymentService[F].pay(amount) *>
+          Logger[F].info(show"Paid $amount") *>
+          Ok(PaymentMade(amount))
     }
   }
 }

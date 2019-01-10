@@ -27,12 +27,8 @@ object OrdersApp extends IOApp {
 class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar](implicit F: ConcurrentEffect[F]) {
   private val serverResource: Resource[F, Unit] =
     for {
-      client <- BlazeClientBuilder[F](ExecutionContext.global).resource
-      _ <- {
-        implicit val c: Client[F] = client
-
-        BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(OrdersModule.make[F].routes.orNotFound).resource.void
-      }
+      implicit0(client: Client[F]) <- BlazeClientBuilder[F](ExecutionContext.global).resource
+      _                            <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(OrdersModule.make[F].routes.orNotFound).resource.void
     } yield ()
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)

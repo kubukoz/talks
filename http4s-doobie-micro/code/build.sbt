@@ -28,8 +28,9 @@ val commonSettings = Seq(
   scalacOptions ++= Options.all,
   fork in Test := true,
   libraryDependencies ++= Seq(
-    "ch.qos.logback" % "logback-classic" % "1.2.3",
-    "org.scalatest"  %% "scalatest"      % "3.0.5" % Test
+    "ch.qos.logback"    % "logback-classic" % "1.2.3",
+    "io.chrisdavenport" %% "log4cats-slf4j" % "0.2.0",
+    "org.scalatest"     %% "scalatest"      % "3.0.5" % Test
   ) ++ compilerPlugins ++ http4s ++ doobie,
 )
 
@@ -42,5 +43,5 @@ val payments     = project.settings(commonSettings).dependsOn(paymentsData)
 val orderData = project.settings(commonSettings).in(file("orders/data"))
 val orders    = project.settings(commonSettings).dependsOn(sushiData, paymentsData, orderData)
 
-val typelevelMicro =
-  project.in(file(".")).dependsOn(sushi).aggregate(sushi)
+val `sushi-place` =
+  project.in(file(".")).dependsOn(orders).aggregate(orders)

@@ -5,6 +5,8 @@ import cats.implicits._
 import cats.effect._
 import doobie.hikari.HikariTransactor
 import doobie._
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.Encoder
 import org.flywaydb.core.Flyway
 import org.http4s.{EntityEncoder, HttpRoutes}
@@ -29,14 +31,13 @@ class SushiServer[F[_]: Timer: ContextShift](implicit F: ConcurrentEffect[F]) {
   private val serverResource: Resource[F, Unit] = for {
     connectEc  <- ExecutionContexts.fixedThreadPool[F](10)
     transactEc <- ExecutionContexts.cachedThreadPool[F]
-    transactor <- HikariTransactor
-      .newHikariTransactor[F]("org.postgresql.Driver", dbUrl, "postgres", "postgres", connectEc, transactEc)
-    _ <- Resource.liftF(runMigrations)
-    _ <- {
-      implicit val xa: Transactor[F] = transactor
 
-      BlazeServerBuilder[F].bindHttp(port = 3000).withHttpApp(SushiModule.make[F].routes.orNotFound).resource
-    }
+    implicit0(transactor: Transactor[F]) <- HikariTransactor
+      .newHikariTransactor[F]("org.postgresql.Driver", dbUrl, "postgres", "postgres", connectEc, transactEc)
+
+    _      <- Resource.liftF(runMigrations)
+    module <- Resource.liftF(SushiModule.make[F])
+    _      <- BlazeServerBuilder[F].bindHttp(port = 3000).withHttpApp(module.routes.orNotFound).resource
   } yield ()
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)
@@ -48,11 +49,13 @@ trait SushiModule[F[_]] {
 
 object SushiModule {
 
-  def make[F[_]: Sync: Transactor]: SushiModule[F] = {
+  def make[F[_]: Sync: Transactor]: F[SushiModule[F]] = {
     implicit val repository: SushiRepository[F] = SushiRepository.instance[F]
 
-    new SushiModule[F] {
-      override val routes: HttpRoutes[F] = SushiRoutes.instance[F].routes
+    Slf4jLogger.fromClass[F](classOf[SushiRoutes[F]]).map { implicit logger =>
+      new SushiModule[F] {
+        override val routes: HttpRoutes[F] = SushiRoutes.instance[F].routes
+      }
     }
   }
 }
@@ -64,12 +67,15 @@ trait SushiRoutes[F[_]] {
 object SushiRoutes {
   implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
 
-  def instance[F[_]: Sync: SushiRepository]: SushiRoutes[F] = new SushiRoutes[F] with Http4sDsl[F] {
+  def instance[F[_]: Sync: SushiRepository: Logger]: SushiRoutes[F] = new SushiRoutes[F] with Http4sDsl[F] {
     override val routes: HttpRoutes[F] = HttpRoutes.of {
       case GET -> Root / "kinds" / "by-name" / name =>
-        SushiRepository[F].findByName(name).flatMap {
-          case None       => NotFound(show"A kind by the requested name was not found: $name")
-          case Some(kind) => Ok(kind)
+        Logger[F].info(show"Got request for sushi kind ($name).") *> SushiRepository[F].findByName(name).flatMap {
+          case None =>
+            Logger[F].error(show"Couldn't find sushi kind ($name).") *> NotFound(
+              show"A kind by the requested name was not found: $name")
+          case Some(kind) =>
+            Logger[F].info(show"Found requested sushi kind ($name): $kind.") *> Ok(kind)
         }
     }
   }
