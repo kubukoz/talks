@@ -1,3 +1,6 @@
+//for error-control
+resolvers in ThisBuild += Resolver.sonatypeRepo("releases")
+
 val compilerPlugins = List(
   compilerPlugin("org.scalamacros" % "paradise" % "2.1.1").cross(CrossVersion.full),
   compilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.9"),
@@ -12,6 +15,7 @@ val http4s = List(
   "io.circe"          %% "circe-generic"        % "0.10.1",
   "io.circe"          %% "circe-generic-extras" % "0.10.1",
   "io.chrisdavenport" %% "cats-par"             % "0.2.0",
+  "com.kubukoz"       %% "error-control-core"   % "0.1.0"
 )
 
 val doobie = List(
