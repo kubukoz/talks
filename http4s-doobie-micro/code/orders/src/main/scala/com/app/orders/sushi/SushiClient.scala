@@ -27,7 +27,7 @@ object SushiClient {
     implicit def entityDecoderForCirce[A: Decoder]: EntityDecoder[F, A] = jsonOf
 
     override def findKind(name: String): F[Option[SushiKind]] = Configuration.Ask[F].ask.flatMap { config =>
-      client.get(config.baseUrl / "kinds/by-name" / name) {
+      client.get(config.baseUrl / "kinds" / "by-name" / name) {
         case resp if resp.status === Status.NotFound => none[SushiKind].pure[F]
         case resp if resp.status.isSuccess           => resp.as[SushiKind].map(_.some)
         case resp                                    => Sync[F].raiseError(UnexpectedStatus(resp.status))
