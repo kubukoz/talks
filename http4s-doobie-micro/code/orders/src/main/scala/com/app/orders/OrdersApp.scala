@@ -4,8 +4,8 @@ import cats.data.{EitherT, NonEmptyList}
 import cats.effect._
 import cats.implicits._
 import cats.mtl.DefaultApplicativeAsk
-import cats.temp.par.{NonEmptyPar, nonEmptyParToNonEmptyParallel}
-import cats.{Applicative, ApplicativeError, ErrorControl, MonadError}
+import cats.temp.par.{nonEmptyParToNonEmptyParallel, NonEmptyPar}
+import cats.{Applicative, ErrorControl, MonadError}
 import com.app.orders.OrderError.{AmountNotPositive, PaymentFailed, SetNotDivisible, SushiKindNotFound}
 import com.app.orders.config.OrderServiceConfiguration
 import com.app.orders.payments.PaymentsClient
@@ -13,6 +13,8 @@ import com.app.orders.sushi.SushiClient
 import com.app.payments.PaymentMade
 import com.app.sushi.SushiKind
 import com.typesafe.config.ConfigFactory
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.Encoder
 import org.http4s.circe._
 import org.http4s.client.Client
@@ -61,7 +63,8 @@ class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar: ConfigLoader](implici
     for {
       implicit0(config: OrderServiceConfiguration.Ask[F]) <- Resource.liftF(ConfigLoader[F].loadConfig)
       implicit0(client: Client[F])                        <- BlazeClientBuilder[F](ExecutionContext.global).resource
-      _                                                   <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(OrdersModule.make[F].routes.orNotFound).resource.void
+      module                                              <- Resource.liftF(OrdersModule.make[F])
+      _                                                   <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(module.routes.orNotFound).resource.void
     } yield ()
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)
@@ -73,7 +76,7 @@ trait OrdersModule[F[_]] {
 
 object OrdersModule {
 
-  def make[F[_]: Sync: Client: NonEmptyPar: OrderServiceConfiguration.Ask]: OrdersModule[F] = {
+  def make[F[_]: Sync: Client: NonEmptyPar: OrderServiceConfiguration.Ask]: F[OrdersModule[F]] = {
     type E[A] = EitherT[F, NonEmptyList[OrderError], A]
 
     import com.olegpy.meow.hierarchy.deriveApplicativeAsk
@@ -81,11 +84,14 @@ object OrdersModule {
     implicit val sushiClient: SushiClient[E]       = SushiClient.fromClient[F].mapK(EitherT.liftK)
     implicit val paymentsClient: PaymentsClient[F] = PaymentsClient.fromClient[F]
 
-    implicit val orderService: OrderService[E] = OrderService.make[E, F]
-
-    new OrdersModule[F] {
-      override val routes: HttpRoutes[F] = OrderRoutes.instance[E, F, NonEmptyList[OrderError]].routes
-    }
+    Slf4jLogger
+      .fromClass[F](classOf[OrderService[E]])
+      .map(implicit l => OrderService.make[E, F])
+      .map { implicit orderService =>
+        new OrdersModule[F] {
+          override val routes: HttpRoutes[F] = OrderRoutes.instance[E, F, NonEmptyList[OrderError]].routes
+        }
+      }
   }
 }
 
@@ -118,7 +124,7 @@ object OrderService {
   def apply[F[_]](implicit F: OrderService[F]): OrderService[F] = F
 
   def make[F[_]: OrderError.NelMonad: SushiClient: NonEmptyPar,
-           G[_]: PaymentsClient: ApplicativeError[?[_], Throwable]](
+           G[_]: PaymentsClient: MonadError[?[_], Throwable]: Logger](
     implicit handler: OrderError.NelErrorHandler[F, G]): OrderService[F] = new OrderService[F] {
 
     def checkKind(kind: String): Option[SushiKind] => F[SushiKind] =
@@ -142,8 +148,13 @@ object OrderService {
     def makePayment(price: Long): F[PaymentMade] = handler.absolve {
       PaymentsClient[G]
         .pay(price)
-        .map(_.asRight[NonEmptyList[OrderError]])
-        .orElse(NonEmptyList.one[OrderError](PaymentFailed).asLeft[PaymentMade].pure[G])
+        .attempt
+        .flatMap {
+          _.bitraverse(Logger[G]
+                         .error(_)("Unexpected error while calling Payment service")
+                         .as((PaymentFailed: OrderError).pure[NonEmptyList]),
+                       _.pure[G])
+        }
     }
 
     override def order(sushiKind: String, amount: Int): F[Long] = {

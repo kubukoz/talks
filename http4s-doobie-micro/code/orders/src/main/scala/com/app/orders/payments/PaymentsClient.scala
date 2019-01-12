@@ -17,6 +17,7 @@ trait PaymentsClient[F[_]] { self =>
 
   def mapK[G[_]](f: F ~> G): PaymentsClient[G] = amount => f(self.pay(amount))
 }
+
 object PaymentsClient {
   import com.app.orders.http4s.UriInstances._
 
