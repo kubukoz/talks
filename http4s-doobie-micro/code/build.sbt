@@ -15,7 +15,8 @@ val http4s = List(
   "io.circe"          %% "circe-generic"        % "0.10.1",
   "io.circe"          %% "circe-generic-extras" % "0.10.1",
   "io.chrisdavenport" %% "cats-par"             % "0.2.0",
-  "com.kubukoz"       %% "error-control-core"   % "0.1.0"
+  "com.kubukoz"       %% "error-control-core"   % "0.1.0",
+  "org.typelevel"     %% "kittens"              % "1.2.0"
 )
 
 val doobie = List(
@@ -32,19 +33,23 @@ val commonSettings = Seq(
   scalacOptions ++= Options.all,
   fork in Test := true,
   libraryDependencies ++= Seq(
+    "org.scalaz" %% "deriving-macro" % "1.0.0",
+    compilerPlugin("org.scalaz" %% "deriving-plugin" % "1.0.0"),
     "ch.qos.logback"    % "logback-classic" % "1.2.3",
     "io.chrisdavenport" %% "log4cats-slf4j" % "0.2.0",
     "org.scalatest"     %% "scalatest"      % "3.0.5" % Test
-  ) ++ compilerPlugins ++ http4s ++ doobie,
+  ) ++ compilerPlugins ++ http4s ++ doobie
 )
 
-val sushiData = project.settings(commonSettings).in(file("sushi/data"))
+val shared = project.settings(commonSettings)
+
+val sushiData = project.settings(commonSettings).in(file("sushi/data")).dependsOn(shared)
 val sushi     = project.settings(commonSettings).dependsOn(sushiData)
 
-val paymentsData = project.settings(commonSettings).in(file("payments/data"))
+val paymentsData = project.settings(commonSettings).in(file("payments/data")).dependsOn(shared)
 val payments     = project.settings(commonSettings).dependsOn(paymentsData)
 
-val orderData = project.settings(commonSettings).in(file("orders/data"))
+val orderData = project.settings(commonSettings).in(file("orders/data")).dependsOn(shared)
 val orders    = project.settings(commonSettings).dependsOn(sushiData, paymentsData, orderData)
 
 val `sushi-place` =
