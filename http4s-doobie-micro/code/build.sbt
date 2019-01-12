@@ -15,6 +15,7 @@ val http4s = List(
   "io.circe"          %% "circe-generic"        % "0.10.1",
   "io.circe"          %% "circe-generic-extras" % "0.10.1",
   "io.chrisdavenport" %% "cats-par"             % "0.2.0",
+  "com.olegpy"        %% "meow-mtl"             % "0.2.0",
   "com.kubukoz"       %% "error-control-core"   % "0.1.0",
   "org.typelevel"     %% "kittens"              % "1.2.0"
 )
@@ -28,6 +29,10 @@ val doobie = List(
   "org.flywaydb"   % "flyway-core"       % "5.2.4"
 )
 
+val pureconfig = List(
+  "com.github.pureconfig" %% "pureconfig" % "0.10.1"
+)
+
 val commonSettings = Seq(
   scalaVersion := "2.12.8",
   scalacOptions ++= Options.all,
@@ -38,7 +43,7 @@ val commonSettings = Seq(
     "ch.qos.logback"    % "logback-classic" % "1.2.3",
     "io.chrisdavenport" %% "log4cats-slf4j" % "0.2.0",
     "org.scalatest"     %% "scalatest"      % "3.0.5" % Test
-  ) ++ compilerPlugins ++ http4s ++ doobie
+  ) ++ compilerPlugins ++ http4s ++ doobie ++ pureconfig
 )
 
 val shared = project.settings(commonSettings)

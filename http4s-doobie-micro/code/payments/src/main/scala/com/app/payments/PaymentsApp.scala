@@ -87,6 +87,6 @@ object PaymentService {
   def apply[F[_]](implicit F: PaymentService[F]): PaymentService[F] = F
 
   def paypalPaymentService[F[_]: Functor](implicit client: Client[F]): PaymentService[F] =
-    (amount: Long) =>
+    amount =>
       client.successful(Request[F](Method.POST, uri = Uri.unsafeFromString(s"/make-payment?amount=$amount"))).void
 }
