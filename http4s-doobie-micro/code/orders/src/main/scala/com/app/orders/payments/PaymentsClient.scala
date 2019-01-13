@@ -2,12 +2,11 @@ package com.app.orders.payments
 
 import cats.effect.Sync
 import cats.implicits._
-import cats.~>
 import com.app.orders.util.AskFunctions
 import com.app.payments.{PaymentMade, PaymentRequest}
 import eu.timepit.refined.types.numeric.PosLong
-import org.http4s.circe._
 import io.circe.syntax._
+import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.{Method, Request, Uri}
 import pureconfig.ConfigReader
@@ -15,8 +14,6 @@ import scalaz.deriving
 
 trait PaymentsClient[F[_]] { self =>
   def pay(amount: PosLong): F[PaymentMade]
-
-  def mapK[G[_]](f: F ~> G): PaymentsClient[G] = amount => f(self.pay(amount))
 }
 
 object PaymentsClient {
