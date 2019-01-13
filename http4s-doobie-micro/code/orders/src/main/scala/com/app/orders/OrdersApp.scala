@@ -3,16 +3,15 @@ package com.app.orders
 import cats.data.{EitherT, NonEmptyList}
 import cats.effect._
 import cats.implicits._
-import cats.mtl.DefaultApplicativeAsk
-import cats.temp.par.{nonEmptyParToNonEmptyParallel, NonEmptyPar}
+import cats.temp.par.NonEmptyPar
 import cats.{Applicative, ErrorControl, MonadError}
-import com.app.orders.OrderError.{AmountNotPositive, PaymentFailed, SetNotDivisible, SushiKindNotFound}
-import com.app.orders.config.OrderServiceConfiguration
+import com.app.orders.OrderError.{PaymentFailed, SetNotDivisible, SushiKindNotFound}
+import com.app.orders.config.{ConfigLoader, OrderServiceConfiguration}
 import com.app.orders.payments.PaymentsClient
 import com.app.orders.sushi.SushiClient
 import com.app.payments.PaymentMade
 import com.app.sushi.SushiKind
-import com.typesafe.config.ConfigFactory
+import eu.timepit.refined.types.numeric.{NonNegInt, PosInt, PosLong}
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.Encoder
@@ -20,6 +19,7 @@ import org.http4s.circe._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
+import org.http4s.dsl.impl.IntVar
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.{EntityEncoder, HttpRoutes}
@@ -31,30 +31,6 @@ object OrdersApp extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
     new OrdersServer[IO].run
-}
-
-trait ConfigLoader[F[_]] {
-  def loadConfig: F[OrderServiceConfiguration.Ask[F]]
-}
-
-object ConfigLoader {
-  def apply[F[_]](implicit F: ConfigLoader[F]): ConfigLoader[F] = F
-
-  def make[F[_]: Sync]: ConfigLoader[F] = new ConfigLoader[F] {
-    override val loadConfig: F[OrderServiceConfiguration.Ask[F]] = {
-      Sync[F]
-        .delay(ConfigFactory.load())
-        .flatMap { raw =>
-          Sync[F].catchNonFatal(pureconfig.loadConfigOrThrow[OrderServiceConfiguration](raw))
-        }
-        .map { config =>
-          new DefaultApplicativeAsk[F, OrderServiceConfiguration] {
-            override val applicative: Applicative[F]       = Applicative[F]
-            override val ask: F[OrderServiceConfiguration] = config.pure[F]
-          }
-        }
-    }
-  }
 }
 
 class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar: ConfigLoader](implicit F: ConcurrentEffect[F]) {
@@ -102,11 +78,18 @@ trait OrderRoutes[F[_]] {
 object OrderRoutes {
   implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
 
+  object PosIntVar {
+
+    def unapply(str: String): Option[PosInt] = IntVar.unapply(str).flatMap {
+      PosInt.from(_).toOption
+    }
+  }
+
   def instance[E[_]: OrderService: Sync, F[_]: Sync, Err: Encoder](
     implicit handler: ErrorControl[E, F, Err]): OrderRoutes[F] =
     new OrderRoutes[F] with Http4sDsl[F] {
       override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-        case POST -> Root / "order" / sushiKind / IntVar(amount) =>
+        case POST -> Root / "order" / sushiKind / PosIntVar(amount) =>
           handler.controlError {
             OrderService[E].order(sushiKind, amount).flatMap { totalPrice =>
               handler.accept(Ok(OrderedSushi(amount, sushiKind, totalPrice)))
@@ -117,7 +100,7 @@ object OrderRoutes {
 }
 
 trait OrderService[F[_]] {
-  def order(sushiKind: String, amount: Int): F[Long]
+  def order(sushiKind: String, amount: PosInt): F[PosLong]
 }
 
 object OrderService {
@@ -130,22 +113,19 @@ object OrderService {
     def checkKind(kind: String): Option[SushiKind] => F[SushiKind] =
       _.toRight(SushiKindNotFound(kind)).toEitherNel.liftTo[F]
 
-    def checkSetSize(requested: Int)(kind: SushiKind): F[Unit] = {
-      val rem = requested % kind.setSize
+    def checkSetSize(requested: PosInt)(kind: SushiKind): F[Unit] = {
+      val rem = requested.value % kind.setSize.value
 
       if (rem == 0) Applicative[F].unit
       else {
         OrderError
           .NelMonad[F]
-          .raiseError(SetNotDivisible(requested, kind.setSize, requested - rem).pure[NonEmptyList])
+          .raiseError(
+            SetNotDivisible(requested, kind.setSize, NonNegInt.unsafeFrom(requested.value - rem)).pure[NonEmptyList])
       }
     }
 
-    def checkAmount(requested: Int): F[Unit] = {
-      (requested > 0).guard[Option].liftTo[F](NonEmptyList.one(AmountNotPositive(requested)))
-    }
-
-    def makePayment(price: Long): F[PaymentMade] = handler.absolve {
+    def makePayment(price: PosLong): F[PaymentMade] = handler.absolve {
       PaymentsClient[G]
         .pay(price)
         .attempt
@@ -157,15 +137,13 @@ object OrderService {
         }
     }
 
-    override def order(sushiKind: String, amount: Int): F[Long] = {
-      val placeOrder = SushiClient[F]
+    override def order(sushiKind: String, amount: PosInt): F[PosLong] = {
+      SushiClient[F]
         .findKind(sushiKind)
         .flatMap(checkKind(sushiKind))
         .flatTap(checkSetSize(amount))
-        .map(_.price * amount)
+        .map(sushi => PosLong.unsafeFrom(amount.value * sushi.price.value))
         .flatTap(makePayment)
-
-      (checkAmount(amount), placeOrder).parMapN((_, totalPrice) => totalPrice)
     }
   }
 }
@@ -178,18 +156,18 @@ object OrderError {
 
   type NelErrorHandler[F[_], G[_]] = ErrorControl[F, G, NonEmptyList[OrderError]]
 
-  case class SushiKindNotFound(name: String)                               extends OrderError
-  case class SetNotDivisible(requested: Int, setSize: Int, remainder: Int) extends OrderError
-  case class AmountNotPositive(requested: Int)                             extends OrderError
-  case object PaymentFailed                                                extends OrderError
+  case class SushiKindNotFound(name: String)                                       extends OrderError
+  case class SetNotDivisible(requested: PosInt, setSize: PosInt, lower: NonNegInt) extends OrderError
+  case object PaymentFailed                                                        extends OrderError
 
   val message: OrderError => String = {
-    case SushiKindNotFound(name)      => show"Couldn't find sushi kind: $name"
-    case AmountNotPositive(requested) => show"The ordered amount must be positive, but it was $requested."
-    case PaymentFailed                => show"Payment failed. Please try again later"
+    case SushiKindNotFound(name) => show"Couldn't find sushi kind: $name"
+    case PaymentFailed           => show"Payment failed. Please try again later"
     case SetNotDivisible(requested, setSize, lower) =>
-      val instead = if (lower > 0) show"$lower or ${lower + setSize}" else show"${lower + setSize}"
-      show"The requested sushi kind is sold in sets of size $setSize (requested $requested, so maybe try ordering $instead instead?)"
+      val instead =
+        if (lower.value > 0) show"${lower.value} or ${lower.value + setSize.value}"
+        else show"${lower.value + setSize.value}"
+      show"The requested sushi kind is sold in sets of size ${setSize.value} (requested ${requested.value}, so maybe try ordering $instead instead?)"
   }
 
   implicit val encoder: Encoder[OrderError] = Encoder[String].contramap(message)

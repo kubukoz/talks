@@ -14,15 +14,19 @@ val http4s = List(
   "org.http4s"        %% "http4s-circe"         % "0.20.0-M4",
   "io.circe"          %% "circe-generic"        % "0.10.1",
   "io.circe"          %% "circe-generic-extras" % "0.10.1",
+  "io.circe"          %% "circe-refined"        % "0.10.1",
+  "eu.timepit"        %% "refined-cats"         % "0.9.3",
   "io.chrisdavenport" %% "cats-par"             % "0.2.0",
   "com.olegpy"        %% "meow-mtl"             % "0.2.0",
   "com.kubukoz"       %% "error-control-core"   % "0.1.0",
-  "org.typelevel"     %% "kittens"              % "1.2.0"
+  "org.typelevel"     %% "kittens"              % "1.2.0",
+  "io.scalaland"      %% "chimney"              % "0.3.0"
 )
 
 val doobie = List(
   "org.tpolecat"   %% "doobie-core"      % "0.6.0",
   "org.tpolecat"   %% "doobie-postgres"  % "0.6.0",
+  "org.tpolecat"   %% "doobie-refined"   % "0.6.0",
   "org.tpolecat"   %% "doobie-hikari"    % "0.6.0",
   "org.tpolecat"   %% "doobie-scalatest" % "0.6.0",
   "org.postgresql" % "postgresql"        % "42.2.4",

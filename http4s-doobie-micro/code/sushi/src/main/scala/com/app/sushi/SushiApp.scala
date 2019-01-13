@@ -92,6 +92,7 @@ object SushiRepository {
 
     override def findByName(name: String): F[Option[SushiKind]] = {
       import doobie.implicits._
+      import doobie.refined.implicits._
 
       sql"select kind.name, kind.set_size, kind.price from sushi_kinds kind where kind.name = $name"
         .query[SushiKind]
