@@ -3,6 +3,7 @@ package com.app.orders
 import cats.data.{EitherT, NonEmptyList}
 import cats.effect._
 import cats.implicits._
+import io.circe.syntax._
 import cats.temp.par.NonEmptyPar
 import cats.{Applicative, ErrorControl, MonadError}
 import com.app.orders.OrderError.{PaymentFailed, SetNotDivisible, SushiKindNotFound}
@@ -22,7 +23,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.impl.IntVar
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
-import org.http4s.{EntityEncoder, HttpRoutes}
+import org.http4s.HttpRoutes
 
 import scala.concurrent.ExecutionContext
 
@@ -76,8 +77,6 @@ trait OrderRoutes[F[_]] {
 }
 
 object OrderRoutes {
-  implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
-
   object PosIntVar {
 
     def unapply(str: String): Option[PosInt] = IntVar.unapply(str).flatMap {
@@ -90,11 +89,10 @@ object OrderRoutes {
     new OrderRoutes[F] with Http4sDsl[F] {
       override val routes: HttpRoutes[F] = HttpRoutes.of[F] {
         case POST -> Root / "order" / sushiKind / PosIntVar(amount) =>
-          handler.controlError {
-            OrderService[E].order(sushiKind, amount).flatMap { totalPrice =>
-              handler.accept(Ok(OrderedSushi(amount, sushiKind, totalPrice)))
-            }
-          }(BadRequest(_))
+          handler.control(OrderService[E].order(sushiKind, amount)) {
+            case Right(totalPrice) => Ok(OrderedSushi(amount, sushiKind, totalPrice).asJson)
+            case Left(e)           => BadRequest(e.asJson)
+          }
       }
     }
 }
