@@ -68,9 +68,10 @@ trait PaymentRoutes[F[_]] {
 }
 
 object PaymentRoutes {
+
   def instance[F[_]: Sync: PaymentService: Logger]: PaymentRoutes[F] = new PaymentRoutes[F] with Http4sDsl[F] {
     override val routes: HttpRoutes[F] = HttpRoutes.of {
-      case req @ (POST -> Root / "pay") =>
+      case req @ POST -> Root / "pay" =>
         req.decodeJson[PaymentRequest].flatMap { body =>
           Logger[F].info(show"Trying to pay: $body") *>
             PaymentService[F].pay(body.amount) *>
