@@ -1,19 +1,21 @@
 package com.app.sushi
 
-import cats.{Applicative, Monad}
+import cats.Monad
 import cats.implicits._
 import cats.effect._
+import com.app.sushi.util.StreamingMode.JsonArray
 import doobie.hikari.HikariTransactor
 import doobie._
+import fs2.Stream
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
-import io.circe.Encoder
 import org.flywaydb.core.Flyway
-import org.http4s.{EntityEncoder, HttpRoutes}
+import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.circe._
 import org.http4s.implicits._
+import io.circe.syntax._
 
 object SushiApp extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
@@ -65,7 +67,6 @@ trait SushiRoutes[F[_]] {
 }
 
 object SushiRoutes {
-  implicit def entityEncoderForCirce[F[_]: Applicative, A: Encoder]: EntityEncoder[F, A] = jsonEncoderOf
 
   def instance[F[_]: Sync: SushiRepository: Logger]: SushiRoutes[F] = new SushiRoutes[F] with Http4sDsl[F] {
     override val routes: HttpRoutes[F] = HttpRoutes.of {
@@ -75,14 +76,17 @@ object SushiRoutes {
             Logger[F].error(show"Couldn't find sushi kind ($name).") *> NotFound(
               show"A kind by the requested name was not found: $name")
           case Some(kind) =>
-            Logger[F].info(show"Found requested sushi kind ($name): $kind.") *> Ok(kind)
+            Logger[F].info(show"Found requested sushi kind ($name): $kind.") *> Ok(kind.asJson)
         }
+      case GET -> Root / "kinds" / "stream" =>
+        util.jsonUtils.toJsonArray(SushiRepository[F].all, mode = JsonArray)(Ok(_))
     }
   }
 }
 
 trait SushiRepository[F[_]] {
   def findByName(name: String): F[Option[SushiKind]]
+  def all: Stream[F, SushiKind]
 }
 
 object SushiRepository {
@@ -90,13 +94,20 @@ object SushiRepository {
 
   def instance[F[_]: Monad](implicit xa: Transactor[F]): SushiRepository[F] = new SushiRepository[F] {
 
-    override def findByName(name: String): F[Option[SushiKind]] = {
-      import doobie.implicits._
-      import doobie.refined.implicits._
+    import doobie.implicits._
+    import doobie.refined.implicits._
 
+    override def findByName(name: String): F[Option[SushiKind]] = {
       sql"select kind.name, kind.set_size, kind.price from sushi_kinds kind where kind.name = $name"
         .query[SushiKind]
         .option
+        .transact(xa)
+    }
+
+    override val all: Stream[F, SushiKind] = {
+      sql"select kind.name, kind.set_size, kind.price from sushi_kinds kind"
+        .query[SushiKind]
+        .stream
         .transact(xa)
     }
   }

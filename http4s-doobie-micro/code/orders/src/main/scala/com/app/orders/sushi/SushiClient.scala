@@ -5,7 +5,6 @@ import cats.implicits.none
 import cats.~>
 import com.app.orders.util.AskFunctions
 import com.app.sushi.SushiKind
-import io.circe.Decoder
 import org.http4s.circe._
 import org.http4s.client.{Client, UnexpectedStatus}
 import org.http4s.{Status, Uri}
