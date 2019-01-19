@@ -8,13 +8,13 @@ val compilerPlugins = List(
 )
 
 val http4s = List(
-  "org.http4s"        %% "http4s-blaze-server"  % "0.20.0-M4",
-  "org.http4s"        %% "http4s-blaze-client"  % "0.20.0-M4",
-  "org.http4s"        %% "http4s-dsl"           % "0.20.0-M4",
-  "org.http4s"        %% "http4s-circe"         % "0.20.0-M4",
-  "io.circe"          %% "circe-generic"        % "0.10.1",
-  "io.circe"          %% "circe-generic-extras" % "0.10.1",
-  "io.circe"          %% "circe-refined"        % "0.10.1",
+  "org.http4s"        %% "http4s-blaze-server"  % "0.20.0-M5",
+  "org.http4s"        %% "http4s-blaze-client"  % "0.20.0-M5",
+  "org.http4s"        %% "http4s-dsl"           % "0.20.0-M5",
+  "org.http4s"        %% "http4s-circe"         % "0.20.0-M5",
+  "io.circe"          %% "circe-generic"        % "0.11.1",
+  "io.circe"          %% "circe-generic-extras" % "0.11.1",
+  "io.circe"          %% "circe-refined"        % "0.11.1",
   "eu.timepit"        %% "refined-cats"         % "0.9.3",
   "io.chrisdavenport" %% "cats-par"             % "0.2.0",
   "com.olegpy"        %% "meow-mtl"             % "0.2.0",
