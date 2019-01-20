@@ -44,10 +44,41 @@
         <!--motivation-->
         <section>
             <section>
-                <h2>Agenda</h2>
+                <p>Let's play a game</p>
+                <h3 class="fragment">"Never have I ever"</h3>
+                <ul>
+                    <li class="fragment">Used Spring in a project larger than 100 lines</li>
+                    <li class="fragment">Added an annotation that required 3 more to work</li>
+                    <li class="fragment">Used Play and tried to upgrade it from 2.3 to 2.4</li>
+                    <li class="fragment">Cursed at dependency injection</li>
+                </ul>
+                <p class="fragment">Just some of the horrors of frameworks</p>
+            </section>
+            <section>
+                <h3>We can do better</h3>
+                <table>
+                    <tr><td>Dependency injection</td><td class="fragment">Passing arguments to functions</td></tr>
+                    <tr><td>Autowiring</td><td class="fragment">Implicits</td></tr>
+                    <tr><td>Beans</td><td class="fragment">Tagless final algebras</td></tr>
+                    <tr><td>Bean registration</td><td class="fragment">implicits/flatMap</td></tr>
+                    <tr><td>Runtime errors</td><td class="fragment">Compile-time errors</td></tr>
+                    <tr><td>Startup/shutdown hooks</td><td class="fragment">Resource monad</td></tr>
+                    <tr><td>Scheduled jobs</td><td class="fragment">Streams</td></tr>
+                </table>
             </section>
         </section>
-        <!--parallel-->
+        <section>
+            <section>
+                <h3>Resource leaking</h3>
+                <pre><code class="scala">pathPrefix("orders") {
+  post {
+    extractRequestEntity { oops => //oops, leaking the world
+      complete("ok")
+    }
+  }
+}</code></pre>
+            </section>
+        </section>
         <section>
             <h3>Links</h3>
             <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>

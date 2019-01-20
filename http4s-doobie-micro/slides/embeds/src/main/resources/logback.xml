@@ -12,4 +12,7 @@
     <root level="INFO">
         <appender-ref ref="ASYNC"/>
     </root>
+
+    <logger name="org.http4s.blaze" level="ERROR"/>
+    <logger name="org.http4s.client" level="ERROR"/>
 </configuration>
