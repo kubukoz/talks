@@ -218,11 +218,12 @@
             </section>
             <section>
                 <h3>Cancelation</h3>
-                <p>Happens only after asynchronous boundaries, which can be achieved by:</p>
+                <p>Happens only after asynchronous boundaries*, which can be achieved by:</p>
                 <ul>
                     <li class="fragment">Building an asynchronous IO with <code>IO.cancelable, IO.async, IO.bracket</code> (!)</li>
                     <li class="fragment">Using <code>IO.cancelBoundary</code> or <code>IO.shift</code></li>
                 </ul>
+                <p>* - plus runtime-inserted cancel boundaries every n steps in the run loop (as of 1.1.0)</p>
             </section>
             <section>
                 <h3>Races</h3>
