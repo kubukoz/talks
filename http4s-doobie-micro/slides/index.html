@@ -43,7 +43,7 @@
         </section>
         <section>
             <section>
-                <h3>Part 1: The problem</h3>
+                <h3>Part 1: The problem(s)</h3>
             </section>
             <section>
                 <p>Let's play a game</p>
@@ -57,9 +57,45 @@
                 <p class="fragment">Just some of the horrors of frameworks</p>
             </section>
             <section>
+                <h3>Microservices</h3>
+                <p class="fragment">A set of architectural patterns for building distributed systems</p>
+            </section>
+            <section>
+                <h3>Microservices are usually</h3>
+                <ul>
+                    <li class="fragment">small</li>
+                    <li class="fragment">doing one thing well</li>
+                    <li class="fragment">autonomous</li>
+                    <li class="fragment">isolated<br/><br/></li>
+                    <li class="fragment">hard to do</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Microservices are dangerous</h3>
+                <ul>
+                    <li class="fragment">lots of infrastructure needed</li>
+                    <li class="fragment">the network isn't reliable</li>
+                    <li class="fragment">debugging difficulty</li>
+                    <li class="fragment">generally challenging and complex</li>
+                    <li class="fragment">need constant evolution</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Microservices can help with</h3>
+                <ul>
+                    <li class="fragment">frequent, independent deployment</li>
+                    <li class="fragment">resilience</li>
+                    <li class="fragment">scalability</li>
+                    <li class="fragment">ease of development (within a service)</li>
+                </ul>
+            </section>
+            <section>
+                <h3>There's a lot to keep in mind</h3>
+                <img src="./images/microservice-patterns.jpg" style="width: 70%"/>
+                <p><a href="https://microservices.io/patterns/microservices.html" target="_blank">Source (microservices.io)</a></p>
+            </section>
                 <!--a word about microservices, the problems (that will eventually be easier to solve with the libs)-->
                 <!--what we need: compile-time checks, resource safety, -->
-            </section>
         </section>
         <section>
             <section>
@@ -69,13 +105,34 @@
             <section>
                 <h3>We can do better</h3>
                 <table>
-                    <tr><td>Dependency injection</td><td class="fragment">Passing arguments to functions</td></tr>
-                    <tr><td>Autowiring</td><td class="fragment">Implicits</td></tr>
-                    <tr><td>Beans</td><td class="fragment">Tagless final algebras</td></tr>
-                    <tr><td>Bean/component registration</td><td class="fragment">implicits/flatMap</td></tr>
-                    <tr><td>Runtime errors</td><td class="fragment">Compile-time errors</td></tr>
-                    <tr><td>Startup/shutdown hooks</td><td class="fragment">Resource monad</td></tr>
-                    <tr><td>Scheduled jobs</td><td class="fragment">Streams</td></tr>
+                    <tr>
+                        <td>Dependency injection</td>
+                        <td class="fragment">Passing arguments to functions</td>
+                    </tr>
+                    <tr>
+                        <td>Autowiring</td>
+                        <td class="fragment">Implicits</td>
+                    </tr>
+                    <tr>
+                        <td>Beans</td>
+                        <td class="fragment">Tagless final algebras</td>
+                    </tr>
+                    <tr>
+                        <td>Bean/component registration</td>
+                        <td class="fragment">implicits/flatMap</td>
+                    </tr>
+                    <tr>
+                        <td>Runtime errors</td>
+                        <td class="fragment">Compile-time errors</td>
+                    </tr>
+                    <tr>
+                        <td>Startup/shutdown hooks</td>
+                        <td class="fragment">Resource monad</td>
+                    </tr>
+                    <tr>
+                        <td>Scheduled jobs</td>
+                        <td class="fragment">Streams</td>
+                    </tr>
                 </table>
             </section>
         </section>
