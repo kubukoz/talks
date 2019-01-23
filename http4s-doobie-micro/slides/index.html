@@ -43,7 +43,7 @@
         </section>
         <section>
             <section>
-                <h3>Part 1: The problem(s)</h3>
+                <h2>Part 1: The problem(s)</h2>
             </section>
             <section>
                 <p>Let's play a game</p>
@@ -92,42 +92,78 @@
             <section>
                 <h3>There's a lot to keep in mind</h3>
                 <img src="./images/microservice-patterns.jpg" style="width: 70%"/>
-                <p><a href="https://microservices.io/patterns/microservices.html" target="_blank">Source (microservices.io)</a></p>
+                <p><a href="https://microservices.io/patterns/microservices.html" target="_blank">Source
+                    (microservices.io)</a></p>
             </section>
-                <!--a word about microservices, the problems (that will eventually be easier to solve with the libs)-->
-                <!--what we need: compile-time checks, resource safety, -->
+            <!--a word about microservices, the problems (that will eventually be easier to solve with the libs)-->
+            <!--what we need: compile-time checks, resource safety, -->
         </section>
         <section>
             <section>
-                <h3>Part 2: Functions over frameworks</h3>
+                <h2>Part 2: Functions over frameworks</h2>
+                <p>We can do better</p>
+            </section>
+            <section>
+                <h3>Dependency injection</h3>
+                <pre><code class="scala">class UserService @Inject()(userRepo: UserRepo) {
+  //...
+}</code></pre>
+                <div class="fragment">
+                    <p>vs</p>
+                    <pre><code class="scala">class UserService(userRepo: UserRepo)</code></pre>
+                </div>
+            </section>
+            <section>
+                <h3>Beans</h3>
+                <pre><code class="java">
+@Configuration class MyConfig {
+  @Bean DataSource dataSource(){
+    //some side-effecty things allocating some DB connection pool
+  }
+  @Bean UserRepository userRepository(DataSource dataSource) {
+    return new UserRepositoryImpl(dataSource);
+  }
+}</code></pre>
+                <div class="fragment">
+                    <p>vs</p>
+                    <pre><code class="scala">object MyModule {
+  def make: Resource[IO, Module] =
+    DataSource.make.map { implicit ds =>
+        implicit val userRepository: UserRepository[F] =
+            UserRepository.make
+        //...
+    }
+}</code></pre>
+                </div>
+            </section>
+            <section>
+                <h3>Startup/shutdown hooks</h3>
+                <pre><code class="scala">class DataSource @Inject()(
+  config: Config,
+  lifecycle: ApplicationLifecycle
+) {
+  val db = newHikariPool(config)
+
+  lifecycle.addStopHook {
+    db.close()
+  }
+}</code></pre>
+            </section>
+            <section>
+                <h3>Startup/shutdown hooks: FP</h3>
+                <pre><code class="scala">object DataSource {
+  def make(config: Config): Resource[IO, DataSource] =
+    Resource.make(newHikariPool(config))(_.close)
+      .map(new DataSource(_))
+}</code></pre>
             </section>
             <!--todo rewrite this as separate slides-->
             <section>
                 <h3>We can do better</h3>
                 <table>
                     <tr>
-                        <td>Dependency injection</td>
-                        <td class="fragment">Passing arguments to functions</td>
-                    </tr>
-                    <tr>
-                        <td>Autowiring</td>
-                        <td class="fragment">Implicits</td>
-                    </tr>
-                    <tr>
-                        <td>Beans</td>
-                        <td class="fragment">Tagless final algebras</td>
-                    </tr>
-                    <tr>
-                        <td>Bean/component registration</td>
-                        <td class="fragment">implicits/flatMap</td>
-                    </tr>
-                    <tr>
                         <td>Runtime errors</td>
                         <td class="fragment">Compile-time errors</td>
-                    </tr>
-                    <tr>
-                        <td>Startup/shutdown hooks</td>
-                        <td class="fragment">Resource monad</td>
                     </tr>
                     <tr>
                         <td>Scheduled jobs</td>
@@ -138,7 +174,7 @@
         </section>
         <section>
             <section>
-                <h3>Part 3: Libraries over frameworks</h3>
+                <h2>Part 3: Libraries over frameworks</h2>
                 <!--http4s, doobie - what they are-->
                 <!--how do they solve the problem-->
             </section>
