@@ -42,10 +42,10 @@ class OrdersServer[F[_]: Timer: ContextShift: Par: ConfigLoader](implicit F: Con
   private val serverResource: Resource[F, Unit] =
     for {
       implicit0(config: OrderServiceConfiguration.Ask[F]) <- Resource.liftF(ConfigLoader[F].loadConfig)
-      implicit0(client: Client[F])                        <- BlazeClientBuilder[F](ExecutionContext.global).resource
-      module                                              <- Resource.liftF(OrdersModule.make[F])
-      _                                                   <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(module.routes.orNotFound).resource.void
-      _                                                   <- Resource.liftF(module.streams.parTraverse(_.compile.drain))
+      implicit0(client: Client[F]) <- BlazeClientBuilder[F](ExecutionContext.global).resource
+      module <- Resource.liftF(OrdersModule.make[F])
+      _ <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(module.routes.orNotFound).resource.void
+      _ <- Resource.liftF(module.streams.parTraverse(_.compile.drain))
     } yield ()
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)
@@ -63,7 +63,7 @@ object OrdersModule {
 
     import com.olegpy.meow.hierarchy.deriveApplicativeAsk
 
-    implicit val sushiClient: SushiClient[E]       = SushiClient.fromClient[F].mapK(EitherT.liftK)
+    implicit val sushiClient: SushiClient[E] = SushiClient.fromClient[F].mapK(EitherT.liftK)
     implicit val paymentsClient: PaymentsClient[E] = PaymentsClient.fromClient[F].mapK(EitherT.liftK)
 
     (
@@ -72,15 +72,16 @@ object OrdersModule {
     ).mapN {
       case (implicit0(storage: OrderStorage[F]), implicit0(logger: Logger[F])) =>
         implicit val storageE: OrderStorage[E] = OrderStorage[F].mapK(EitherT.liftK)
-        implicit val service                   = OrderService.make[E]
+        implicit val service = OrderService.make[E]
 
         new OrdersModule[F] {
           override val routes: HttpRoutes[F] = OrderRoutes.instance[E, F, NonEmptyList[OrderError]].routes
           override val streams: List[Stream[F, Unit]] = {
-            val orderCountScheduledJob = Stream
-              .repeatEval(storage.countOrders)
-              .evalMap(count => Logger[F].info(show"Current order count: $count"))
-              .zipLeft(Stream.sleep[F](5.seconds).repeat)
+            val orderCountScheduledJob: Stream[F, Unit] =
+              Stream
+                .repeatEval(storage.countOrders)
+                .evalMap(count => Logger[F].info(show"Current order count: $count"))
+                .zipLeft(Stream.sleep[F](5.seconds).repeat)
 
             List(orderCountScheduledJob)
           }
