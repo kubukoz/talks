@@ -105,12 +105,10 @@
             </section>
             <section>
                 <h3>Dependency injection</h3>
-                <pre><code class="scala">class UserService @Inject()(userRepo: UserRepo) {
-  //...
-}</code></pre>
+                <pre><code class="scala" embed="di/UserServicePlay.scala" line-from="6" line-to="8"></code></pre>
                 <div class="fragment">
                     <p>vs</p>
-                    <pre><code class="scala">class UserService(userRepo: UserRepo)</code></pre>
+                    <pre><code class="scala" embed="di/UserServiceFP.scala" line-from="3" line-to="3"></code></pre>
                 </div>
             </section>
             <section>
@@ -126,36 +124,16 @@
 }</code></pre>
                 <div class="fragment">
                     <p>vs</p>
-                    <pre><code class="scala">object MyModule {
-  def make: Resource[IO, Module] =
-    DataSource.make.map { implicit ds =>
-        implicit val userRepository: UserRepository[F] =
-            UserRepository.make
-        //...
-    }
-}</code></pre>
+                    <pre><code class="scala" embed="di/MyModuleFP.scala" line-from="19" line-to="26"></code></pre>
                 </div>
             </section>
             <section>
                 <h3>Startup/shutdown hooks</h3>
-                <pre><code class="scala">class DataSource @Inject()(
-  config: Config,
-  lifecycle: ApplicationLifecycle
-) {
-  val db = newHikariPool(config)
-
-  lifecycle.addStopHook {
-    db.close()
-  }
-}</code></pre>
+                <pre><code class="scala" embed="di/PlayHooks.scala" line-from="19" line-to="28"></code></pre>
             </section>
             <section>
                 <h3>Startup/shutdown hooks: FP</h3>
-                <pre><code class="scala">object DataSource {
-  def make(config: Config): Resource[IO, DataSource] =
-    Resource.make(newHikariPool(config))(_.close)
-      .map(new DataSource(_))
-}</code></pre>
+                <pre><code class="scala" embed="di/FPHooks.scala" line-from="20" line-to="24"></code></pre>
             </section>
             <!--todo rewrite this as separate slides-->
             <section>
@@ -215,8 +193,12 @@
         return {
             insertCode: async elem => {
                 const path = elem.getAttribute("embed");
+                const lineFrom = elem.getAttribute("line-from") || 0
+                
+                const lineTo = elem.getAttribute("line-to") || undefined
 
-                elem.innerHTML = await fetchFileContents(path);
+                const fileContents = await fetchFileContents(path);
+                elem.innerHTML = fileContents.split("\n").slice(lineFrom - 1, lineTo).join("\n")
             },
             async init() {
                 const self = this;
