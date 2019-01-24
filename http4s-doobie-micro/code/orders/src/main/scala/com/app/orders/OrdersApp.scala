@@ -4,7 +4,7 @@ import cats.data.{EitherT, NonEmptyList}
 import cats.effect._
 import cats.implicits._
 import io.circe.syntax._
-import cats.temp.par.NonEmptyPar
+import cats.temp.par._
 import cats.{Applicative, ErrorControl}
 import com.app.orders.OrderError.{SetNotDivisible, SushiKindNotFound}
 import com.app.orders.config.{ConfigLoader, OrderServiceConfiguration}
@@ -21,9 +21,13 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.impl.IntVar
 import org.http4s.implicits._
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.chrisdavenport.log4cats.Logger
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.HttpRoutes
+import fs2.Stream
 
+import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 
 object OrdersApp extends IOApp {
@@ -33,7 +37,7 @@ object OrdersApp extends IOApp {
     new OrdersServer[IO].run
 }
 
-class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar: ConfigLoader](implicit F: ConcurrentEffect[F]) {
+class OrdersServer[F[_]: Timer: ContextShift: Par: ConfigLoader](implicit F: ConcurrentEffect[F]) {
 
   private val serverResource: Resource[F, Unit] =
     for {
@@ -41,6 +45,7 @@ class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar: ConfigLoader](implici
       implicit0(client: Client[F])                        <- BlazeClientBuilder[F](ExecutionContext.global).resource
       module                                              <- Resource.liftF(OrdersModule.make[F])
       _                                                   <- BlazeServerBuilder[F].bindHttp(port = 2000).withHttpApp(module.routes.orNotFound).resource.void
+      _                                                   <- Resource.liftF(module.streams.parTraverse(_.compile.drain))
     } yield ()
 
   val run: F[Nothing] = serverResource.use[Nothing](_ => F.never)
@@ -48,11 +53,12 @@ class OrdersServer[F[_]: Timer: ContextShift: NonEmptyPar: ConfigLoader](implici
 
 trait OrdersModule[F[_]] {
   def routes: HttpRoutes[F]
+  def streams: List[Stream[F, Unit]]
 }
 
 object OrdersModule {
 
-  def make[F[_]: Sync: Client: NonEmptyPar: OrderServiceConfiguration.Ask]: F[OrdersModule[F]] = {
+  def make[F[_]: Sync: Timer: Client: Par: OrderServiceConfiguration.Ask]: F[OrdersModule[F]] = {
     type E[A] = EitherT[F, NonEmptyList[OrderError], A]
 
     import com.olegpy.meow.hierarchy.deriveApplicativeAsk
@@ -60,15 +66,26 @@ object OrdersModule {
     implicit val sushiClient: SushiClient[E]       = SushiClient.fromClient[F].mapK(EitherT.liftK)
     implicit val paymentsClient: PaymentsClient[E] = PaymentsClient.fromClient[F].mapK(EitherT.liftK)
 
-    OrderStorage
-      .inMemory[F, E]
-      .map { implicit storage =>
-        implicit val service = OrderService.make[E]
+    (
+      OrderStorage.inMemory[F],
+      Slf4jLogger.fromClass(classOf[OrdersModule[F]])
+    ).mapN {
+      case (implicit0(storage: OrderStorage[F]), implicit0(logger: Logger[F])) =>
+        implicit val storageE: OrderStorage[E] = OrderStorage[F].mapK(EitherT.liftK)
+        implicit val service                   = OrderService.make[E]
 
         new OrdersModule[F] {
           override val routes: HttpRoutes[F] = OrderRoutes.instance[E, F, NonEmptyList[OrderError]].routes
+          override val streams: List[Stream[F, Unit]] = {
+            val orderCountScheduledJob = Stream
+              .repeatEval(storage.countOrders)
+              .evalMap(count => Logger[F].info(show"Current order count: $count"))
+              .zipLeft(Stream.sleep[F](5.seconds).repeat)
+
+            List(orderCountScheduledJob)
+          }
         }
-      }
+    }
   }
 }
 
@@ -112,7 +129,7 @@ trait OrderService[F[_]] {
 object OrderService {
   def apply[F[_]](implicit F: OrderService[F]): OrderService[F] = F
 
-  def make[F[_]: OrderStorage: SushiClient: OrderError.NelMonad: NonEmptyPar: PaymentsClient]: OrderService[F] =
+  def make[F[_]: OrderStorage: SushiClient: OrderError.NelMonad: Par: PaymentsClient]: OrderService[F] =
     new OrderService[F] {
 
       def checkKind(kind: String): Option[SushiKind] => F[SushiKind] =
