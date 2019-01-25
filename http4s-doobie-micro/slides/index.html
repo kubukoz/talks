@@ -211,6 +211,9 @@ prog1 <-> prog2</code></pre>
             <section>
                 <h3>Resource</h3>
                 <p>Manages resource acquisition and cleanup</p>
+                <pre><code class="scala smaller" embed="ResourceSimple.scala" line-from="5"></code></pre>
+            </section>
+            <section>
                 <pre><code class="scala smaller" embed="ResourceUsage.scala" line-from="19"></code></pre>
             </section>
             <section>
@@ -347,7 +350,7 @@ def countryById(id: CountryId): IO[Option[Country]] =
             </section>
             <section>
                 <p>End-to-end streaming with http4s</p>
-                <pre><code class="scala smaller" embed="doobie/DoobieHttp4s.scala" line-from="2"></code></pre>
+                <pre><code class="scala smaller" embed="doobie/DoobieHttp4s.scala" line-from="26"></code></pre>
             </section>
             <section>
                 <p>Query typechecking</p>
@@ -358,20 +361,32 @@ def countryById(id: CountryId): IO[Option[Country]] =
   )
 
   test("countryById") { check(countryById(CountryId(1L)))  }
-  test("countries")     { check(countries) }
+  test("countries") { check(countries) }
 }</code></pre>
             </section>
         </section>
         <section>
-            <h3>Links</h3>
-            <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>
-            <p>Code: <a href="https://git.io/fhsWd" target="_blank">https://git.io/fhsWd</a></p>
-        </section>
-        <section>
-            <h2>Thank you!</h2>
-            <p>Get in touch</p>
-            <p><a href="https://twitter.com/kubukoz" target="_blank">@kubukoz</a> | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a>
-            </p>
+            <section>
+                <h3>Links</h3>
+                <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>
+                <p>Code: <a href="https://git.io/fhsWd" target="_blank">https://git.io/fhoVH</a></p>
+            </section>
+            <section>
+                <h2>Questions</h2>
+                <div class="fragment">
+                    <p>Ask on gitter:</p>
+                    <a target="_blank" href="https://gitter.im/typelevel/cats">typelevel/cats</a><br/>
+                    <a target="_blank" href="https://gitter.im/typelevel/cats-effect">typelevel/cats-effect</a><br/>
+                    <a target="_blank" href="https://gitter.im/http4s/http4s">http4s/http4s</a><br/>
+                    <a target="_blank" href="https://gitter.im/tpolecat/doobie">tpolecat/doobie</a>
+                </div>
+            </section>
+            <section>
+                <h2>Thank you!</h2>
+                <p>Get in touch</p>
+                <p><a href="https://twitter.com/kubukoz" target="_blank">@kubukoz</a> | <a href="mailto:kubukoz@gmail.com">kubukoz@gmail.com</a></p>
+                <small>(Read my blog! <a href="https://blog.kubukoz.com" target="_blank">blog.kubukoz.com</a>)</small>
+            </section>
         </section>
     </div>
 </div>
