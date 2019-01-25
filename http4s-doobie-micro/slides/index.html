@@ -51,7 +51,7 @@
                 <ul>
                     <li class="fragment">Used Spring in a project larger than hello world</li>
                     <li class="fragment">Added an annotation that required 3 more to work</li>
-                    <li class="fragment">Used Play and tried to upgrade it from 2.3 to 2.4</li>
+                    <li class="fragment">Used Play and tried to upgrade from 2.3</li>
                     <li class="fragment">Cursed at dependency injection</li>
                 </ul>
                 <p class="fragment">Just some of the horrors of frameworks</p>
@@ -144,6 +144,7 @@
             <section>
                 <h3>Scheduled jobs: FP</h3>
                 <pre><code class="scala" embed="ScheduledFs2.scala" line-from="19" line-to="25"></code></pre>
+                <a href="https://fs2.co" target="_blank">fs2.co</a>
             </section>
             <section>
                 <h3>Resource lifetime</h3>
@@ -205,6 +206,8 @@ prog1 <-> prog2</code></pre>
             <section>
                 <h3>RT == no side effects == FP</h3>
             </section>
+        </section>
+        <section>
             <section>
                 <h3>Resource</h3>
                 <p>Manages resource acquisition and cleanup</p>
@@ -233,6 +236,8 @@ out/</code></pre>
                 <!--http4s, doobie - what they are-->
                 <!--how do they solve the problem-->
             </section>
+        </section>
+        <section>
             <section>
                 <h3>http4s</h3>
                 <div style="display: flex; flex-direction: row; align-items: center">
@@ -244,6 +249,7 @@ out/</code></pre>
                     </ul>
                     <pre style="margin-left: 20px; width: 45%"><code class="scala smaller" embed="http4s/Http4sMain.scala" line-from="10"></code></pre>
                 </div>
+                <a href="https://http4s.org" target="_blank">http4s.org</a>
             </section>
             <section>
                 <h3>Http4s Route</h3>
@@ -251,7 +257,9 @@ out/</code></pre>
                 <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request => IO[Response]</code></pre>
                 <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request => IO[Option[Response]]</code></pre>
                 <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request[IO] => IO[Option[Response[IO]]]</code></pre>
-                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes =
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">//Kleisli[F[_], A, B] ~= A => F[B]
+//OptionT[F, A] ~= F[Option[A]]
+type HttpRoutes =
   Kleisli[OptionT[IO, ?], Request[IO], Response[IO]]</code></pre>
                 <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes[F[_]] =
   Kleisli[OptionT[F, ?], Request[F], Response[F]]</code></pre>
@@ -284,19 +292,76 @@ out/</code></pre>
                 <p>Creating clients from routes - trivial server stubbing</p>
                 <pre><code class="scala smaller" embed="http4s/ClientFromRoutes.scala" line-from="18"></code></pre>
             </section>
+            <section>
+                <p>Calling endpoint in test = calling a function</p>
+                <pre><code class="scala" embed="http4s/RouteCallTest.scala" line-from="17"></code></pre>
+            </section>
         </section>
-        <!--<section>-->
-            <!--<section>-->
-                <!--<h3>Resource leaking (todo move this example to "why http4s")</h3>-->
-                <!--<pre><code class="scala">pathPrefix("orders") {-->
-  <!--post {-->
-    <!--extractRequestEntity { oops => //oops, leaking the world-->
-      <!--complete("ok")-->
-    <!--}-->
-  <!--}-->
-<!--}</code></pre>-->
-            <!--</section>-->
-        <!--</section>-->
+        <section>
+            <section>
+                <h3>doobie</h3>
+                <div style="display: flex; flex-direction: row; align-items: center">
+                    <ul style="font-size: .75em">
+                        <li>functional JDBC layer</li>
+                        <li>built on fs2 and cats-effect</li>
+                        <li>resource safe, supports streaming</li>
+                        <li>no reflection/magic - just write SQL</li>
+                    </ul>
+                    <pre style="margin-left: 20px; width: 45%"><code class="scala smaller">case class Country(name: String, capital: String)
+
+def countryById(id: CountryId): IO[Option[Country]] =
+  sql"""select c.name, c.capital
+        from countries
+        where c.id = $id"""
+  .query[Country]
+  .option
+  .transact(transactor)</code></pre>
+                </div>
+                <a href="https://tpolecat.github.io/doobie" target="_blank">tpolecat.github.io/doobie</a>
+            </section>
+            <section>
+                <p>Transactor</p>
+                <pre><code class="scala" embed="doobie/TransactorEx.scala" line-from="23" line-to="34"></code></pre>
+            </section>
+            <section>
+                <p>Query</p>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">def countryById(id: CountryId): Query0[Country] =
+  sql"""select c.name, c.capital
+        from countries
+        where c.id = $id""".query[Country]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">val countries: Query0[Country] =
+  sql"select c.name, c.capital from countries"
+    .query[Country]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">val country1: ConnectionIO[Option[Country]] =
+  countryById(CountryId(1L)).option</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">val countriesStream: Stream[ConnectionIO, Country] =
+  countries.stream</code></pre>
+            </section>
+            <section>
+                <p>ConnectionIO -> IO</p>
+                <pre><code class="scala">transactor.use { xa =>
+  country1
+    .transact(xa)
+    .flatMap(putStrLn(_)) // Some(Country(...))
+}</code></pre>
+            </section>
+            <section>
+                <p>End-to-end streaming with http4s</p>
+                <pre><code class="scala smaller" embed="doobie/DoobieHttp4s.scala" line-from="2"></code></pre>
+            </section>
+            <section>
+                <p>Query typechecking</p>
+                <pre><code class="scala smaller">class AnalysisTestScalaCheck extends FunSuite with Matchers with IOChecker {
+
+  val transactor = Transactor.fromDriverManager[IO](
+    "org.postgresql.Driver", "jdbc:postgresql:world", "postgres", ""
+  )
+
+  test("countryById") { check(countryById(CountryId(1L)))  }
+  test("countries")     { check(countries) }
+}</code></pre>
+            </section>
+        </section>
         <section>
             <h3>Links</h3>
             <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>
