@@ -15,7 +15,7 @@ object ConfigLoader {
   def make[F[_]: Sync]: ConfigLoader[F] = new ConfigLoader[F] {
     override val loadConfig: F[OrderServiceConfiguration.Ask[F]] = {
       Sync[F]
-        .delay(ConfigFactory.load())
+        .delay(ConfigFactory.load(getClass.getClassLoader))
         .flatMap { raw =>
           Sync[F].catchNonFatal(pureconfig.loadConfigOrThrow[OrderServiceConfiguration](raw))
         }
