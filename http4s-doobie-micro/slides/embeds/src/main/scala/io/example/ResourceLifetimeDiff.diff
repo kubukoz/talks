@@ -1,0 +1,12 @@
+object UserRoutes {
+
+- def make[F[_]: Sync: UserRepository]: HttpRoutes[F] = {
++ def make[F[_]: Async: ContextShift]: HttpRoutes[F] = {
+    val dsl = new Http4sDsl[F] {}
+    import dsl._
+
+    HttpRoutes.of[F] {
+-     case GET -> Root / "users" => UserRepository[F].findAll.map(_.asJson)
++     case GET -> Root / "users" => UserRepository.make[F].use(_.findAll).map(_.asJson)
+    }
+}

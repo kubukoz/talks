@@ -35,8 +35,8 @@
             <section>
                 <h3><a>Lightweight, functional microservices</a></h3>
                 <h2>with http4s and doobie</h2>
-                <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small>
-                <small>f(by) | January 25, 2019 | Minsk, Belarus</small>
+                <small>Jakub Kozłowski - Scala Developer, Ocado Technology</small><br/>
+                <small>f(by) Scala Night | January 25, 2019 | Minsk, Belarus</small>
                 <br/><br/>
                 <small>Slides: <a href="https://git.io/fhsW5" target="_blank">git.io/fhsW5</a></small>
             </section>
@@ -49,7 +49,7 @@
                 <p>Let's play a game</p>
                 <h3 class="fragment">"Never have I ever"</h3>
                 <ul>
-                    <li class="fragment">Used Spring in a project larger than 100 lines</li>
+                    <li class="fragment">Used Spring in a project larger than hello world</li>
                     <li class="fragment">Added an annotation that required 3 more to work</li>
                     <li class="fragment">Used Play and tried to upgrade it from 2.3 to 2.4</li>
                     <li class="fragment">Cursed at dependency injection</li>
@@ -95,8 +95,6 @@
                 <p><a href="https://microservices.io/patterns/microservices.html" target="_blank">Source
                     (microservices.io)</a></p>
             </section>
-            <!--a word about microservices, the problems (that will eventually be easier to solve with the libs)-->
-            <!--what we need: compile-time checks, resource safety, -->
         </section>
         <section>
             <section>
@@ -118,8 +116,7 @@
             </section>
             <section>
                 <h3>Beans</h3>
-                <pre><code class="java">
-@Configuration class MyConfig {
+                <pre><code class="java">@Configuration class MyConfig {
   @Bean DataSource dataSource(){
     //some side-effecty things allocating some DB connection pool
   }
@@ -142,45 +139,164 @@
             </section>
             <section>
                 <h3>Scheduled jobs</h3>
-                <pre><code class="java" embed="ScheduledSpring.java" line-from="7"></code></pre>
+                <pre><code class="java" embed="ScheduledSpring.java" line-from="9"></code></pre>
             </section>
             <section>
                 <h3>Scheduled jobs: FP</h3>
                 <pre><code class="scala" embed="ScheduledFs2.scala" line-from="19" line-to="25"></code></pre>
             </section>
-            <!--todo rewrite this as separate slides-->
             <section>
-                <h3>We can do better</h3>
-                <table>
-                    <tr>
-                        <td>Runtime errors</td>
-                        <td class="fragment">Compile-time errors</td>
-                    </tr>
-                    <tr>
-                        <td class="fragment">Streams</td>
-                    </tr>
-                </table>
+                <h3>Resource lifetime</h3>
+                <pre><code class="java smaller" embed="spring/UserControllerSingleton.java" line-from="22"></code></pre>
+                <div>
+                    <pre class="fragment"><code class="java smaller" embed="spring/UserControllerScopedFailed.java" line-from="5"></code></pre>
+                    <small class="fragment">NPE when called</small>
+                </div>
+                <img src="./images/spring/spring-3.jpg" class="fragment"/>
+                <img src="./images/spring/spring-4.jpg" class="fragment"/>
+            </section>
+            <section>
+                <h3>Resource lifetime: global to per-request</h3>
+                <pre><code class="diff smaller" embed="ResourceLifetimeDiff.diff"></code></pre>
             </section>
         </section>
         <section>
             <section>
-                <h2>Part 3: Libraries over frameworks</h2>
+                <h2>Part 3: How FP fits in</h2>
+            </section>
+            <section>
+                <h2>What's FP?</h2>
+                <p>Lack of side effects</p>
+            </section>
+            <section>
+                <h3>Definition of a side effect</h3>
+                <p>Lack of referential transparency</p>
+            </section>
+            <section>
+                <h3>Referential transparency</h3>
+                <pre><code>for any expression `a`
+given `x = a`
+
+All occurrences of `x` in a program `p` can be replaced with `a`
+
+//Example
+val prog1 = (x, x)
+val prog2 = (a, a)
+
+//both sides equivalent
+prog1 <-> prog2</code></pre>
+            </section>
+            <section>
+                <h3>Pure expressions are RT</h3>
+                <pre><code embed="rt/rt-expressions.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Side effects?</h3>
+                <pre><code embed="rt/impure-sideeffects.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>Future</h3>
+                <pre><code embed="rt/impure-future.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>IO</h3>
+                <pre><code embed="rt/rt-io.sc" class="scala"></code></pre>
+            </section>
+            <section>
+                <h3>RT == no side effects == FP</h3>
+            </section>
+            <section>
+                <h3>Resource</h3>
+                <p>Manages resource acquisition and cleanup</p>
+                <pre><code class="scala smaller" embed="ResourceUsage.scala" line-from="19"></code></pre>
+            </section>
+            <section>
+                <h3>Acquire/cleanup order</h3>
+                <pre><code>Acquiring lock1
+Acquiring file reader: .gitignore
+Acquiring lock2
+Finished reading lines
+
+Releasing lock2
+Releasing file reader: .gitignore
+Releasing lock1
+.idea/
+*.iml
+*.iws
+*.eml
+out/</code></pre>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h2>Part 4: Libraries over frameworks</h2>
                 <!--http4s, doobie - what they are-->
                 <!--how do they solve the problem-->
             </section>
-        </section>
-        <section>
             <section>
-                <h3>Resource leaking (todo move this example to "why http4s")</h3>
-                <pre><code class="scala">pathPrefix("orders") {
-  post {
-    extractRequestEntity { oops => //oops, leaking the world
-      complete("ok")
-    }
-  }
-}</code></pre>
+                <h3>http4s</h3>
+                <div style="display: flex; flex-direction: row; align-items: center">
+                    <ul style="font-size: .75em">
+                        <li>functional http interface in Scala</li>
+                        <li>multiple backends</li>
+                        <li>built on fs2 and cats-effect</li>
+                        <li>resource safe, supports streaming</li>
+                    </ul>
+                    <pre style="margin-left: 20px; width: 45%"><code class="scala smaller" embed="http4s/Http4sMain.scala" line-from="10"></code></pre>
+                </div>
+            </section>
+            <section>
+                <h3>Http4s Route</h3>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request => Response</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request => IO[Response]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request => IO[Option[Response]]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes = Request[IO] => IO[Option[Response[IO]]]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes =
+  Kleisli[OptionT[IO, ?], Request[IO], Response[IO]]</code></pre>
+                <pre class="fragment fade-in-then-semi-out"><code class="scala">type HttpRoutes[F[_]] =
+  Kleisli[OptionT[F, ?], Request[F], Response[F]]</code></pre>
+            </section>
+            <section>
+                <img src="images/brains-routes.png" style="width: 30%"/>
+            </section>
+            <section>
+                <p>If a route is just a function</p>
+                <p class="fragment">...then we can modify its input and output</p>
+            </section>
+            <section>
+                <p>Example: Response timing</p>
+                <pre><code class="scala" embed="http4s/Http4sTimingMiddleware.scala" line-from="12"></code></pre>
+            </section>
+            <section>
+                <p>Built-in server middleware (0.20.0-M5)</p>
+                <img src="images/http4s-server-middleware.png" style="width: 25%"/>
+            </section>
+            <section>
+                <p>What about clients?</p>
+                <pre><code class="scala" embed="http4s/ClientSimplified.scala" line-from="5"></code></pre>
+                <p class="fragment">Just another function</p>
+            </section>
+            <section>
+                <p>Built-in client middleware (0.20.0-M5)</p>
+                <img src="images/http4s-client-middleware.png" style="width: 50%"/>
+            </section>
+            <section>
+                <p>Creating clients from routes - trivial server stubbing</p>
+                <pre><code class="scala smaller" embed="http4s/ClientFromRoutes.scala" line-from="18"></code></pre>
             </section>
         </section>
+        <!--<section>-->
+            <!--<section>-->
+                <!--<h3>Resource leaking (todo move this example to "why http4s")</h3>-->
+                <!--<pre><code class="scala">pathPrefix("orders") {-->
+  <!--post {-->
+    <!--extractRequestEntity { oops => //oops, leaking the world-->
+      <!--complete("ok")-->
+    <!--}-->
+  <!--}-->
+<!--}</code></pre>-->
+            <!--</section>-->
+        <!--</section>-->
         <section>
             <h3>Links</h3>
             <p>Slides: <a href="https://git.io/fhsW5" target="_blank">https://git.io/fhsW5</a></p>
@@ -205,12 +321,12 @@
         return {
             insertCode: async elem => {
                 const path = elem.getAttribute("embed");
-                const lineFrom = elem.getAttribute("line-from") || 0
-                
+                const lineFrom = elem.getAttribute("line-from") || 1
+
                 const lineTo = elem.getAttribute("line-to") || undefined
 
                 const fileContents = await fetchFileContents(path);
-                elem.innerHTML = fileContents.split("\n").slice(lineFrom - 1, lineTo).join("\n")
+                elem.textContent = fileContents.split("\n").slice(lineFrom - 1, lineTo).join("\n")
             },
             async init() {
                 const self = this;

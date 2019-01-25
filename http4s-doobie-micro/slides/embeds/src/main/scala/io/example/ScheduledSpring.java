@@ -1,3 +1,5 @@
+package io.example;
+
 @interface Scheduled {
     int fixedRate();
 }
