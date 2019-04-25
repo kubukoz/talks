@@ -13,6 +13,9 @@ import cats.effect.Resource
 import org.http4s.server.Server
 import org.http4s.Request
 import org.http4s.dsl.io._
+import fs2.concurrent.Queue
+import org.http4s.server.websocket.WebSocketBuilder
+import org.http4s.websocket.WebSocketFrame
 
 object Main extends IOApp {
 
@@ -37,6 +40,14 @@ object Main extends IOApp {
         val response = client.stream(request).flatMap(_.body)
 
         Ok(response)
+
+      case GET -> Root / "ws" / "echo" =>
+        Queue.bounded[IO, WebSocketFrame](100).flatMap { q =>
+          WebSocketBuilder[IO].build(
+            send = q.dequeue,
+            receive = q.enqueue
+          )
+        }
     }
   }
 
