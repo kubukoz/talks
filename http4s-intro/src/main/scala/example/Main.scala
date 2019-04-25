@@ -11,11 +11,10 @@ import scala.concurrent.ExecutionContext
 import org.http4s.Uri
 import cats.effect.Resource
 import org.http4s.server.Server
+import org.http4s.Request
 import org.http4s.dsl.io._
 
 object Main extends IOApp {
-
-  import org.http4s.Request
 
   def routes(client: Client[IO]): HttpRoutes[IO] = {
     val request = Request[IO](uri = Uri.uri("https://http4s.org"))
@@ -42,13 +41,27 @@ object Main extends IOApp {
   }
 
   val server: Resource[IO, Server[IO]] =
-    BlazeClientBuilder[IO](ExecutionContext.global).resource.flatMap { client =>
-      BlazeServerBuilder[IO]
-        .withHttpApp(routes(client).orNotFound)
-        .bindHttp(port = 8080)
-        .resource
+    BlazeClientBuilder[IO](ExecutionContext.global).resource.flatMap {
+      client =>
+        BlazeServerBuilder[IO]
+          .withHttpApp(routes(client).orNotFound)
+          .bindHttp(port = 8080)
+          .resource
     }
 
   def run(args: List[String]): IO[ExitCode] =
     server.use(_ => IO.never)
+}
+
+import cats.effect.Bracket
+
+object BaseUrl {
+
+  def apply[F[_]](base: Uri)(
+    client: Client[F]
+  )(implicit F: Bracket[F, Throwable]): Client[F] = {
+    Client.apply[F] { req =>
+      client.run(req.withUri(base.resolve(req.uri)))
+    }
+  }
 }
