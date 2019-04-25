@@ -56,7 +56,7 @@ object Main extends IOApp {
       client =>
         BlazeServerBuilder[IO]
           .withHttpApp(routes(client).orNotFound)
-          .bindHttp(port = 8080)
+          .bindHttp(port = 8080, host = "0.0.0.0")
           .resource
     }
 
