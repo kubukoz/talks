@@ -4,7 +4,6 @@ import cats.effect.{ExitCode, IO}
 import cats.effect.IOApp
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.HttpRoutes
-import org.http4s.implicits._
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.ExecutionContext
@@ -16,11 +15,13 @@ import org.http4s.dsl.io._
 import fs2.concurrent.Queue
 import org.http4s.server.websocket.WebSocketBuilder
 import org.http4s.websocket.WebSocketFrame
+import org.http4s.Http4sLiteralSyntax
+import org.http4s.implicits._
 
 object Main extends IOApp {
 
   def routes(client: Client[IO]): HttpRoutes[IO] = {
-    val request = Request[IO](uri = Uri.uri("https://http4s.org"))
+    val request = Request[IO](uri = uri"https://http4s.org")
 
     HttpRoutes.of[IO] {
       case GET -> Root / "hello" => Ok("Hello world!")
