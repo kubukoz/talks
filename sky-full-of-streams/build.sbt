@@ -10,7 +10,9 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.apache.geronimo.specs" % "geronimo-jms_1.1_spec" % "1.1.1",
     "org.typelevel" %% "cats-effect" % "1.4.0",
-    "co.fs2" %% "fs2-io" % "1.0.5"
+    "co.fs2" %% "fs2-io" % "1.0.5",
+    "org.scalacheck" %% "scalacheck"  % "1.13.5",
+    "org.scalatest" %% "scalatest" % "3.0.8"
   ) ++ compilerPlugins
 )
 

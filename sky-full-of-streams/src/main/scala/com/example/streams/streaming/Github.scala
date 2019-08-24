@@ -6,10 +6,10 @@ import cats.Functor
 import cats.effect.IO
 import cats.implicits._
 
-//example: traverse a list multiple times without effects
-//example: traverse a list multiple times with effects
 //websockets
 //database streaming
+//example: traverse a list multiple times without effects
+//example: traverse a list multiple times with effects
 
 class Github(projects: Projects, issues: Issues) {
   import fs2._
