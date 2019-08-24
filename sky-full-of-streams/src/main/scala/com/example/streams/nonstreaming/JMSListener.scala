@@ -7,7 +7,11 @@ import org.apache.activemq.ActiveMQConnectionFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) {
+trait Listener {
+  def create[A: Decoder](handler: A => Unit): Unit
+}
+
+class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) extends Listener {
 
   def create[A: Decoder](handler: A => Unit): Unit =
     withConsumer { consumer =>
@@ -46,14 +50,14 @@ class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) {
   }
 }
 
-final case class Event(id: String)
-
-object Demo {
+object JMSDemo {
 
   def main(args: Array[String]): Unit = {
     val cf: ConnectionFactory = new ActiveMQConnectionFactory("admin", "admin", "tcp://localhost:61616")
 
-    new JMSListener(cf, LoggerFactory.getLogger(classOf[JMSListener])).create[String] { msg =>
+    val listener: Listener = new JMSListener(cf, LoggerFactory.getLogger(classOf[JMSListener]))
+
+    listener.create[String] { msg =>
       println(msg)
     }
   }
