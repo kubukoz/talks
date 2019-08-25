@@ -27,7 +27,17 @@ class Traversing(
       .flatMap(_.traverse(findIssue))
       .map(_.filterNot(excludedIssue))
       .map(_.filter(_.creator === me))
+}
 
+class TraversingStreams(
+  findProject: ProjectId => IO[Project],
+  findIssues: Project => IO[List[IssueId]],
+  findIssue: IssueId => IO[Issue],
+  allProjectIds: IO[List[ProjectId]],
+  me: UserId
+) {
+
+  type F[A] = fs2.Stream[IO, A]
   import fs2._
 
   def withFs2(

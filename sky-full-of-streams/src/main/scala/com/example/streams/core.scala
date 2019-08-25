@@ -18,7 +18,11 @@ object core {
   }
 
   trait Issues {
-    def getPage(projectId: ProjectId, afterIssue: Option[IssueId]): IO[List[Issue]]
+
+    def getPage(
+      projectId: ProjectId,
+      afterIssue: Option[IssueId]
+    ): IO[List[Issue]]
   }
 
 }
