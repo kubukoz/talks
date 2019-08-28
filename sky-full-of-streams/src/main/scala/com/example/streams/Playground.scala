@@ -52,9 +52,6 @@ object Playground extends IOApp {
   val exponentialWait =
     Stream.iterate(1.0)(_ * 2).map(_.millis).evalMap(IO.sleep).bufferAll
 
-  // package object fs2 {
-  //   type Pure[A] <: Nothing
-  // }
   val stars = Stream
     .emits(1 to 40)
     .evalMap { n =>
