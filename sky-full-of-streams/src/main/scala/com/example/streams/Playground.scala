@@ -3,8 +3,9 @@ package com.example.streams
 import cats.effect._
 import cats.~>
 
-import scala.util.Random
 import scala.concurrent.duration._
+import scala.util.Random
+import cats.data.`package`.State
 
 object Playground extends IOApp {
 
@@ -29,6 +30,21 @@ object Playground extends IOApp {
   import cats.implicits._
 
   val now = IO(System.currentTimeMillis())
+
+  import scala.util.Random
+
+  val exponentialWait =
+    Stream.iterate(1.0)(_ * 1.15).map(_.millis).evalMap(IO.sleep)
+
+  val stars = Stream
+    .emits(1 to 40)
+    .evalMap { n =>
+      IO { Random.nextInt(n * 2) }
+    }
+    .zipLeft(exponentialWait)
+    .flatMap { a =>
+      Stream.emits(0 to a).map(_ => "*").reduce(_ ++ _)
+    } ++ Stream.emit("The end").covary[IO].showLinesStdOut.drain
 
   val stepByStep = Stream
     .eval(now)
