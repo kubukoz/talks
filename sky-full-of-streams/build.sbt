@@ -14,6 +14,8 @@ val commonSettings = Seq(
     "io.chrisdavenport" %% "log4cats-slf4j" % "0.3.0",
     "ch.qos.logback" % "logback-classic" % "1.2.3",
     "co.fs2" %% "fs2-io" % "1.0.5",
+    "io.circe" %% "circe-generic" % "0.11.1",
+    "io.circe" %% "circe-parser" % "0.11.1",
     "dev.profunktor" %% "console4cats" % "0.7.0",
     "org.scalacheck" %% "scalacheck" % "1.13.5",
     "org.scalatest" %% "scalatest" % "3.0.8"

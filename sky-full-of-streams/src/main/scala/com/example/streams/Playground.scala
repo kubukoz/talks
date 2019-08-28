@@ -5,7 +5,6 @@ import cats.~>
 
 import scala.concurrent.duration._
 import scala.util.Random
-import cats.data.`package`.State
 
 object Playground extends IOApp {
 
@@ -33,9 +32,29 @@ object Playground extends IOApp {
 
   import scala.util.Random
 
-  val exponentialWait =
-    Stream.iterate(1.0)(_ * 1.15).map(_.millis).evalMap(IO.sleep)
+  implicit class DebugStream[F[_]: Sync, A](f: Stream[F, A]) {
+    def debug(tag: String): Stream[F, A] = f.evalTap(e => Sync[F].delay(println(tag + ": " + e)))
+  }
 
+  val numbers: Stream[IO, Int] = Stream.random[IO]
+  def showOut(i: Int) = IO(println(i))
+  numbers //[-467868903, 452477122, 1143039958, ...]
+    .debug("random")
+    .map(_.abs % 10 + 1) //[-2, 3, 9]
+    .take(3)
+    .debug("map")
+    .flatMap { until =>
+      Stream.range(until, until + 3)
+    } //[0..2, 0..8]
+    .debug("flatMap")
+    .evalMap(showOut)
+
+  val exponentialWait =
+    Stream.iterate(1.0)(_ * 2).map(_.millis).evalMap(IO.sleep).bufferAll
+
+  // package object fs2 {
+  //   type Pure[A] <: Nothing
+  // }
   val stars = Stream
     .emits(1 to 40)
     .evalMap { n =>
@@ -66,7 +85,5 @@ object Playground extends IOApp {
   import cats.effect.Console.io._
 
   def run(args: List[String]): IO[ExitCode] =
-    stepByStep
-      .flatMap(_.traverse(putStrLn(_)))
-      .map(_ => ExitCode.Success)
+    stepByStep.flatMap(_.traverse(putStrLn(_))).map(_ => ExitCode.Success)
 }
