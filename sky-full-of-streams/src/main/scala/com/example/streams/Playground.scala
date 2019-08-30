@@ -62,23 +62,23 @@ object Playground extends IOApp {
       )
     }
 
-  val clientBytes = Stream
-    .resource(acgResource)
-    .flatMap { implicit acg =>
-      fs2
-        .io
-        .tcp
-        .Socket
-        .server[IO](
-          new InetSocketAddress("0.0.0.0", 8080)
-        )
-    }
+  val server = Stream.resource(acgResource).flatMap { implicit acg =>
+    fs2
+      .io
+      .tcp
+      .Socket
+      .server[IO](
+        new InetSocketAddress("0.0.0.0", 8080)
+      )
+  }
+
+  val logSocket = Resource.make(IO(println("new socket")))(
+    _ => IO(println("closed socket"))
+  )
+
+  val clientBytes = server
+    .map(logSocket *> _)
     .map {
-      Resource.make(IO(println("new socket")))(
-        _ => IO(println("closed socket"))
-      ) *> _
-    }
-    .map(
       Stream
         .resource(_)
         .scope
@@ -86,7 +86,7 @@ object Playground extends IOApp {
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
         .unchunk
-    )
+    }
     .parJoin(maxOpen = 10)
 
   def run(args: List[String]): IO[ExitCode] =
