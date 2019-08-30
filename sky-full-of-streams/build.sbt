@@ -1,5 +1,6 @@
 val compilerPlugins = List(
-  compilerPlugin("org.scalamacros" % "paradise" % "2.1.1").cross(CrossVersion.full),
+  compilerPlugin("org.scalamacros" % "paradise" % "2.1.1")
+    .cross(CrossVersion.full),
   compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
   compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 )
@@ -22,4 +23,7 @@ val commonSettings = Seq(
   ) ++ compilerPlugins
 )
 
-val streams = project.in(file(".")).settings(commonSettings)
+val streams = project
+  .in(file("."))
+  .settings(commonSettings)
+  .enablePlugins(JavaAppPackaging)

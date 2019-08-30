@@ -11,7 +11,8 @@ trait Listener {
   def create[A: Decoder](handler: A => Unit): Unit
 }
 
-class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) extends Listener {
+class JMSListener(connectionFactory: ConnectionFactory, logger: Logger)
+  extends Listener {
 
   def create[A: Decoder](handler: A => Unit): Unit =
     withConsumer { consumer =>
@@ -30,7 +31,8 @@ class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) extends 
     val conn = connectionFactory.createConnection()
     try {
       conn.start()
-      val ses = conn.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE)
+      val ses =
+        conn.createSession(false, javax.jms.Session.AUTO_ACKNOWLEDGE)
 
       try {
         ses.run()
@@ -49,7 +51,7 @@ class JMSListener(connectionFactory: ConnectionFactory, logger: Logger) extends 
 
   }
 }
-
+/*
 object JMSDemo {
 
   def main(args: Array[String]): Unit = {
@@ -62,3 +64,4 @@ object JMSDemo {
     }
   }
 }
+ */
