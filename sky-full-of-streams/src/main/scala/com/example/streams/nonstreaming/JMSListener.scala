@@ -51,17 +51,21 @@ class JMSListener(connectionFactory: ConnectionFactory, logger: Logger)
 
   }
 }
-/*
+
 object JMSDemo {
 
   def main(args: Array[String]): Unit = {
-    val cf: ConnectionFactory = new ActiveMQConnectionFactory("admin", "admin", "tcp://localhost:61616")
+    val cf: ConnectionFactory = new ActiveMQConnectionFactory(
+      "admin",
+      "admin",
+      "tcp://localhost:61616"
+    )
 
-    val listener: Listener = new JMSListener(cf, LoggerFactory.getLogger(classOf[JMSListener]))
+    val listener: Listener =
+      new JMSListener(cf, LoggerFactory.getLogger(classOf[JMSListener]))
 
     listener.create[String] { msg =>
       println(msg)
     }
   }
 }
- */

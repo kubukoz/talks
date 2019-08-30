@@ -87,14 +87,23 @@ object Listener {
         .through(decode[A])
   }
 }
-/*
+
 object JMSDemo extends IOApp {
 
-  implicit val logger: Logger[IO] = Slf4jLogger.getLoggerFromClass[IO](classOf[Listener[IO]])
+  implicit val logger: Logger[IO] =
+    Slf4jLogger.getLoggerFromClass[IO](classOf[Listener[IO]])
 
   override def run(args: List[String]): IO[ExitCode] =
     Stream
-      .eval(IO(new ActiveMQConnectionFactory("admin", "admin", "tcp://localhost:61616")))
+      .eval(
+        IO(
+          new ActiveMQConnectionFactory(
+            "admin",
+            "admin",
+            "tcp://localhost:61616"
+          )
+        )
+      )
       .flatMap(Listener.jms(_).run[String])
       .evalMap { msg =>
         putStrLn(msg)
@@ -104,4 +113,3 @@ object JMSDemo extends IOApp {
       .as(ExitCode.Success)
 
 }
- */
