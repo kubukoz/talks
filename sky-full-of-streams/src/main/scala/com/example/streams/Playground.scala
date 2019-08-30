@@ -85,7 +85,7 @@ object Playground extends IOApp {
         .flatMap(_.reads(1024))
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
-        .unchunk
+      // .unchunk uncomment me for more sinterleaving
     }
     .parJoin(maxOpen = 10)
 
