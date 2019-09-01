@@ -30,12 +30,9 @@ object Playground extends IOApp {
       IO(println("---------- Resetting delays! ----------"))
 
     val delaysExponential: Stream[IO, FiniteDuration] =
-      Stream
-        .iterate(1.millisecond)(_ * 2)
-        .map {
-          Stream.awakeDelay[IO](_).take(n.toLong)
-        }
-        .flatMap(_ ++ showSlowingDown)
+      Stream.iterate(1.millisecond)(_ * 2).flatMap {
+        Stream.awakeDelay[IO](_).take(n.toLong) ++ showSlowingDown
+      }
 
     Stream.eval(MVar.empty[IO, Unit]).flatMap { restart =>
       val delaysUntilReset =
@@ -47,12 +44,11 @@ object Playground extends IOApp {
     }
   }
 
-  val slowDown = (
+  val slowDown =
     slowDownEveryNTicks(
       resets = Stream.awakeEvery[IO](3.seconds).void,
-      n = 5
+      n = 10
     )
-  )
 
   val acgResource = Resource
     .make(IO(Executors.newCachedThreadPool()))(e => IO(e.shutdown()))
@@ -76,7 +72,7 @@ object Playground extends IOApp {
     _ => IO(println("closed socket"))
   )
 
-  val clientBytes = server
+  val clientMessages = server
     .map(logSocket *> _)
     .map {
       Stream
@@ -85,13 +81,14 @@ object Playground extends IOApp {
         .flatMap(_.reads(1024))
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
-      // .unchunk uncomment me for more sinterleaving
+        .map("Message: " + _)
+      // .unchunk uncomment me for more interleaving
     }
     .parJoin(maxOpen = 10)
 
   def run(args: List[String]): IO[ExitCode] =
     IO(println("Started app")) *>
-      clientBytes
+      clientMessages
         .zipLeft(slowDown)
         .showLinesStdOut
         .compile

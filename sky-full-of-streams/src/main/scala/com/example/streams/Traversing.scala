@@ -61,14 +61,15 @@ class TraversingStreams(
     excludedProject: Project => Boolean,
     excludedIssue: Issue => Boolean
   ): IO[List[Issue]] = {
-    def issues: Pipe[IO, Project, Issue] =
-      _.evalMap(findIssues).flatMap(Stream.emits).evalMap(findIssue)
 
     val projects: Stream[IO, Project] =
       Stream
         .eval(allProjectIds)
         .flatMap(Stream.emits)
         .evalMap(findProject)
+
+    val issues: Pipe[IO, Project, Issue] =
+      _.evalMap(findIssues).flatMap(Stream.emits).evalMap(findIssue)
 
     projects
       .filter(!excludedProject(_))
@@ -78,5 +79,4 @@ class TraversingStreams(
       .compile
       .toList
   }
-
 }
