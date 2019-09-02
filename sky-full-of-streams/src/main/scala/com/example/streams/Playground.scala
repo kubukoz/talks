@@ -77,7 +77,6 @@ object Playground extends IOApp {
     .map {
       Stream
         .resource(_)
-        .scope
         .flatMap(_.reads(1024))
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
