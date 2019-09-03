@@ -13,12 +13,6 @@ import cats.implicits._
 
 object TCPServer extends IOApp {
 
-  implicit class DebugStream[F[_]: Sync, A](f: Stream[F, A]) {
-
-    def debug(tag: String): Stream[F, A] =
-      f.evalTap(e => Sync[F].delay(println(tag + ": " + e)))
-  }
-
   def slowDownEveryNTicks[A](
     resets: Stream[IO, Unit],
     n: Int
