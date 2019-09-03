@@ -7,7 +7,9 @@ import com.example.streams.core.types._
 
 class Github(projects: Projects, issues: Issues) {
 
-  def findFirstWithMatchingIssue(predicate: Issue => Boolean): IO[Option[Project]] = {
+  def findFirstWithMatchingIssue(
+    predicate: Issue => Boolean
+  ): IO[Option[Project]] = {
     def go(afterProject: Option[ProjectId]): IO[Option[Project]] =
       projects.getPage(afterProject).map(_.toNel).flatMap {
         _.traverse { projects =>
@@ -27,7 +29,11 @@ class Github(projects: Projects, issues: Issues) {
     go(None)
   }
 
-  private def hasIssueMatching(projectId: ProjectId, predicate: Issue => Boolean, afterIssue: Option[IssueId]): IO[Boolean] =
+  private def hasIssueMatching(
+    projectId: ProjectId,
+    predicate: Issue => Boolean,
+    afterIssue: Option[IssueId]
+  ): IO[Boolean] =
     issues.getPage(projectId, afterIssue).map(_.toNel).flatMap {
       _.existsM {
         case l if l.exists(predicate) => true.pure[IO]

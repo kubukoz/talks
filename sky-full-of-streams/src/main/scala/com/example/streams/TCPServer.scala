@@ -11,7 +11,7 @@ import java.util.concurrent.Executors
 import fs2.Stream
 import cats.implicits._
 
-object Playground extends IOApp {
+object TCPServer extends IOApp {
 
   implicit class DebugStream[F[_]: Sync, A](f: Stream[F, A]) {
 
@@ -58,15 +58,16 @@ object Playground extends IOApp {
       )
     }
 
-  val server = Stream.resource(acgResource).flatMap { implicit acg =>
-    fs2
-      .io
-      .tcp
-      .Socket
-      .server[IO](
-        new InetSocketAddress("0.0.0.0", 8080)
-      )
-  }
+  val server: Stream[IO, Resource[IO, fs2.io.tcp.Socket[IO]]] =
+    Stream.resource(acgResource).flatMap { implicit acg =>
+      fs2
+        .io
+        .tcp
+        .Socket
+        .server[IO](
+          new InetSocketAddress("0.0.0.0", 8080)
+        )
+    }
 
   val logSocket = Resource.make(IO(println("new socket")))(
     _ => IO(println("closed socket"))
