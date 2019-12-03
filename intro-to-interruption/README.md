@@ -20,6 +20,8 @@ In this talk, I'll provide a concise introduction to the way interruption works 
   - I free my mind of resources relevant to previous task <- finalizer
   - I start thinking about and solving person's problem
   - ...
+- But how do we cancel an effect if IO is just a description of a not-yet-running effect?
+- Future! I mean... Fiber
 - Fiber model (3min)
   - .start, .cancel/interrupt
 - Cause interruption (5min)
