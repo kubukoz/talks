@@ -7,6 +7,10 @@ In this talk, I'll provide a concise introduction to the way interruption works 
 
 ---
 
+This repo contains part of the snippets that appeared in the slides (accessible [here](https://speakerdeck.com/kubukoz/introduction-to-interruption)), but it's not anything super useful. You're free to check my notes though ;)
+
+---
+
 - Functional effects recap (2min)
   - side effect, referential transparency
   - IO

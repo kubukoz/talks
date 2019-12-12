@@ -1,0 +1,62 @@
+# notes
+
+- Functional Scala conference, so I assume everyone is comfortable with FP in Scala
+- London is a special place for my Scala journey because that's where I started learning 4 years ago
+- Three main takeaways: what's interruption in the context of functional effects, how to cause and react to it, tips for writing interruptible, concurrent code
+- Quick recap of referential transparency
+  - the ability to inline and extract expressions in bigger expressions
+  - really helps understand code
+  - just three nights ago it allowed me to understand code during an incident and resolve it with greater confidence
+  - makes race conditions more obvious
+- A story
+  - everyday story from your office, chances are it's happened to you in the past week
+  - what we need: to cancel an effect
+  - so we need an already running effect - sounds like Future?
+  - Fiber model. Fiber can be thought of as a lightweight thread - unit of execution
+  - Remember: fibers are low level and there are better abstractions for most use cases
+  - Fibers are interruptible
+  - Fibers run concurrently and can be coordinated/supervised by other fibers
+  - Watch Fabio's talk from Scala World to learn more about the approach
+  - the process of sleep + interruption runs concurrently with the developer process
+- Reacting
+  - we saw how to cause interruption (basically: fiber#cancel)
+  - how to react to it? One example: bracket
+  - bracket gives you the ability to safely clean up after acquiring a resource
+  - can't be interrupted once started acquiring, cleanup must happen even if usage is canceled
+  - "try with resources" for functional effects, also called the loan pattern
+  - bracketCase - provides reason for cleanup
+  - variations: guarantee (try-finally), onCancel
+  - cancelable builder - lifting callback-based async APIs to IO with cancelation
+- What can be interrupted?
+  - it'll differ across implementations, but some parts are the same everywhere
+  - async boundaries - every time threads are switched or something is scheduled for a later time
+  - every few hundred flatMaps - some impls like ZIO will allow it at every flatMap
+- What can't?
+  - acquisition & disposal in bracket
+  - sections marked uncancelable
+- How do implementations differ?
+  - Cancelable/uncancelable regions - disable and restore interruptibility at will
+  - join on canceled fiber - in CE/Monix it'll never terminate
+  - Semantic blocking on finalizers - cancel might not wait for finalizer to complete
+  - interruptible blocking - interrupting thread that's blocked
+  - interruptible futures - checking for cancelation via custom ExecutionContext injected to the future
+  - - only works on futures that actually take an ExecutionContext
+  - Supervision - cancel all fibers when parent fiber completes
+- Tips
+  - Concurrency is hard, avoid it if possible
+  - Avoid touching fibers - start/fork is dangerous
+  - Might leak resources if used improperly
+  - Use parallel operations for parallel actions
+  - Use race/deferred for coordination
+  - use background - for safer fibers
+  - use fs2 stream, queues - rich APIs for concurrent operations
+  - streaming is actually more useful than one might think
+  - watch my / Fabio's talks
+- Design tips
+  - Build small abstractions that handle one thing well but can compose with others
+  - Keep concurrent code away from business/domain logic
+  - If working with polymorphic effects - only rely on behavior guaranteed by laws
+  - If you want a specific effect's semantics - write code for that effect specifically
+  - Test edge cases, interruption will happen when you least expect it!
+- Thank you
+- Follow me on YT!
