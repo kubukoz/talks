@@ -5,8 +5,6 @@ import cats.effect._
 import scala.concurrent.duration._
 import cats.effect.concurrent.MVar
 import java.net.InetSocketAddress
-import java.nio.channels.AsynchronousChannelGroup
-import java.util.concurrent.Executors
 
 import fs2.Stream
 import cats.implicits._
@@ -44,21 +42,12 @@ object TCPServer extends IOApp {
       n = 10
     )
 
-  val acgResource = Resource
-    .make(IO(Executors.newCachedThreadPool()))(e => IO(e.shutdown()))
-    .flatMap { es =>
-      Resource.make(IO(AsynchronousChannelGroup.withThreadPool(es)))(
-        acg => IO(acg.shutdown())
-      )
-    }
-
-  val server: Stream[IO, Resource[IO, fs2.io.tcp.Socket[IO]]] =
-    Stream.resource(acgResource).flatMap { implicit acg =>
-      fs2
-        .io
-        .tcp
-        .Socket
-        .server[IO](
+  def server(
+    blocker: Blocker
+  ): Stream[IO, Resource[IO, fs2.io.tcp.Socket[IO]]] =
+    Stream.resource(fs2.io.tcp.SocketGroup[IO](blocker)).flatMap {
+      group =>
+        group.server[IO](
           new InetSocketAddress("0.0.0.0", 8080)
         )
     }
@@ -67,7 +56,9 @@ object TCPServer extends IOApp {
     _ => IO(println("closed socket"))
   )
 
-  val clientMessages = server
+  val clientMessages = Stream
+    .resource(Blocker[IO])
+    .flatMap(server)
     .map(logSocket *> _)
     .map {
       Stream
@@ -75,6 +66,7 @@ object TCPServer extends IOApp {
         .flatMap(_.reads(1024))
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
+        .filter(_.trim.nonEmpty)
         .map("Message: " + _)
       // .unchunk uncomment me for more interleaving
     }
