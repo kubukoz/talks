@@ -48,13 +48,21 @@ object TCPServer extends IOApp {
     Stream.resource(fs2.io.tcp.SocketGroup[IO](blocker)).flatMap {
       group =>
         group.server[IO](
-          new InetSocketAddress("0.0.0.0", 8080)
+          new InetSocketAddress("0.0.0.0", 8080),
+          receiveBufferSize = 128
         )
     }
 
   val logSocket = Resource.make(IO(println("new socket")))(
     _ => IO(println("closed socket"))
   )
+
+  def showChunkSize[A]: fs2.Pipe[IO, A, A] =
+    _.chunks
+      .evalTap { chunk =>
+        IO(println("chunk size: " + chunk.size))
+      }
+      .flatMap(Stream.chunk)
 
   val clientMessages = Stream
     .resource(Blocker[IO])
@@ -66,8 +74,8 @@ object TCPServer extends IOApp {
         .flatMap(_.reads(1024))
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
-        .filter(_.trim.nonEmpty)
         .map("Message: " + _)
+        .through(showChunkSize)
       // .unchunk uncomment me for more interleaving
     }
     .parJoin(maxOpen = 10)
