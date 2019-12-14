@@ -48,8 +48,7 @@ object TCPServer extends IOApp {
     Stream.resource(fs2.io.tcp.SocketGroup[IO](blocker)).flatMap {
       group =>
         group.server[IO](
-          new InetSocketAddress("0.0.0.0", 8080),
-          receiveBufferSize = 128
+          new InetSocketAddress("0.0.0.0", 8080)
         )
     }
 
@@ -75,7 +74,7 @@ object TCPServer extends IOApp {
         .through(fs2.text.utf8Decode)
         .through(fs2.text.lines)
         .map("Message: " + _)
-        .through(showChunkSize)
+      // .through(showChunkSize)
       // .unchunk uncomment me for more interleaving
     }
     .parJoin(maxOpen = 10)
