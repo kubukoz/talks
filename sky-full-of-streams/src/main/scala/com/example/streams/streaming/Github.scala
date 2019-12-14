@@ -33,11 +33,7 @@ class Github(projects: Projects, issues: Issues) {
 
     projectStream
       .evalFilter { project =>
-        issueStream(project.id)
-          .exists(predicate)
-          .compile
-          .last
-          .map(_.getOrElse(false))
+        issueStream(project.id).exists(predicate).compile.lastOrError
       }
       .head
       .compile
