@@ -9,17 +9,12 @@ import cats.implicits._
 class Github(projects: Projects, issues: Issues) {
   import fs2._
 
-  private def filterEval[F[_]: Functor, A](
-    pred: A => F[Boolean]
-  ): Pipe[F, A, A] =
-    _.evalMap(e => pred(e).map(_.guard[Option].as(e))).unNone
-
   private def paginateByLastSeen[F[_]: Functor, A](
     fetch: Option[A] => F[List[A]]
   ): Stream[F, A] =
     Stream.unfoldChunkEval[F, Option[A], A](none[A]) {
       fetch(_).map { items =>
-        (Chunk.seq(items), items.lastOption.map(_.some)).sequence
+        items.lastOption.map(_.some).tupleLeft(Chunk.seq(items))
       }
     }
 
@@ -37,13 +32,13 @@ class Github(projects: Projects, issues: Issues) {
       )
 
     projectStream
-      .through(filterEval { project =>
+      .evalFilter { project =>
         issueStream(project.id)
           .exists(predicate)
           .compile
           .last
           .map(_.getOrElse(false))
-      })
+      }
       .head
       .compile
       .last
