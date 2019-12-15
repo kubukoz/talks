@@ -8,8 +8,11 @@ import java.net.InetSocketAddress
 
 import fs2.Stream
 import cats.implicits._
+import fs2.Pipe
 
 object TCPServer extends IOApp {
+
+  val address = new InetSocketAddress("0.0.0.0", 8080)
 
   def slowDownEveryNTicks[A](
     resets: Stream[IO, Unit],
@@ -48,7 +51,7 @@ object TCPServer extends IOApp {
     Stream.resource(fs2.io.tcp.SocketGroup[IO](blocker)).flatMap {
       group =>
         group.server[IO](
-          new InetSocketAddress("0.0.0.0", 8080)
+          address
         )
     }
 
@@ -87,4 +90,35 @@ object TCPServer extends IOApp {
         .compile
         .drain
         .as(ExitCode.Success)
+}
+
+object TCPClient extends IOApp {
+
+  def clientPipe(blocker: Blocker): Pipe[IO, Byte, Unit] = {
+    val clientResource = fs2
+      .io
+      .tcp
+      .SocketGroup[IO](blocker)
+      .flatMap(_.client[IO](TCPServer.address))
+
+    stream =>
+      Stream
+        .resource(clientResource)
+        .map(_.writes())
+        .flatMap(stream.through(_))
+  }
+
+  def run(args: List[String]): IO[ExitCode] =
+    Blocker[IO].use { blocker =>
+      fs2
+        .io
+        .stdin[IO](4096, blocker)
+        .through(fs2.text.utf8Decode[IO])
+        .through(fs2.text.lines[IO])
+        .map(_ + "\n")
+        .flatMap(s => Stream.emits(s.getBytes()))
+        .through(clientPipe(blocker))
+        .compile
+        .drain
+    } as ExitCode.Success
 }
