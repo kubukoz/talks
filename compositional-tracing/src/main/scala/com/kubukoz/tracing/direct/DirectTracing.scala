@@ -56,13 +56,14 @@ object BusinessLogic {
     implicit cs: ContextShift[IO],
     timer: Timer[IO],
     client: Client[IO]
-  ): BusinessLogic[IO] =
-    new BusinessLogic[IO] {
-      val logger = Slf4jLogger.getLogger[IO]
-      import org.http4s.client.dsl.io._
-      import org.http4s.Method._
-      import org.http4s.implicits._
+  ): BusinessLogic[IO] = {
+    val logger = Slf4jLogger.getLogger[IO]
 
+    import org.http4s.client.dsl.io._
+    import org.http4s.Method._
+    import org.http4s.implicits._
+
+    new BusinessLogic[IO] {
       def execute(args: Args, span: Span): IO[Result] =
         for {
           _ <- logger.info(span.toMap)(show"Executing request $args")
@@ -73,4 +74,5 @@ object BusinessLogic {
           _ <- logger.info(span.toMap)(show"Executed request $args")
         } yield Result(show"${args.message} finished")
     }
+  }
 }
