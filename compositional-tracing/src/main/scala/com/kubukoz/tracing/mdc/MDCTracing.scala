@@ -131,7 +131,7 @@ object MDCTracing extends Init with IOApp {
             }
           }
 
-        exec("hello") // &> exec("bye")
+        exec("hello") &> exec("bye")
     }
   }.as(ExitCode.Success)
 }
@@ -167,11 +167,9 @@ object BusinessLogic {
         for {
           _ <- logger.info(show"Executing request $args")
           _ <- IO.sleep(100.millis)
-          _ <- logger.info("before: " + Kamon.currentSpan().operationName())
           _ <- Tracing[IO].keepSpanAround(
                 client.successful(POST(uri"http://localhost:8080/execute"))
               )
-          _ <- logger.info("after: " + Kamon.currentSpan().operationName())
           _ <- logger.info(show"Executed request $args")
         } yield Result(show"${args.message} finished")
     }

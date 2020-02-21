@@ -29,5 +29,5 @@ object UpstreamApp extends IOApp {
       .bindHttp(8080, "0.0.0.0")
       .withHttpApp(routes.orNotFound)
       .resource
-      .use(_ => IO.never)
+      .use(_ => logger.info("Started upstream") *> IO.never)
 }

@@ -2,7 +2,6 @@ package com.kubukoz.tracing
 
 import cats.effect.IO
 import cats.data.OptionT
-import java.{util => ju}
 import cats.implicits._
 import org.http4s.Headers
 import org.http4s.util.CaseInsensitiveString
