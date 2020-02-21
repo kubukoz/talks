@@ -14,6 +14,8 @@ val commonSettings = Seq(
   fork in Test := true,
   updateOptions := updateOptions.value.withGigahorse(false),
   libraryDependencies ++= Seq(
+    "io.kamon" %% "kamon-logback" % "2.0.2",
+    "io.kamon" %% "kamon-http4s" % "2.0.2",
     "org.http4s" %% "http4s-blaze-server" % "0.21.1",
     "org.http4s" %% "http4s-blaze-client" % "0.21.1",
     "org.http4s" %% "http4s-dsl" % "0.21.1",
