@@ -24,14 +24,12 @@ import kamon.tag.TagSet
 import cats.effect.Resource
 import cats.effect.ExitCase
 import cats.effect.Async
-import cats.effect.Clock
 import kamon.context.Context
 import kamon.context.Storage.Scope
 import kamon.trace.SpanBuilder
 
 @finalAlg
 trait Tracing[F[_]] {
-  def keepSpanAround[A](fa: F[A]): F[A]
   def inSpan[A](span: Span)(fa: F[A]): F[A]
 }
 
@@ -57,22 +55,7 @@ object Tracing {
             case ExitCase.Canceled  => span.fail("Canceled")
           }
         }.void
-
-      def shiftWith(ctx: Context): F[Unit] = Async[F].async[Unit] { cb =>
-        Kamon.runWithContext(ctx) {
-          cb(Right(()))
-        }
-      }
     }
-
-    def keepSpanAround[A](fa: F[A]): F[A] =
-      //shift afterwards to ensure we're not on `fa`'s thread anymore,
-      //which would mean everything after `keepSpanAround` executes on that thread.
-      raw
-        .currentCtx
-        .flatMap(
-          fa.guarantee(ContextShift[F].shift) <* raw.shiftWith(_)
-        )
 
     private def scope(ctx: Context): Resource[F, Unit] =
       Resource.make(raw.store(ctx))(raw.close).void
@@ -96,16 +79,6 @@ object Tracing {
   }
 }
 
-final class KamonExecutionContext(underlying: ExecutionContext) extends ExecutionContext {
-
-  def execute(runnable: Runnable): Unit = {
-    val ctx = Kamon.currentContext()
-
-    underlying.execute(() => Kamon.runWithContext(ctx)(runnable.run()))
-  }
-  def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
-}
-
 trait Init {
   //has to be done before logger is initialized
   System.setProperty("APP_NAME", "%magenta(client  )")
@@ -114,22 +87,8 @@ trait Init {
 
 object KamonTracing extends Init with IOApp {
 
-  val executionContext = new KamonExecutionContext(ExecutionContext.global)
-
-  override implicit val contextShift: ContextShift[IO] =
-    IO.contextShift(executionContext)
-
-  override implicit val timer: Timer[IO] = new Timer[IO] {
-    private val underlying = IO.timer(executionContext)
-
-    val clock: Clock[IO] = underlying.clock
-
-    def sleep(duration: FiniteDuration): IO[Unit] =
-      Tracing[IO].keepSpanAround(underlying.sleep(duration))
-  }
-
   def run(args: List[String]): IO[ExitCode] =
-    BlazeClientBuilder[IO](executionContext).resource.map(KamonSupport(_)).use {
+    BlazeClientBuilder[IO](ExecutionContext.global).resource.map(KamonSupport(_)).use {
       implicit client =>
         val bl = BusinessLogic.instance
 
@@ -163,7 +122,6 @@ object BusinessLogic {
     implicit cs: ContextShift[IO],
     timer: Timer[IO],
     client: Client[IO]
-    // tracing: Tracing[IO]
   ): BusinessLogic[IO] = {
     val logger = Slf4jLogger.getLogger[IO]
 
@@ -177,12 +135,11 @@ object BusinessLogic {
           _ <- logger.info(show"Executing request $args")
           //
           //
-          //this doesn't seem to cause any problems, but... yeah
+          //now if this sleep runs, we'll actually have a context ater the client call -
+          //but it'll be the wrong context (concurrent calls to `exec` in the main class will mix up).
+          //
+          //if this is disabled, there's no span after the client call.
           _ <- IO.sleep(100.millis)
-          //
-          //
-          //wrapping the client call like this makes it recover the context after the client returns
-          //_ <- Tracing[IO].keepSpanAround(client.successful(POST(uri"http://localhost:8080/execute")))
           //
           //
           _ <- logger.info("Before client call")
