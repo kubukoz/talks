@@ -1,4 +1,4 @@
-package com.kubukoz.tracing.mdc
+package com.kubukoz.tracing.magic
 
 import cats.effect.IOApp
 
@@ -36,7 +36,10 @@ trait Tracing[F[_]] {
 }
 
 object Tracing {
-  def println(s: String) = Console.println(Thread.currentThread().getName() + ": " + s)
+
+  def println(s: String) =
+    Console.println(Thread.currentThread().getName() + ": " + s)
+
   implicit def kamonInstance[F[_]: Async: ContextShift]: Tracing[F] = new Tracing[F] {
 
     object raw {
@@ -65,7 +68,11 @@ object Tracing {
     def keepSpanAround[A](fa: F[A]): F[A] =
       //shift afterwards to ensure we're not on `fa`'s thread anymore,
       //which would mean everything after `keepSpanAround` executes on that thread.
-      raw.currentCtx.flatMap(fa.guarantee(ContextShift[F].shift) <* raw.shiftWith(_))
+      raw
+        .currentCtx
+        .flatMap(
+          fa.guarantee(ContextShift[F].shift) <* raw.shiftWith(_)
+        )
 
     private def scope(ctx: Context): Resource[F, Unit] =
       Resource.make(raw.store(ctx))(raw.close).void
@@ -75,7 +82,8 @@ object Tracing {
         Kamon.spanBuilder(span.name).tag(TagSet.from(span.toMap)).asChildOf(parent)
       }
 
-      val kamonSpan = Resource.makeCase(buildSpan.flatMap(raw.start))(raw.finishCase)
+      val kamonSpan =
+        Resource.makeCase(buildSpan.flatMap(raw.start))(raw.finishCase)
 
       kamonSpan
         .flatTap { span =>
@@ -93,9 +101,7 @@ final class KamonExecutionContext(underlying: ExecutionContext) extends Executio
   def execute(runnable: Runnable): Unit = {
     val ctx = Kamon.currentContext()
 
-    underlying.execute { () =>
-      Kamon.runWithContext(ctx)(runnable.run())
-    }
+    underlying.execute(() => Kamon.runWithContext(ctx)(runnable.run()))
   }
   def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
 }
@@ -109,7 +115,10 @@ trait Init {
 object MDCTracing extends Init with IOApp {
 
   val executionContext = new KamonExecutionContext(ExecutionContext.global)
-  override implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
+
+  override implicit val contextShift: ContextShift[IO] =
+    IO.contextShift(executionContext)
+
   override implicit val timer: Timer[IO] = new Timer[IO] {
     private val underlying = IO.timer(executionContext)
 
@@ -119,7 +128,7 @@ object MDCTracing extends Init with IOApp {
       Tracing[IO].keepSpanAround(underlying.sleep(duration))
   }
 
-  def run(args: List[String]): IO[ExitCode] = {
+  def run(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO](executionContext).resource.map(KamonSupport(_)).use {
       implicit client =>
         val bl = BusinessLogic.instance
@@ -131,9 +140,9 @@ object MDCTracing extends Init with IOApp {
             }
           }
 
+        //run two in parallel, wait for both
         exec("hello") &> exec("bye")
-    }
-  }.as(ExitCode.Success)
+    } *> IO.fromFuture(IO(Kamon.stopModules())).as(ExitCode.Success)
 }
 
 final case class Result(message: String)
@@ -153,8 +162,8 @@ object BusinessLogic {
   def instance(
     implicit cs: ContextShift[IO],
     timer: Timer[IO],
-    client: Client[IO],
-    tracing: Tracing[IO]
+    client: Client[IO]
+    // tracing: Tracing[IO]
   ): BusinessLogic[IO] = {
     val logger = Slf4jLogger.getLogger[IO]
 
@@ -166,10 +175,18 @@ object BusinessLogic {
       def execute(args: Args): IO[Result] =
         for {
           _ <- logger.info(show"Executing request $args")
+          //
+          //
+          //this doesn't seem to cause any problems, but... yeah
           _ <- IO.sleep(100.millis)
-          _ <- Tracing[IO].keepSpanAround(
-                client.successful(POST(uri"http://localhost:8080/execute"))
-              )
+          //
+          //
+          //wrapping the client call like this makes it recover the context after the client returns
+          //_ <- Tracing[IO].keepSpanAround(client.successful(POST(uri"http://localhost:8080/execute")))
+          //
+          //
+          _ <- logger.info("Before client call")
+          _ <- client.successful(POST(uri"http://localhost:8080/execute"))
           _ <- logger.info(show"Executed request $args")
         } yield Result(show"${args.message} finished")
     }
