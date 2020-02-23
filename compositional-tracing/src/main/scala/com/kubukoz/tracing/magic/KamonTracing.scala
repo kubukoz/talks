@@ -112,7 +112,7 @@ trait Init {
   Kamon.init()
 }
 
-object MDCTracing extends Init with IOApp {
+object KamonTracing extends Init with IOApp {
 
   val executionContext = new KamonExecutionContext(ExecutionContext.global)
 
