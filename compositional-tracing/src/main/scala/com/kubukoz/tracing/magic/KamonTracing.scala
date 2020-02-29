@@ -31,7 +31,7 @@ import kamon.trace.SpanBuilder
 
 @finalAlg
 trait Tracing[F[_]] {
-  def keepSpanAround[A](fa: F[A]): F[A]
+  def keepSpanAround[A](fa: F[A], shiftBetween: Boolean = true): F[A]
   def inSpan[A](span: Span)(fa: F[A]): F[A]
 }
 
@@ -58,21 +58,22 @@ object Tracing {
           }
         }.void
 
-      def shiftWith(ctx: Context): F[Unit] = Async[F].async[Unit] { cb =>
-        Kamon.runWithContext(ctx) {
-          cb(Right(()))
+      // Sets the Kamon context for the rest of the IO until there's another async boundary
+      // (at which point the Kamon-aware EC will also capture and restore the Kamon context).
+      //
+      // Note that if there wasn't an async boundary just before, this has to add one itself - so that when `cb` is ran,
+      // The rest of the computation is *ACTUALLY* ran immediately instead of being queued up.
+      // Otherwise, the context would immediately be lost as only the scheduling of the runnable would have context, not the actual runnable triggered by `cb`.
+      def restore(shiftBefore: Boolean)(ctx: Context): F[Unit] =
+        ContextShift[F].shift.whenA(shiftBefore) *> Async[F].async[Unit] { cb =>
+          Kamon.runWithContext(ctx) {
+            cb(Right(()))
+          }
         }
-      }
     }
 
-    def keepSpanAround[A](fa: F[A]): F[A] =
-      //shift afterwards to ensure we're not on `fa`'s thread anymore,
-      //which would mean everything after `keepSpanAround` executes on that thread.
-      raw
-        .currentCtx
-        .flatMap(
-          fa.guarantee(ContextShift[F].shift) <* raw.shiftWith(_)
-        )
+    def keepSpanAround[A](fa: F[A], shiftBetween: Boolean): F[A] =
+      raw.currentCtx.map(raw.restore(shiftBetween)).flatMap(fa.guarantee)
 
     private def scope(ctx: Context): Resource[F, Unit] =
       Resource.make(raw.store(ctx))(raw.close).void
@@ -100,9 +101,9 @@ final class KamonExecutionContext(underlying: ExecutionContext) extends Executio
 
   def execute(runnable: Runnable): Unit = {
     val ctx = Kamon.currentContext()
-
     underlying.execute(() => Kamon.runWithContext(ctx)(runnable.run()))
   }
+
   def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
 }
 
@@ -125,7 +126,8 @@ object KamonTracing extends Init with IOApp {
     val clock: Clock[IO] = underlying.clock
 
     def sleep(duration: FiniteDuration): IO[Unit] =
-      Tracing[IO].keepSpanAround(underlying.sleep(duration))
+      //No extra shift needed - IO.sleep will shift to EC immediately before we set the context
+      Tracing[IO].keepSpanAround(underlying.sleep(duration), shiftBetween = false)
   }
 
   def run(args: List[String]): IO[ExitCode] =
@@ -141,7 +143,7 @@ object KamonTracing extends Init with IOApp {
           }
 
         //run two in parallel, wait for both
-        exec("hello") &> exec("bye")
+        exec("hello") /*  &> exec("bye") */
     } *> IO.fromFuture(IO(Kamon.stopModules())).as(ExitCode.Success)
 }
 
@@ -160,10 +162,10 @@ trait BusinessLogic[F[_]] {
 object BusinessLogic {
 
   def instance(
-    implicit cs: ContextShift[IO],
+    implicit
     timer: Timer[IO],
-    client: Client[IO]
-    // tracing: Tracing[IO]
+    client: Client[IO],
+    tracing: Tracing[IO]
   ): BusinessLogic[IO] = {
     val logger = Slf4jLogger.getLogger[IO]
 
@@ -175,19 +177,13 @@ object BusinessLogic {
       def execute(args: Args): IO[Result] =
         for {
           _ <- logger.info(show"Executing request $args")
-          //
-          //
-          //this doesn't seem to cause any problems, but... yeah
           _ <- IO.sleep(100.millis)
-          //
-          //
-          //wrapping the client call like this makes it recover the context after the client returns
-          //_ <- Tracing[IO].keepSpanAround(client.successful(POST(uri"http://localhost:8080/execute")))
-          //
-          //
           _ <- logger.info("Before client call")
-          _ <- client.successful(POST(uri"http://localhost:8080/execute"))
+          _ <- Tracing[IO].keepSpanAround(
+                client.successful(POST(uri"http://localhost:8080/execute"))
+              )
           _ <- logger.info(show"Executed request $args")
+          _ <- IO(println(Kamon.currentSpan().operationName()))
         } yield Result(show"${args.message} finished")
     }
   }
