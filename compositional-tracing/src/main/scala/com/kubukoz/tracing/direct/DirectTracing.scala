@@ -16,6 +16,8 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import cats.effect.Timer
+import com.kubukoz.tracing.TraceReporter
+import cats.effect.Blocker
 
 object DirectTracing extends IOApp {
 
@@ -23,17 +25,21 @@ object DirectTracing extends IOApp {
   System.setProperty("APP_NAME", "%magenta(client  )")
 
   def run(args: List[String]): IO[ExitCode] =
-    BlazeClientBuilder[IO](ExecutionContext.global)
-      .resource
-      .use { implicit client =>
-        val bl = BusinessLogic.instance
+    Blocker[IO]
+      .flatMap(TraceReporter.zipkin[IO]("client", _))
+      .use { tracer =>
+        BlazeClientBuilder[IO](ExecutionContext.global).resource.use { implicit client =>
+          val bl = BusinessLogic.instance
 
-        def exec(msg: String) =
-          (IO(ju.UUID.randomUUID()).map(Args(_, msg)), Span.create(msg))
-            .mapN(bl.execute)
-            .flatten
+          def exec(msg: String) =
+            Span.create(msg).flatMap { span =>
+              tracer.trace(span) {
+                IO(ju.UUID.randomUUID()).map(Args(_, msg)).flatMap(bl.execute(_, span))
+              }
+            }
 
-        exec("hello") &> exec("bye")
+          exec("hello") &> exec("bye")
+        } *> tracer.flush *> IO.never
       }
       .as(ExitCode.Success)
 }

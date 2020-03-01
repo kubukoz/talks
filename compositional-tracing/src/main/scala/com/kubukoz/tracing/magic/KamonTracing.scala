@@ -110,12 +110,13 @@ final class KamonExecutionContext(underlying: ExecutionContext) extends Executio
 trait Init {
   //has to be done before logger is initialized
   System.setProperty("APP_NAME", "%magenta(client  )")
+  System.setProperty("kamon.environment.service", "client")
   Kamon.init()
 }
 
-object KamonTracing extends Init with IOApp {
+trait KamonApp extends Init with IOApp {
 
-  val executionContext = new KamonExecutionContext(ExecutionContext.global)
+  protected val executionContext = new KamonExecutionContext(ExecutionContext.global)
 
   override implicit val contextShift: ContextShift[IO] =
     IO.contextShift(executionContext)
@@ -130,21 +131,42 @@ object KamonTracing extends Init with IOApp {
       Tracing[IO].keepSpanAround(underlying.sleep(duration), shiftBetween = false)
   }
 
+  def runWithKamon(args: List[String]): IO[ExitCode]
+
   def run(args: List[String]): IO[ExitCode] =
+    runWithKamon(args).guarantee(IO.fromFuture(IO(Kamon.stopModules())))
+}
+
+object KamonTracing extends KamonApp {
+
+  def runWithKamon(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO](executionContext).resource.map(KamonSupport(_)).use {
       implicit client =>
         val bl = BusinessLogic.instance
 
+        def execSingle(msg: String) = {
+          val makeCall = IO(ju.UUID.randomUUID()).map(Args(_, msg)).flatMap(bl.execute)
+
+          Span.create(msg).flatMap(Tracing.kamonInstance[IO].inSpan(_)(makeCall))
+        }
+
         def exec(msg: String) =
-          Span.create(msg).flatMap { span =>
-            Tracing[IO].inSpan(span) {
-              IO(ju.UUID.randomUUID()).map(Args(_, msg)).flatMap(bl.execute)
+          fs2
+            .Stream
+            .repeatEval {
+              Tracing.kamonInstance[IO].keepSpanAround(execSingle(msg)).attempt <*
+                IO(println(Kamon.currentSpan().operationName()))
             }
-          }
+            .head
+            // .metered(3.seconds)
+            .compile
+            .drain
 
         //run two in parallel, wait for both
-        exec("hello") /*  &> exec("bye") */
-    } *> IO.fromFuture(IO(Kamon.stopModules())).as(ExitCode.Success)
+        exec("hello") &> exec("bye")
+    } *> (IO.sleep(1.second) *> IO( /*check for breakpoint*/ ()))
+      .foreverM
+      .as(ExitCode.Success)
 }
 
 final case class Result(message: String)
