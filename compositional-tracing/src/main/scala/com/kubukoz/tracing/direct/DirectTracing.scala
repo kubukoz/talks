@@ -32,7 +32,7 @@ object DirectTracing extends IOApp {
           val bl = BusinessLogic.instance
 
           def exec(msg: String) =
-            Span.create(msg).flatMap { span =>
+            Span.create[IO](msg).flatMap { span =>
               tracer.trace(span) {
                 IO(ju.UUID.randomUUID()).map(Args(_, msg)).flatMap(bl.execute(_, span))
               }

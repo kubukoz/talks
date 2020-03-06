@@ -1,6 +1,5 @@
 package com.kubukoz.tracing
 
-import cats.effect.IO
 import cats.data.OptionT
 import cats.implicits._
 import org.http4s.Headers
@@ -8,40 +7,50 @@ import org.http4s.util.CaseInsensitiveString
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s.Header
 import kamon.trace.Identifier
+import cats.effect.Sync
+import natchez.TraceValue
 
 final case class Span(
   name: String,
   traceId: String,
   spanId: String,
-  parentSpanId: Option[String]
+  parentSpanId: Option[String],
+  values: Map[String, TraceValue]
 ) {
   def withName(newName: String) = copy(name = newName)
+
+  def withValues(modValues: Map[String, TraceValue] => Map[String, TraceValue]): Span =
+    copy(values = modValues(values))
 
   def toMap: Map[String, String] =
     Map("X-B3-TraceId" -> traceId, "X-B3-SpanId" -> spanId) ++ Map(
       "X-B3-ParentSpanId" -> parentSpanId
-    ).flattenOption
+    ).flattenOption ++ values.map {
+      case (key, TraceValue.StringValue(s))  => key -> s
+      case (key, TraceValue.NumberValue(n))  => key -> n.toString
+      case (key, TraceValue.BooleanValue(b)) => key -> b.toString
+    }
 
   def toTraceHeaders: Headers = Headers(toMap.map((Header.apply _).tupled).toList)
 }
 
 object Span {
 
-  private val newUUID =
-    IO(Identifier.Factory.EightBytesIdentifier.generate()).map(_.string)
+  private def newUUID[F[_]: Sync] =
+    Sync[F].delay(Identifier.Factory.EightBytesIdentifier.generate()).map(_.string)
 
-  private val logger = Slf4jLogger.getLogger[IO]
-
-  def create(name: String, parent: Option[Span] = None): IO[Span] =
+  def create[F[_]: Sync](name: String, parent: Option[Span] = None): F[Span] =
     parent match {
-      case Some(parent) => newUUID.map(Span(name, parent.traceId, _, parent.spanId.some))
-      case None         => (newUUID, newUUID).mapN(Span(name, _, _, none))
+      case Some(parent) =>
+        newUUID[F].map(Span(name, parent.traceId, _, parent.spanId.some, Map.empty))
+      case None => (newUUID[F], newUUID[F]).mapN(Span(name, _, _, none, Map.empty))
     }
 
-  def fromHeaders(name: String)(headers: Headers): IO[Span] = {
+  def fromHeaders[F[_]: Sync](name: String)(headers: Headers): F[Span] = {
+    val logger = Slf4jLogger.getLogger[F]
 
-    def readF(name: String): OptionT[IO, String] =
-      OptionT.fromOption[IO](headers.get(CaseInsensitiveString(name))).map(_.value)
+    def readF(name: String): OptionT[F, String] =
+      OptionT.fromOption[F](headers.get(CaseInsensitiveString(name))).map(_.value)
 
     val traceId = readF("X-B3-TraceId")
     val spanId = readF("X-B3-SpanId")
@@ -55,7 +64,8 @@ object Span {
               name = name,
               traceId = traceId,
               spanId = spanId,
-              parentSpanId = parentSpanId
+              parentSpanId = parentSpanId,
+              Map.empty
             )
         }
 
@@ -68,7 +78,8 @@ object Span {
                 name = name,
                 traceId = traceId,
                 spanId = spanId,
-                parentSpanId = None
+                parentSpanId = None,
+                Map.empty
               )
           }
           .flatTap(span => logger.info(span.toMap)(s"Created new trace and span"))

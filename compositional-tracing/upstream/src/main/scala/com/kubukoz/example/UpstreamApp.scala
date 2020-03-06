@@ -22,7 +22,7 @@ object UpstreamApp extends IOApp {
 
   def routes(reporter: TraceReporter[IO]) = HttpRoutes.of[IO] {
     case req @ POST -> (path @ Root / "execute") =>
-      Span.fromHeaders(path.asString)(req.headers).flatMap { span =>
+      Span.fromHeaders[IO](path.asString)(req.headers).flatMap { span =>
         reporter.trace(span) {
           logger.info(span.toMap)("Received execution request") *> IO
             .sleep(100.millis) *> Accepted()

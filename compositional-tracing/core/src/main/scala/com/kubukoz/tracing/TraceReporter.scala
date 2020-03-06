@@ -16,6 +16,20 @@ trait TraceReporter[F[_]] {
 }
 
 object TraceReporter {
+  import scala.concurrent.duration._
+
+  def convertSpan(endpoint: Endpoint, span: Span, start: Instant, end: Instant) =
+    zipkin2
+      .Span
+      .newBuilder()
+      .name(span.name)
+      .id(span.spanId)
+      .traceId(span.traceId)
+      .parentId(span.parentSpanId.orNull)
+      .timestamp(start.toEpochMilli.millis.toMicros)
+      .duration(java.time.Duration.between(start, end).toMillis.millis.toMicros)
+      .localEndpoint(endpoint)
+      .build()
 
   def zipkin[F[_]: Sync: ContextShift](
     serviceName: String,
@@ -29,20 +43,6 @@ object TraceReporter {
       )
       .map { reporter =>
         new TraceReporter[F] {
-          import scala.concurrent.duration._
-
-          private def convertSpan(span: Span, start: Instant, end: Instant) =
-            zipkin2
-              .Span
-              .newBuilder()
-              .name(span.name)
-              .id(span.spanId)
-              .traceId(span.traceId)
-              .parentId(span.parentSpanId.orNull)
-              .timestamp(start.toEpochMilli.millis.toMicros)
-              .duration(java.time.Duration.between(start, end).toMillis.millis.toMicros)
-              .localEndpoint(endpoint)
-              .build()
 
           val endpoint: Endpoint =
             Endpoint
@@ -56,7 +56,9 @@ object TraceReporter {
 
             val now = Sync[F].delay(Instant.now())
             (now, ioa, now)
-              .mapN((before, result, after) => (result, convertSpan(span, before, after)))
+              .mapN((before, result, after) =>
+                (result, convertSpan(endpoint, span, before, after))
+              )
               .flatMap {
                 case (result, zipSpan) =>
                   Sync[F].delay(reporter.report(zipSpan)).as(result)

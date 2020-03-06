@@ -147,7 +147,7 @@ object KamonTracing extends KamonApp {
         def execSingle(msg: String) = {
           val makeCall = IO(ju.UUID.randomUUID()).map(Args(_, msg)).flatMap(bl.execute)
 
-          Span.create(msg).flatMap(Tracing.kamonInstance[IO].inSpan(_)(makeCall))
+          Span.create[IO](msg).flatMap(Tracing.kamonInstance[IO].inSpan(_)(makeCall))
         }
 
         def exec(msg: String) =
