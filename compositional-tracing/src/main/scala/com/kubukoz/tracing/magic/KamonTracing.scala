@@ -16,7 +16,6 @@ import org.http4s.client.blaze.BlazeClientBuilder
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import cats.effect.Timer
-import cats.effect.implicits._
 import kamon.http4s.middleware.client.KamonSupport
 import cats.effect.Sync
 import kamon.Kamon
@@ -26,16 +25,13 @@ import cats.effect.ExitCase
 import cats.effect.Async
 import cats.effect.Clock
 import kamon.context.Context
-import kamon.context.Storage.Scope
 import kamon.trace.SpanBuilder
 import cats.effect.ConcurrentEffect
-import cats.effect.Concurrent
-import com.kubukoz.tracing.common
-import com.kubukoz.tracing.common.UnsafeRunWithContext
+import com.kubukoz.tracing.ContextKeeper
 
 @finalAlg
 trait Tracing[F[_]] {
-  def keepSpanAround[A](fa: F[A], shiftBetween: Boolean = true): F[A]
+  def keepSpanAround[A](fa: F[A]): F[A]
   def inSpan[A](span: Span)(fa: F[A]): F[A]
 }
 
@@ -44,7 +40,9 @@ object Tracing {
   def println(s: String) =
     Console.println(Thread.currentThread().getName() + ": " + s)
 
-  implicit def kamonInstance[F[_]: ConcurrentEffect: ContextShift]: Tracing[F] =
+  implicit def kamonInstance[F[_]: ConcurrentEffect: ContextShift](
+    implicit keeper: ContextKeeper[F, Context]
+  ): Tracing[F] =
     new Tracing[F] {
 
       object raw {
@@ -75,17 +73,7 @@ object Tracing {
           }
       }
 
-      private def runFWithContext[A](ctx: Context)(action: F[A]): F[A] = {
-        val runWith = new UnsafeRunWithContext[Context] {
-          def runWithContext[X](context: Context)(f: => X): X =
-            Kamon.runWithContext(context)(f)
-        }
-
-        common.runFWithContext(runWith, raw.currentCtx)(ctx)(action)
-      }
-
-      def keepSpanAround[A](fa: F[A], shiftBetween: Boolean): F[A] =
-        raw.currentCtx.flatMap(runFWithContext(_)(fa))
+      def keepSpanAround[A](fa: F[A]): F[A] = keeper.keepContextAround(fa)
 
       def inSpan[A](span: Span)(fa: F[A]): F[A] = {
         val buildSpan = raw.currentSpan.map { parent =>
@@ -97,7 +85,7 @@ object Tracing {
 
         kamonSpan
           .evalMap(span => raw.currentCtx.map(_.withEntry(kamon.trace.Span.Key, span)))
-          .use(runFWithContext(_)(fa))
+          .use(keeper.withContext(_)(fa))
       }
     }
 }
@@ -161,7 +149,7 @@ object KamonTracing extends KamonApp {
               execSingle(msg).attempt <*
                 IO(println("after: " + Kamon.currentSpan().operationName()))
             }
-            .metered(1.seconds)
+            .head
             .compile
             .drain
 

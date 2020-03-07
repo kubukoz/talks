@@ -14,73 +14,85 @@ import cats.effect.ExitCode
 import scala.concurrent.duration._
 import cats.effect.Timer
 import cats.effect.Clock
-import com.kubukoz.tracing.common.UnsafeRunWithContext
-import com.kubukoz.tracing.common
+import cats.~>
+import com.kubukoz.tracing.ContextKeeper
+import com.kubukoz.tracing.ContextKeeper.UnsafeRunWithContext
 
 object LoggingBasic extends IOApp {
   val logger = LoggerFactory.getLogger(getClass())
 
-  type Result = Int
+  object mdc {
+    val ec = mdc.mdcAware(ExecutionContext.global)
 
-  import scala.jdk.CollectionConverters._
+    import scala.jdk.CollectionConverters._
 
-  private def grab() =
-    Option(MDC.getCopyOfContextMap())
-      .map(_.asScala.toMap)
-      .getOrElse(Map.empty[String, String])
+    private def grab() =
+      Option(MDC.getCopyOfContextMap())
+        .map(_.asScala.toMap)
+        .getOrElse(Map.empty[String, String])
 
-  private def runWithContext[A](ctx: Map[String, String])(f: => A): A = {
-    val childContext = grab()
+    val get: IO[Map[String, String]] = IO(grab())
 
-    MDC.setContextMap(ctx.asJava)
+    val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
+      new UnsafeRunWithContext[Map[String, String]] {
 
-    try {
-      f
-    } finally {
-      MDC.setContextMap(childContext.asJava)
-    }
-  }
+        def runWithContext[A](ctx: Map[String, String])(f: => A): A = {
+          val childContext = grab()
 
-  val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
-    new UnsafeRunWithContext[Map[String, String]] {
+          MDC.setContextMap(ctx.asJava)
 
-      def runWithContext[A](ctx: Map[String, String])(f: => A): A =
-        LoggingBasic.runWithContext(ctx)(f)
-    }
-
-  def mdcAware(underlying: ExecutionContext): ExecutionContext = new ExecutionContext {
-
-    def execute(runnable: Runnable): Unit = {
-
-      val rootContext = grab()
-
-      underlying.execute(() =>
-        runWithContext(rootContext) {
-          runnable.run()
+          try {
+            f
+          } finally {
+            MDC.setContextMap(childContext.asJava)
+          }
         }
-      )
+      }
+
+    def mdcAware(underlying: ExecutionContext): ExecutionContext = new ExecutionContext {
+
+      def execute(runnable: Runnable): Unit = {
+
+        val rootContext = grab()
+
+        underlying.execute { () =>
+          mdcWithContext.runWithContext(rootContext) {
+            runnable.run()
+          }
+        }
+      }
+
+      def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
     }
 
-    def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
+    implicit val contextShift: ContextShift[IO] = IO.contextShift(ec)
+
+    implicit val keeper: ContextKeeper[IO, Map[String, String]] = ContextKeeper.instance(
+      mdcWithContext,
+      get
+    )
+
+    val timer: Timer[IO] = new Timer[IO] {
+      val underlying = IO.timer(ec)
+
+      def clock: Clock[IO] = underlying.clock
+
+      def sleep(duration: FiniteDuration): IO[Unit] =
+        keepContextAround(underlying.sleep(duration))
+    }
+
+    val keepContextAround: IO ~> IO =
+      keeper.keepContextAround
+
+    def runIOWithContext: Map[String, String] => IO ~> IO =
+      keeper.withContext
   }
 
-  implicit val ec = mdcAware(ExecutionContext.global)
-  override implicit val contextShift: ContextShift[IO] = IO.contextShift(ec)
+  override implicit val contextShift: ContextShift[IO] = mdc.contextShift
 
-  override implicit val timer: Timer[IO] = new Timer[IO] {
-    val underlying = IO.timer(ec)
+  override implicit val timer: Timer[IO] = mdc.timer
 
-    def clock: Clock[IO] = underlying.clock
-
-    def sleep(duration: FiniteDuration): IO[Unit] =
-      keepContextAround(underlying.sleep(duration))
-  }
-
-  def keepContextAround[A](action: IO[A]): IO[A] =
-    IO(grab()).flatMap(runIOWithContext(_)(action))
-
-  def runIOWithContext[A](ctx: Map[String, String])(action: IO[A]): IO[A] =
-    common.runFWithContext(mdcWithContext, IO(grab()))(ctx)(action)
+  type Result = Int
 
   val processPayment: String => IO[Result] = _ =>
     IO.shift *> IO {
@@ -88,18 +100,16 @@ object LoggingBasic extends IOApp {
     } <* IO.sleep(100.millis)
 
   def executeRequest(paymentId: String) =
-    IO.suspend {
-      val requestId = ju.UUID.randomUUID().toString()
-
-      val ctx = grab() + ("RequestId" -> requestId)
-
-      runIOWithContext(ctx) {
-        IO(logger.info(s"Started processing payment $paymentId")) *>
-          processPayment(paymentId).flatMap { result =>
-            IO(logger.info(s"Finished processing payment with result $result"))
-          }
-      }
-    } *> IO(logger.info("oops"))
+    (mdc.get, IO(ju.UUID.randomUUID().toString()))
+      .mapN((ctx, requestId) => ctx + ("RequestId" -> requestId))
+      .flatMap {
+        mdc.runIOWithContext(_) {
+          IO(logger.info(s"Started processing payment $paymentId")) *>
+            processPayment(paymentId).flatMap { result =>
+              IO(logger.info(s"Finished processing payment with result $result"))
+            }
+        }
+      } *> IO(logger.info("out of context"))
 
   def run(args: List[String]): IO[ExitCode] = {
     // (1 to 1).map(_.toString).toList.parTraverse(executeRequest)
