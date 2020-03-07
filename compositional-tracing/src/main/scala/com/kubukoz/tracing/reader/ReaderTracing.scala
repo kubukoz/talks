@@ -42,8 +42,8 @@ import cats.Defer
 import cats.~>
 import cats.effect.SyncIO
 import cats.effect.SyncEffect
-import com.kubukoz.tracing.logging.LoggingBasic
-import org.slf4j.LoggerFactory
+import com.kubukoz.tracing.logging.MDCLogging
+import org.slf4j.MDC
 
 object Zipkin {
 
@@ -92,6 +92,7 @@ object Zipkin {
                           }
                           .map(make)
                       }
+
                   }
 
                   lifecycle.as(theSpan)
@@ -119,7 +120,7 @@ object ReaderTracing extends IOApp {
 
   type Traced[A] = Kleisli[IO, Span[IO], A]
 
-  implicit val rawLogger = Slf4jLogger.getLogger[IO]
+  val rawLogger = Slf4jLogger.getLogger[IO]
 
   def loggerBy[F[_]: FlatMap](
     underlying: StructuredLogger[F]
@@ -158,25 +159,26 @@ object ReaderTracing extends IOApp {
   //MDC is cleaned up afterwards.
   //Escape hatch for spots that interact directly with MDC, beyond our control.
   def withTraceInMdc[F[_]: Trace: Sync, G[_]: SyncEffect, A](
-    //first arg is old, second arg is kernel
-    merge: (Map[String, String], Map[String, String]) => Map[String, String]
+    preModifyOldContext: F[Map[String, String]] => F[Map[String, String]]
   )(
     inContext: G[A]
   ): F[A] = {
-    val runner = LoggingBasic.mdc.mdcWithContext
+    val runner = MDCLogging.mdc.mdcWithContext
 
-    (LoggingBasic.mdc.get[F], Trace[F].kernel.map(_.toHeaders)).mapN(merge).flatMap {
-      ctx =>
+    (preModifyOldContext(MDCLogging.mdc.get[F]), Trace[F].kernel.map(_.toHeaders))
+      .mapN(_ ++ _)
+      .flatMap { ctx =>
         Sync[F].delay(
           runner.runWithContext(ctx)(
             SyncEffect[G].runSync[SyncIO, A](inContext).unsafeRunSync()
           )
         )
-    }
+      }
   }
 
+  //Same as withTraceInMdc but ignores (doesn't even ask for) the old context.
   def withSetTraceInMdc[F[_]: Trace: Sync, G[_]: SyncEffect, A](inContext: G[A]): F[A] =
-    withTraceInMdc((_, local) => local)(inContext)
+    withTraceInMdc[F, G, A](Function.const(Map.empty[String, String].pure[F]))(inContext)
 
   implicit val tracedLogger: MessageLogger[Traced] =
     loggerBy[Traced](rawLogger.mapK(Kleisli.liftK))(
@@ -258,6 +260,8 @@ object BusinessLogic {
     val client = implicitly[Client[F]]
     val dsl = new org.http4s.client.dsl.Http4sClientDsl[F] {}
 
+    val goodOldDumbLogger = Slf4jLogger.getLogger[SyncIO]
+
     import dsl._
     import org.http4s.Method._
     import org.http4s.implicits._
@@ -270,7 +274,9 @@ object BusinessLogic {
           _ <- client.successful(POST(uri"http://localhost:8080/execute"))
           _ <- MessageLogger[F].info(show"Executed request $args")
           _ <- ReaderTracing.withSetTraceInMdc(
-                SyncIO(LoggerFactory.getLogger(getClass).info("foo!"))
+                goodOldDumbLogger.info(
+                  "I'm a good old dumb logger but I have the trace context!"
+                )
               )
         } yield Result(show"${args.message} finished")
     }

@@ -19,7 +19,7 @@ import com.kubukoz.tracing.ContextKeeper
 import com.kubukoz.tracing.ContextKeeper.UnsafeRunWithContext
 import cats.effect.Sync
 
-object LoggingBasic extends IOApp {
+object MDCLogging extends IOApp {
   val logger = LoggerFactory.getLogger(getClass())
 
   object mdc {
