@@ -14,6 +14,8 @@ import cats.effect.ExitCode
 import scala.concurrent.duration._
 import cats.effect.Timer
 import cats.effect.Clock
+import com.kubukoz.tracing.common.UnsafeRunWithContext
+import com.kubukoz.tracing.common
 
 object LoggingBasic extends IOApp {
   val logger = LoggerFactory.getLogger(getClass())
@@ -38,6 +40,13 @@ object LoggingBasic extends IOApp {
       MDC.setContextMap(childContext.asJava)
     }
   }
+
+  val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
+    new UnsafeRunWithContext[Map[String, String]] {
+
+      def runWithContext[A](ctx: Map[String, String])(f: => A): A =
+        LoggingBasic.runWithContext(ctx)(f)
+    }
 
   def mdcAware(underlying: ExecutionContext): ExecutionContext = new ExecutionContext {
 
@@ -71,31 +80,12 @@ object LoggingBasic extends IOApp {
     IO(grab()).flatMap(runIOWithContext(_)(action))
 
   def runIOWithContext[A](ctx: Map[String, String])(action: IO[A]): IO[A] =
-    IO.suspend {
-      val oldContext = grab()
-      //this is basically forking the IO underneath (with the chosen context)
-      IO.cancelable[A] { cb =>
-          runWithContext(ctx) {
-            action.unsafeRunCancelable(cb)
-          }
-        }
-        //after the forked IO is done, we need to run the rest of the program with the old context!
-        .guarantee(
-          IO.shift *>
-            IO.async[Unit] { cb =>
-              runWithContext(oldContext) {
-                cb(Right(()))
-              }
-            }
-        )
-    }
+    common.runFWithContext(mdcWithContext, IO(grab()))(ctx)(action)
 
   val processPayment: String => IO[Result] = _ =>
     IO.shift *> IO {
       Random.nextInt(100)
     } <* IO.sleep(100.millis)
-
-  import cats.effect.implicits._
 
   def executeRequest(paymentId: String) =
     IO.suspend {

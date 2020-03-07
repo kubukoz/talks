@@ -28,6 +28,10 @@ import cats.effect.Clock
 import kamon.context.Context
 import kamon.context.Storage.Scope
 import kamon.trace.SpanBuilder
+import cats.effect.ConcurrentEffect
+import cats.effect.Concurrent
+import com.kubukoz.tracing.common
+import com.kubukoz.tracing.common.UnsafeRunWithContext
 
 @finalAlg
 trait Tracing[F[_]] {
@@ -40,61 +44,62 @@ object Tracing {
   def println(s: String) =
     Console.println(Thread.currentThread().getName() + ": " + s)
 
-  implicit def kamonInstance[F[_]: Async: ContextShift]: Tracing[F] = new Tracing[F] {
+  implicit def kamonInstance[F[_]: ConcurrentEffect: ContextShift]: Tracing[F] =
+    new Tracing[F] {
 
-    object raw {
-      val currentCtx = Sync[F].delay(Kamon.currentContext())
-      val currentSpan = Sync[F].delay(Kamon.currentSpan())
-      def store(ctx: Context) = Sync[F].delay(Kamon.storeContext(ctx))
-      def close(ctx: Scope) = Sync[F].delay(ctx.close())
-      def start(spanBuilder: SpanBuilder) = Sync[F].delay(spanBuilder.start())
+      object raw {
+        val currentCtx = Sync[F].delay(Kamon.currentContext())
+        val currentSpan = Sync[F].delay(Kamon.currentSpan())
+        def start(spanBuilder: SpanBuilder) = Sync[F].delay(spanBuilder.start())
 
-      def finishCase(span: kamon.trace.Span, ec: ExitCase[Throwable]) =
-        Sync[F].delay {
-          ec match {
-            case ExitCase.Completed => span.finish()
-            case ExitCase.Error(e)  => span.fail(e)
-            case ExitCase.Canceled  => span.fail("Canceled")
+        def finishCase(span: kamon.trace.Span, ec: ExitCase[Throwable]) =
+          Sync[F].delay {
+            ec match {
+              case ExitCase.Completed => span.finish()
+              case ExitCase.Error(e)  => span.fail(e)
+              case ExitCase.Canceled  => span.fail("Canceled")
+            }
+          }.void
+
+        // Sets the Kamon context for the rest of the IO until there's another async boundary
+        // (at which point the Kamon-aware EC will also capture and restore the Kamon context).
+        //
+        // Note that if there wasn't an async boundary just before, this has to add one itself - so that when `cb` is ran,
+        // The rest of the computation is *ACTUALLY* ran immediately instead of being queued up.
+        // Otherwise, the context would immediately be lost as only the scheduling of the runnable would have context, not the actual runnable triggered by `cb`.
+        def restore(shiftBefore: Boolean)(ctx: Context): F[Unit] =
+          ContextShift[F].shift.whenA(shiftBefore) *> Async[F].async[Unit] { cb =>
+            Kamon.runWithContext(ctx) {
+              cb(Right(()))
+            }
           }
-        }.void
-
-      // Sets the Kamon context for the rest of the IO until there's another async boundary
-      // (at which point the Kamon-aware EC will also capture and restore the Kamon context).
-      //
-      // Note that if there wasn't an async boundary just before, this has to add one itself - so that when `cb` is ran,
-      // The rest of the computation is *ACTUALLY* ran immediately instead of being queued up.
-      // Otherwise, the context would immediately be lost as only the scheduling of the runnable would have context, not the actual runnable triggered by `cb`.
-      def restore(shiftBefore: Boolean)(ctx: Context): F[Unit] =
-        ContextShift[F].shift.whenA(shiftBefore) *> Async[F].async[Unit] { cb =>
-          Kamon.runWithContext(ctx) {
-            cb(Right(()))
-          }
-        }
-    }
-
-    def keepSpanAround[A](fa: F[A], shiftBetween: Boolean): F[A] =
-      raw.currentCtx.map(raw.restore(shiftBetween)).flatMap(fa.guarantee)
-
-    private def scope(ctx: Context): Resource[F, Unit] =
-      Resource.make(raw.store(ctx))(raw.close).void
-
-    def inSpan[A](span: Span)(fa: F[A]): F[A] = {
-      val buildSpan = raw.currentSpan.map { parent =>
-        Kamon.spanBuilder(span.name).tag(TagSet.from(span.toMap)).asChildOf(parent)
       }
 
-      val kamonSpan =
-        Resource.makeCase(buildSpan.flatMap(raw.start))(raw.finishCase)
-
-      kamonSpan
-        .flatTap { span =>
-          Resource.suspend(
-            raw.currentCtx.map(_.withEntry(kamon.trace.Span.Key, span)).map(scope)
-          )
+      private def runFWithContext[A](ctx: Context)(action: F[A]): F[A] = {
+        val runWith = new UnsafeRunWithContext[Context] {
+          def runWithContext[X](context: Context)(f: => X): X =
+            Kamon.runWithContext(context)(f)
         }
-        .use(_ => fa)
+
+        common.runFWithContext(runWith, raw.currentCtx)(ctx)(action)
+      }
+
+      def keepSpanAround[A](fa: F[A], shiftBetween: Boolean): F[A] =
+        raw.currentCtx.flatMap(runFWithContext(_)(fa))
+
+      def inSpan[A](span: Span)(fa: F[A]): F[A] = {
+        val buildSpan = raw.currentSpan.map { parent =>
+          Kamon.spanBuilder(span.name).tag(TagSet.from(span.toMap)).asChildOf(parent)
+        }
+
+        val kamonSpan =
+          Resource.makeCase(buildSpan.flatMap(raw.start))(raw.finishCase)
+
+        kamonSpan
+          .evalMap(span => raw.currentCtx.map(_.withEntry(kamon.trace.Span.Key, span)))
+          .use(runFWithContext(_)(fa))
+      }
     }
-  }
 }
 
 final class KamonExecutionContext(underlying: ExecutionContext) extends ExecutionContext {
@@ -127,8 +132,7 @@ trait KamonApp extends Init with IOApp {
     val clock: Clock[IO] = underlying.clock
 
     def sleep(duration: FiniteDuration): IO[Unit] =
-      //No extra shift needed - IO.sleep will shift to EC immediately before we set the context
-      Tracing[IO].keepSpanAround(underlying.sleep(duration), shiftBetween = false)
+      Tracing[IO].keepSpanAround(underlying.sleep(duration))
   }
 
   def runWithKamon(args: List[String]): IO[ExitCode]
@@ -154,11 +158,10 @@ object KamonTracing extends KamonApp {
           fs2
             .Stream
             .repeatEval {
-              Tracing.kamonInstance[IO].keepSpanAround(execSingle(msg)).attempt <*
-                IO(println(Kamon.currentSpan().operationName()))
+              execSingle(msg).attempt <*
+                IO(println("after: " + Kamon.currentSpan().operationName()))
             }
-            .head
-            // .metered(3.seconds)
+            .metered(1.seconds)
             .compile
             .drain
 
