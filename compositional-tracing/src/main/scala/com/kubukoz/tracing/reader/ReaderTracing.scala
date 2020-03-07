@@ -45,6 +45,11 @@ import cats.~>
 import cats.Monad
 import cats.StackSafeMonad
 import cats.CoflatMap
+import cats.effect.SyncIO
+import cats.effect.SyncEffect
+import org.slf4j.MDC
+import com.kubukoz.tracing.logging.LoggingBasic
+import org.slf4j.LoggerFactory
 
 object Zipkin {
 
@@ -155,6 +160,30 @@ object ReaderTracing extends IOApp {
     }
   }
 
+  //Runs the given code block with the result of merging the existing MDC context and the enclosing trace stored in MDC.
+  //MDC is cleaned up afterwards.
+  //Escape hatch for spots that interact directly with MDC, beyond our control.
+  def withTraceInMdc[F[_]: Trace: Sync, G[_]: SyncEffect, A](
+    //first arg is old, second arg is kernel
+    merge: (Map[String, String], Map[String, String]) => Map[String, String]
+  )(
+    inContext: G[A]
+  ): F[A] = {
+    val runner = LoggingBasic.mdc.mdcWithContext
+
+    (LoggingBasic.mdc.get[F], Trace[F].kernel.map(_.toHeaders)).mapN(merge).flatMap {
+      ctx =>
+        Sync[F].delay(
+          runner.runWithContext(ctx)(
+            SyncEffect[G].runSync[SyncIO, A](inContext).unsafeRunSync()
+          )
+        )
+    }
+  }
+
+  def withSetTraceInMdc[F[_]: Trace: Sync, G[_]: SyncEffect, A](inContext: G[A]): F[A] =
+    withTraceInMdc((_, local) => local)(inContext)
+
   implicit val tracedLogger: MessageLogger[Traced] =
     loggerBy[Traced](rawLogger.mapK(Kleisli.liftK))(
       (Kleisli(_.kernel): Traced[Kernel]).map(_.toHeaders)
@@ -246,6 +275,9 @@ object BusinessLogic {
           _ <- Trace[F].span("child-span")(Timer[F].sleep(100.millis))
           _ <- client.successful(POST(uri"http://localhost:8080/execute"))
           _ <- MessageLogger[F].info(show"Executed request $args")
+          _ <- ReaderTracing.withSetTraceInMdc(
+                SyncIO(LoggerFactory.getLogger(getClass).info("foo!"))
+              )
         } yield Result(show"${args.message} finished")
     }
   }

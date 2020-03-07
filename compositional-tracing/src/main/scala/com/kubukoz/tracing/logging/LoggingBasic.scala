@@ -17,6 +17,7 @@ import cats.effect.Clock
 import cats.~>
 import com.kubukoz.tracing.ContextKeeper
 import com.kubukoz.tracing.ContextKeeper.UnsafeRunWithContext
+import cats.effect.Sync
 
 object LoggingBasic extends IOApp {
   val logger = LoggerFactory.getLogger(getClass())
@@ -31,7 +32,7 @@ object LoggingBasic extends IOApp {
         .map(_.asScala.toMap)
         .getOrElse(Map.empty[String, String])
 
-    val get: IO[Map[String, String]] = IO(grab())
+    def get[F[_]: Sync]: F[Map[String, String]] = Sync[F].delay(grab())
 
     val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
       new UnsafeRunWithContext[Map[String, String]] {
@@ -69,7 +70,7 @@ object LoggingBasic extends IOApp {
 
     implicit val keeper: ContextKeeper[IO, Map[String, String]] = ContextKeeper.instance(
       mdcWithContext,
-      get
+      get[IO]
     )
 
     val timer: Timer[IO] = new Timer[IO] {
@@ -100,7 +101,7 @@ object LoggingBasic extends IOApp {
     } <* IO.sleep(100.millis)
 
   def executeRequest(paymentId: String) =
-    (mdc.get, IO(ju.UUID.randomUUID().toString()))
+    (mdc.get[IO], IO(ju.UUID.randomUUID().toString()))
       .mapN((ctx, requestId) => ctx + ("RequestId" -> requestId))
       .flatMap {
         mdc.runIOWithContext(_) {
