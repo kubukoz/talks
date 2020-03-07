@@ -39,15 +39,9 @@ import io.chrisdavenport.log4cats.StructuredLogger
 import cats.FlatMap
 import cats.effect.Bracket
 import cats.Defer
-import scala.util.Random
-import natchez.log.Log
 import cats.~>
-import cats.Monad
-import cats.StackSafeMonad
-import cats.CoflatMap
 import cats.effect.SyncIO
 import cats.effect.SyncEffect
-import org.slf4j.MDC
 import com.kubukoz.tracing.logging.LoggingBasic
 import org.slf4j.LoggerFactory
 
