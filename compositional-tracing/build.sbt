@@ -3,15 +3,14 @@ def crossPlugin(x: sbt.librarymanagement.ModuleID) =
 
 val compilerPlugins = List(
   compilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  crossPlugin("org.scalamacros" % "paradise" % "2.1.1"),
+  // crossPlugin("org.scalamacros" % "paradise" % "2.1.1"),
   crossPlugin("org.typelevel" % "kind-projector" % "0.11.0"),
   crossPlugin("com.github.cb372" % "scala-typed-holes" % "0.1.1")
 )
 
 val commonSettings = Seq(
-  // scalaVersion := "2.13.1",
-  scalaVersion := "2.12.10", //kamon-cats-io isn't released on 2.13 yet
-  // scalacOptions ++= Seq("-Ymacro-annotations"),
+  scalaVersion := "2.13.1",
+  scalacOptions ++= Seq("-Ymacro-annotations"),
   scalacOptions --= Seq("-Xfatal-warnings"),
   fork in Test := true,
   updateOptions := updateOptions.value.withGigahorse(false),
@@ -19,10 +18,8 @@ val commonSettings = Seq(
     "io.kamon" %% "kamon-logback" % "2.0.2",
     "io.kamon" %% "kamon-http4s" % "2.0.2",
     "io.kamon" %% "kamon-zipkin" % "2.0.1",
-    // "io.kamon" %% "kamon-cats-io" % "2.0.1",
-    // "io.kamon" %% "kamon-scala-future" % "2.0.1",
-    "org.tpolecat" %% "natchez-log" % "0.0.10+147-a0b4cb9c+20200301-2058-SNAPSHOT",
-    "org.tpolecat" %% "natchez-core" % "0.0.10+147-a0b4cb9c+20200301-2058-SNAPSHOT",
+    "org.tpolecat" %% "natchez-log" % "0.0.10+150-3a9b7d4c-SNAPSHOT",
+    "org.tpolecat" %% "natchez-core" % "0.0.10+150-3a9b7d4c-SNAPSHOT",
     "org.http4s" %% "http4s-blaze-server" % "0.21.1",
     "org.http4s" %% "http4s-blaze-client" % "0.21.1",
     "org.http4s" %% "http4s-dsl" % "0.21.1",
