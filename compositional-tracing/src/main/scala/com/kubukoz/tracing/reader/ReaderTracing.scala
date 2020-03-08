@@ -43,7 +43,6 @@ import cats.~>
 import cats.effect.SyncIO
 import cats.effect.SyncEffect
 import com.kubukoz.tracing.logging.MDCLogging
-import org.slf4j.MDC
 
 object Zipkin {
 
@@ -105,9 +104,10 @@ object Zipkin {
           //Thankfully we don't use these in the examples, but there's an open PR to natchez
           //to add opentracing support - which will work with zipkin with little extra effort.
           def continue(name: String, kernel: Kernel): Resource[F, Span[F]] =
-            ???
+            Resource.liftF(new Throwable("not implemented").raiseError[F, Span[F]])
 
-          def continueOrElseRoot(name: String, kernel: Kernel): Resource[F, Span[F]] = ???
+          def continueOrElseRoot(name: String, kernel: Kernel): Resource[F, Span[F]] =
+            Resource.liftF(new Throwable("not implemented").raiseError[F, Span[F]])
 
         }
       }
