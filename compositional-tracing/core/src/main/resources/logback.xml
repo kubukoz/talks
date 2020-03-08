@@ -1,11 +1,12 @@
 <configuration>
-
+    <appender name="STDOUT_REQUESTID" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%date{YYYY-MM-dd HH:mm:ss.SSS} [%level] %logger{36} [%blue(%mdc{RequestId:--})] %message%n%xException</pattern></encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            
-            <pattern>%date{YYYY-MM-dd HH:mm:ss.SSS} [%level] %logger{36} [%blue(%mdc{RequestId:--})] %message%n%xException</pattern>
-            <!-- <pattern>[%green(%mdc{X-B3-SpanId:\-\-})] [%cyan(%mdc{X-B3-TraceId:\-\-})] %message%n%xException</pattern> -->
-        </encoder>
+        <encoder><pattern>[%green(%mdc{X-B3-SpanId:--})] [%cyan(%mdc{X-B3-TraceId:--})] %message%n%xException</pattern></encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>INFO</level>
         </filter>
@@ -36,7 +37,7 @@
 
     <logger name="com.kubukoz" level="DEBUG"/>
 
-    <root level="INFO">
+    <root level="ERROR">
         <!-- <appender-ref ref="ASYNC_STDOUT" />
         <appender-ref ref="ASYNC_FILE" /> -->
         <appender-ref ref="STDOUT" />
