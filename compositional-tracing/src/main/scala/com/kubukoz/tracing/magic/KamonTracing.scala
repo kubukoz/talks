@@ -22,11 +22,9 @@ import kamon.Kamon
 import kamon.tag.TagSet
 import cats.effect.Resource
 import cats.effect.ExitCase
-import cats.effect.Async
 import cats.effect.Clock
 import kamon.context.Context
 import kamon.trace.SpanBuilder
-import cats.effect.ConcurrentEffect
 import com.kubukoz.tracing.ContextKeeper
 
 @finalAlg
@@ -40,7 +38,7 @@ object Tracing {
   def println(s: String) =
     Console.println(Thread.currentThread().getName() + ": " + s)
 
-  implicit def kamonInstance[F[_]: ConcurrentEffect: ContextShift](
+  implicit def kamonInstance[F[_]: Sync](
     implicit keeper: ContextKeeper[F, Context]
   ): Tracing[F] =
     new Tracing[F] {
@@ -58,19 +56,6 @@ object Tracing {
               case ExitCase.Canceled  => span.fail("Canceled")
             }
           }.void
-
-        // Sets the Kamon context for the rest of the IO until there's another async boundary
-        // (at which point the Kamon-aware EC will also capture and restore the Kamon context).
-        //
-        // Note that if there wasn't an async boundary just before, this has to add one itself - so that when `cb` is ran,
-        // The rest of the computation is *ACTUALLY* ran immediately instead of being queued up.
-        // Otherwise, the context would immediately be lost as only the scheduling of the runnable would have context, not the actual runnable triggered by `cb`.
-        def restore(shiftBefore: Boolean)(ctx: Context): F[Unit] =
-          ContextShift[F].shift.whenA(shiftBefore) *> Async[F].async[Unit] { cb =>
-            Kamon.runWithContext(ctx) {
-              cb(Right(()))
-            }
-          }
       }
 
       def keepSpanAround[A](fa: F[A]): F[A] = keeper.keepContextAround(fa)

@@ -224,12 +224,15 @@ object ReaderTracing extends IOApp {
       val bl = BusinessLogic.instance[Traced]
 
       def exec(msg: String): IO[Unit] =
-        entryPoint.root(msg).use {
-          Kleisli
-            .liftF(IO(ju.UUID.randomUUID()).map(Args(_, msg)))
-            .flatMap(bl.execute(_))
-            .run
-        }
+        entryPoint
+          .root(msg)
+          .use {
+            Kleisli
+              .liftF(IO(ju.UUID.randomUUID()).map(Args(_, msg)))
+              .flatMap(bl.execute(_))
+              .run
+          }
+          .void
 
       exec("hello") &> exec("bye")
     }

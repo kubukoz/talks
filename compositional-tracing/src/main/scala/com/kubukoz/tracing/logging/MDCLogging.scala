@@ -113,8 +113,7 @@ object MDCLogging extends IOApp {
       } *> IO(logger.info("out of context"))
 
   def run(args: List[String]): IO[ExitCode] = {
-    // (1 to 1).map(_.toString).toList.parTraverse(executeRequest)
-    executeRequest("1")
+    (1 to 4).map(_.toString).toList.parTraverse(executeRequest)
   }.as(ExitCode.Success)
 
 }
