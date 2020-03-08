@@ -1,0 +1,8 @@
+version: "3"
+services:
+  zipkin:
+    image: openzipkin/zipkin
+    ports: ["9411:9411"]
+  plantuml:
+    image: plantuml/plantuml-server:tomcat
+    ports: ["3000:8080"]

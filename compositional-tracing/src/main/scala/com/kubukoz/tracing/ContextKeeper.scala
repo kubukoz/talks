@@ -8,7 +8,7 @@ import cats.effect.Concurrent
 import cats.effect.IO
 import cats.effect.Async
 import cats.~>
-import kamon.context.Context
+import kamon.context.{Context => KamonContext}
 import cats.effect.Sync
 import kamon.Kamon
 
@@ -61,9 +61,9 @@ object ContextKeeper {
 
   implicit def kamonContextKeeper[
     F[_]: ConcurrentEffect: ContextShift
-  ]: ContextKeeper[F, Context] = {
-    val runWith = new UnsafeRunWithContext[Context] {
-      def runWithContext[X](context: Context)(f: => X): X =
+  ]: ContextKeeper[F, KamonContext] = {
+    val runWith = new UnsafeRunWithContext[KamonContext] {
+      def runWithContext[X](context: KamonContext)(f: => X): X =
         Kamon.runWithContext(context)(f)
     }
 
