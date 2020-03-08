@@ -26,6 +26,7 @@ import cats.effect.Clock
 import kamon.context.Context
 import kamon.trace.SpanBuilder
 import com.kubukoz.tracing.ContextKeeper
+import kamon.context.Storage
 
 @finalAlg
 trait Tracing[F[_]] {
@@ -89,6 +90,7 @@ trait Init {
   //has to be done before logger is initialized
   System.setProperty("APP_NAME", "%magenta(client  )")
   System.setProperty("kamon.environment.service", "client")
+  System.setProperty("kamon.context.debug", "true")
   Kamon.init()
 }
 
@@ -116,6 +118,20 @@ trait KamonApp extends Init with IOApp {
 
 object KamonTracing extends KamonApp {
 
+  def rightPad(len: Int, s: String): String =
+    if (s.length > len) s.take(len)
+    else s + " " * (len - s.length())
+
+  val dumpKamon = IO(Storage.Debug.allThreadContexts()).map(_.toList).flatMap {
+    _.traverse { thread =>
+      IO(
+        println(
+          s"${rightPad(33, thread.thread.getName())} : ${thread.currentContext}"
+        )
+      )
+    }
+  }
+
   def runWithKamon(args: List[String]): IO[ExitCode] =
     BlazeClientBuilder[IO](executionContext).resource.map(KamonSupport(_)).use {
       implicit client =>
@@ -138,8 +154,10 @@ object KamonTracing extends KamonApp {
             .compile
             .drain
 
+        show"aa"
+
         //run two in parallel, wait for both
-        exec("hello") &> exec("bye")
+        (exec("hello") &> exec("bye")) *> dumpKamon
     } *> (IO.sleep(1.second) *> IO( /*check for breakpoint*/ ()))
       .foreverM
       .as(ExitCode.Success)

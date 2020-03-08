@@ -23,7 +23,6 @@ object MDCLogging extends IOApp {
   val logger = LoggerFactory.getLogger(getClass())
 
   object mdc {
-    val ec = mdc.mdcAware(ExecutionContext.global)
 
     import scala.jdk.CollectionConverters._
 
@@ -32,23 +31,17 @@ object MDCLogging extends IOApp {
         .map(_.asScala.toMap)
         .getOrElse(Map.empty[String, String])
 
-    def get[F[_]: Sync]: F[Map[String, String]] = Sync[F].delay(grab())
+    def runWithContext[A](ctx: Map[String, String])(f: => A): A = {
+      val rootContext = grab()
 
-    val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
-      new UnsafeRunWithContext[Map[String, String]] {
+      MDC.setContextMap(ctx.asJava)
 
-        def runWithContext[A](ctx: Map[String, String])(f: => A): A = {
-          val childContext = grab()
-
-          MDC.setContextMap(ctx.asJava)
-
-          try {
-            f
-          } finally {
-            MDC.setContextMap(childContext.asJava)
-          }
-        }
+      try {
+        f
+      } finally {
+        MDC.setContextMap(rootContext.asJava)
       }
+    }
 
     def mdcAware(underlying: ExecutionContext): ExecutionContext = new ExecutionContext {
 
@@ -56,17 +49,24 @@ object MDCLogging extends IOApp {
 
         val rootContext = grab()
 
-        underlying.execute { () =>
-          mdcWithContext.runWithContext(rootContext) {
-            runnable.run()
-          }
-        }
+        underlying.execute(() => runWithContext(rootContext)(runnable.run()))
       }
 
       def reportFailure(cause: Throwable): Unit = underlying.reportFailure(cause)
     }
 
+    val ec = mdc.mdcAware(ExecutionContext.global)
+
     implicit val contextShift: ContextShift[IO] = IO.contextShift(ec)
+
+    def get[F[_]: Sync]: F[Map[String, String]] = Sync[F].delay(grab())
+
+    val mdcWithContext: UnsafeRunWithContext[Map[String, String]] =
+      new UnsafeRunWithContext[Map[String, String]] {
+
+        def runWithContext[A](ctx: Map[String, String])(f: => A): A =
+          mdc.runWithContext(ctx)(f)
+      }
 
     implicit val keeper: ContextKeeper[IO, Map[String, String]] = ContextKeeper.instance(
       mdcWithContext,
@@ -85,8 +85,10 @@ object MDCLogging extends IOApp {
     val keepContextAround: IO ~> IO =
       keeper.keepContextAround
 
-    def runIOWithContext: Map[String, String] => IO ~> IO =
+    val runIOWithContext: Map[String, String] => IO ~> IO =
       keeper.withContext
+
+    val getContext = get[IO]
   }
 
   override implicit val contextShift: ContextShift[IO] = mdc.contextShift

@@ -21,7 +21,6 @@ import cats.effect.Sync
 import cats.data.Kleisli
 import natchez.Span
 import org.http4s.Header
-import io.chrisdavenport.log4cats.MessageLogger
 import natchez.Kernel
 import cats.effect.Resource
 import org.http4s.Response
@@ -43,7 +42,6 @@ import cats.~>
 import cats.effect.SyncIO
 import cats.effect.SyncEffect
 import com.kubukoz.tracing.logging.MDCLogging
-import natchez.log.Log
 
 object Zipkin {
 
@@ -127,7 +125,7 @@ object ReaderTracing extends IOApp {
     underlying: StructuredLogger[F]
   )(
     ctx: F[Map[String, String]]
-  ): MessageLogger[F] = {
+  ): Logger[F] = {
     def withCtx(
       withUnderlying: (StructuredLogger[F], Map[String, String]) => F[Unit]
     ): F[Unit] = ctx.flatMap(withUnderlying(underlying, _))
@@ -181,7 +179,7 @@ object ReaderTracing extends IOApp {
   def withSetTraceInMdc[F[_]: Trace: Sync, G[_]: SyncEffect, A](inContext: G[A]): F[A] =
     withTraceInMdc[F, G, A](Function.const(Map.empty[String, String].pure[F]))(inContext)
 
-  implicit val tracedLogger: MessageLogger[Traced] =
+  implicit val tracedLogger: Logger[Traced] =
     loggerBy[Traced](rawLogger.mapK(Kleisli.liftK))(
       (Kleisli(_.kernel): Traced[Kernel]).map(_.toHeaders)
     )
@@ -253,7 +251,7 @@ trait BusinessLogic[F[_]] {
 
 object BusinessLogic {
 
-  def instance[F[_]: Sync: Timer: Client: Trace: MessageLogger]: BusinessLogic[F] = {
+  def instance[F[_]: Sync: Timer: Client: Trace: Logger]: BusinessLogic[F] = {
 
     val client = implicitly[Client[F]]
     val dsl = new org.http4s.client.dsl.Http4sClientDsl[F] {}
@@ -267,10 +265,10 @@ object BusinessLogic {
     new BusinessLogic[F] {
       def execute(args: Args): F[Result] =
         for {
-          _ <- MessageLogger[F].info(show"Executing request $args")
+          _ <- Logger[F].info(show"Executing request $args")
           _ <- Trace[F].span("child-span")(Timer[F].sleep(100.millis))
           _ <- client.successful(POST(uri"http://localhost:8080/execute"))
-          _ <- MessageLogger[F].info(show"Executed request $args")
+          _ <- Logger[F].info(show"Executed request $args")
           _ <- ReaderTracing.withSetTraceInMdc(
                 goodOldDumbLogger.info(
                   "I'm a good old dumb logger but I have the trace context!"
