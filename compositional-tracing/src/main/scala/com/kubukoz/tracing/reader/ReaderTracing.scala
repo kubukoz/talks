@@ -43,6 +43,7 @@ import cats.~>
 import cats.effect.SyncIO
 import cats.effect.SyncEffect
 import com.kubukoz.tracing.logging.MDCLogging
+import natchez.log.Log
 
 object Zipkin {
 
@@ -120,7 +121,7 @@ object ReaderTracing extends IOApp {
 
   type Traced[A] = Kleisli[IO, Span[IO], A]
 
-  val rawLogger = Slf4jLogger.getLogger[IO]
+  implicit val rawLogger = Slf4jLogger.getLogger[IO]
 
   def loggerBy[F[_]: FlatMap](
     underlying: StructuredLogger[F]
@@ -211,34 +212,28 @@ object ReaderTracing extends IOApp {
       Resource.suspend(inNewSpan(tracedResponseResource))
     }
 
-  def run(args: List[String]): IO[ExitCode] =
-    Blocker[IO]
-      .use { blocker =>
-        BlazeClientBuilder[IO](ExecutionContext.global)
-          .resource
-          .map(kleisliTracedClient(_))
-          .use { implicit client =>
-            val bl = BusinessLogic.instance[Traced]
+  def run(args: List[String]): IO[ExitCode] = {
+    for {
+      blocker <- Blocker[IO]
+      implicit0(client: Client[Traced]) <- BlazeClientBuilder[IO](ExecutionContext.global)
+                                            .resource
+                                            .map(kleisliTracedClient(_))
+      entryPoint <- Zipkin.entryPoint[IO]("client", blocker)
+      // entryPoint = Log.entryPoint[IO]("client")
+    } yield {
+      val bl = BusinessLogic.instance[Traced]
 
-            def exec(msg: String): IO[Unit] =
-              // Log
-              //   .entryPoint[IO]("client")
-              //   .root(msg)
-              Zipkin
-                .entryPoint[IO]("client", blocker)
-                .flatMap(_.root(msg))
-                .use {
-                  Kleisli
-                    .liftF(IO(ju.UUID.randomUUID()).map(Args(_, msg)))
-                    .flatMap(bl.execute(_))
-                    .run
-                }
-                .void
+      def exec(msg: String): IO[Unit] =
+        entryPoint.root(msg).use {
+          Kleisli
+            .liftF(IO(ju.UUID.randomUUID()).map(Args(_, msg)))
+            .flatMap(bl.execute(_))
+            .run
+        }
 
-            exec("hello") *> IO.never
-          }
-      }
-      .as(ExitCode.Success)
+      exec("hello") &> exec("bye")
+    }
+  }.use(_ *> IO.never).as(ExitCode.Success)
 }
 
 final case class Result(message: String)
