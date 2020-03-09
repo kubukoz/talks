@@ -49,6 +49,34 @@ object ContextKeeper {
   implicit def kamonContextKeeper[
     F[_]: Async: ContextShift
   ]: ContextKeeper[F, KamonContext] = {
+    val alternative = new ContextKeeper[F, KamonContext] {
+      val withContext: KamonContext => F ~> F =
+        ctx =>
+          new (F ~> F) {
+
+            def apply[A](fa: F[A]): F[A] =
+              Sync[F].delay(Kamon.currentContext()).flatMap { oldContext =>
+                Sync[F].delay(Kamon.storeContext(ctx)).bracket(_ => fa) { scope =>
+                  Sync[F].delay(scope.close()) *> Sync[F]
+                    .delay(Kamon.storeContext(oldContext))
+                    .void
+                }
+              }
+          }
+
+      val keepContextAround: F ~> F =
+        new (F ~> F) {
+
+          def apply[A](fa: F[A]): F[A] = Sync[F].delay(Kamon.currentContext()).flatMap {
+            oldContext => fa.guarantee(Sync[F].delay(Kamon.storeContext(oldContext)).void)
+          }
+        }
+
+    }
+
+    //todo: figure out if it's viable
+    val _ = alternative
+
     val runWith = new UnsafeRunWithContext[KamonContext] {
       def runWithContext[X](context: KamonContext)(f: => X): X =
         Kamon.runWithContext(context)(f)
