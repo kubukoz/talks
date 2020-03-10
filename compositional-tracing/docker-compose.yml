@@ -6,3 +6,5 @@ services:
   plantuml:
     image: plantuml/plantuml-server:tomcat
     ports: ["3000:8080"]
+    environment: 
+      ALLOW_PLANTUML_INCLUDE: 'true'
