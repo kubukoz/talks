@@ -117,7 +117,7 @@ group runWithContext(root)
 group remainder
 "thread-1" -> "thread-1": remainder
 end
-"thread-1" -> "thread-1": setContext(root)
+"thread-1" -> "thread-1": setContext(root2)
 end
 "thread-1" -> "thread-1": setContext(root)
 end
@@ -149,13 +149,13 @@ group runWithContext(newContext)
 group fa
 "thread-2" -> "thread-2": launchMissiles
 end
-"thread-2" -> "thread-2": setContext(root2)
-end
 group runWithContext(root)
-"thread-2" -> "thread-2": val root2 = getContext()
+"thread-2" -> "thread-2": val root3 = getContext()
 "thread-2" -> "thread-2": setContext(root)
 group remainder
 "thread-2" -> "thread-2": remainder
+end
+"thread-2" -> "thread-2": setContext(root3)
 end
 "thread-2" -> "thread-2": setContext(root2)
 end

@@ -1,4 +1,10 @@
 <configuration>
+    <appender name="STDOUT_NOTRACE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder><pattern>%date{HH:mm:ss.SSS} [%level] %message%n%xException</pattern></encoder>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
     <appender name="STDOUT_REQUESTID" class="ch.qos.logback.core.ConsoleAppender">
         <encoder><pattern>%date{YYYY-MM-dd HH:mm:ss.SSS} [%level] %logger{36} [%blue(%mdc{RequestId:--})] %message%n%xException</pattern></encoder>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
@@ -40,8 +46,8 @@
     <root level="ERROR">
         <!-- <appender-ref ref="ASYNC_STDOUT" />
         <appender-ref ref="ASYNC_FILE" /> -->
-        <!-- <appender-ref ref="STDOUT" /> -->
-        <appender-ref ref="STDOUT_REQUESTID" />
+        <appender-ref ref="STDOUT" />
+        <!-- <appender-ref ref="STDOUT_NOTRACE" /> -->
         <appender-ref ref="FILE" />
     </root>
 
