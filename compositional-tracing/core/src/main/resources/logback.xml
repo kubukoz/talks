@@ -21,7 +21,7 @@
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>/tmp/logs/totallykibana.log</file>
         <encoder>
-            <pattern>%date{YYYY-MM-dd HH:mm:ss.SSS} [%level] [${APP_NAME}] [%green(%mdc{X-B3-SpanId:--})] [%cyan(%mdc{X-B3-TraceId:--})] %message%n%xException</pattern>
+            <pattern>[%level] [${APP_NAME}] [%green(%mdc{X-B3-SpanId:--})] [%cyan(%mdc{X-B3-TraceId:--})] %message%n%xException</pattern>
         </encoder>
 
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">

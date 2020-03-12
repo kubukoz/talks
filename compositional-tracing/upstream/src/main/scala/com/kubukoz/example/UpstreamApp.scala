@@ -11,6 +11,7 @@ import cats.implicits._
 import com.kubukoz.tracing.TraceReporter
 import scala.concurrent.duration._
 import cats.effect.Blocker
+import zipkin2.Endpoint
 
 object UpstreamApp extends IOApp {
   import org.http4s.dsl.io._
@@ -24,18 +25,31 @@ object UpstreamApp extends IOApp {
     case req @ POST -> (path @ Root / "execute") =>
       Span.fromHeaders[IO](path.asString)(req.headers).flatMap { span =>
         reporter.trace(span) {
-          logger.info(span.toMap)("Received execution request") *> IO
-            .sleep(100.millis) *> Accepted()
+          logger.info(span.toMap)("Received execution request") *>
+            Span.create[IO]("impl", span.some).flatMap { span =>
+              reporter.trace(span) {
+                IO.sleep(100.millis) *>
+                  logger.info(span.toMap)("Completed execution") *>
+                  Accepted()
+              }
+            }
         }
       }
   }
 
   def run(args: List[String]): IO[ExitCode] = {
-    Blocker[IO].flatMap(TraceReporter.zipkin[IO]("upstream", _)).flatMap { tracer =>
-      BlazeServerBuilder[IO]
-        .bindHttp(8080, "0.0.0.0")
-        .withHttpApp(routes(tracer).orNotFound)
-        .resource
-    }
+    Blocker[IO]
+      .flatMap(
+        TraceReporter.zipkin[IO](
+          Endpoint.newBuilder().ip("0.0.0.0").port(8080).serviceName("upstream").build(),
+          _
+        )
+      )
+      .flatMap { tracer =>
+        BlazeServerBuilder[IO]
+          .bindHttp(8080, "0.0.0.0")
+          .withHttpApp(routes(tracer).orNotFound)
+          .resource
+      }
   }.use(_ => logger.info("Started upstream") *> IO.never)
 }

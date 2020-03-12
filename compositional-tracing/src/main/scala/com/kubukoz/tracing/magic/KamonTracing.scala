@@ -189,17 +189,39 @@ object BusinessLogic {
     import org.http4s.Method._
     import org.http4s.implicits._
 
+    def child[A](
+      name: String,
+      extraTags: Map[String, String] = Map.empty
+    )(
+      fa: IO[A]
+    ): IO[A] =
+      Span.create[IO](name).map(_.withValues(_ ++ extraTags)).flatMap {
+        Tracing[IO].inSpan(_)(fa)
+      }
+
     new BusinessLogic[IO] {
+      private val databaseCall =
+        child(
+          "db-call",
+          Map("db.query" -> "select * from users where id = ?")
+        ) {
+          logger.info("Running db call") *>
+            IO.sleep(100.millis)
+        }
+
+      private val clientCall =
+        child("remote-call") {
+          Tracing[IO].keepSpanAround {
+            client.successful(POST(uri"http://localhost:8080/execute"))
+          }
+        }
+
       def execute(args: Args): IO[Result] =
         for {
           _ <- logger.info(show"Executing request $args")
-          _ <- IO.sleep(100.millis)
-          _ <- logger.info("Before client call")
-          _ <- Tracing[IO].keepSpanAround(
-                client.successful(POST(uri"http://localhost:8080/execute"))
-              )
+          _ <- databaseCall
+          _ <- clientCall
           _ <- logger.info(show"Executed request $args")
-          _ <- IO(println(Kamon.currentSpan().operationName()))
         } yield Result(show"${args.message} finished")
     }
   }

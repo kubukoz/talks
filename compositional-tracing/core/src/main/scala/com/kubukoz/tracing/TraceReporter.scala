@@ -18,8 +18,8 @@ trait TraceReporter[F[_]] {
 object TraceReporter {
   import scala.concurrent.duration._
 
-  def convertSpan(endpoint: Endpoint, span: Span, start: Instant, end: Instant) =
-    zipkin2
+  def convertSpan(endpoint: Endpoint, span: Span, start: Instant, end: Instant) = {
+    val builder = zipkin2
       .Span
       .newBuilder()
       .name(span.name)
@@ -29,10 +29,17 @@ object TraceReporter {
       .timestamp(start.toEpochMilli.millis.toMicros)
       .duration(java.time.Duration.between(start, end).toMillis.millis.toMicros)
       .localEndpoint(endpoint)
-      .build()
+
+    span.values.foreach {
+      case (k, v) =>
+        builder.putTag(k, v)
+    }
+
+    builder.build()
+  }
 
   def zipkin[F[_]: Sync: ContextShift](
-    serviceName: String,
+    endpoint: Endpoint,
     blocker: Blocker
   ): Resource[F, TraceReporter[F]] =
     Resource
@@ -43,14 +50,6 @@ object TraceReporter {
       )
       .map { reporter =>
         new TraceReporter[F] {
-
-          val endpoint: Endpoint =
-            Endpoint
-              .newBuilder()
-              .ip("0.0.0.0")
-              .port(9411)
-              .serviceName(serviceName)
-              .build()
 
           def trace[A](span: Span)(ioa: F[A]): F[A] = {
 

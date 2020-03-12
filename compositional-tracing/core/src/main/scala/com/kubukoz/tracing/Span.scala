@@ -8,27 +8,24 @@ import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s.Header
 import kamon.trace.Identifier
 import cats.effect.Sync
-import natchez.TraceValue
 
 final case class Span(
   name: String,
   traceId: String,
   spanId: String,
   parentSpanId: Option[String],
-  values: Map[String, TraceValue]
+  values: Map[String, String]
 ) {
   def withName(newName: String) = copy(name = newName)
 
-  def withValues(modValues: Map[String, TraceValue] => Map[String, TraceValue]): Span =
+  def withValues(modValues: Map[String, String] => Map[String, String]): Span =
     copy(values = modValues(values))
 
   def toMap: Map[String, String] =
     Map("X-B3-TraceId" -> traceId, "X-B3-SpanId" -> spanId) ++ Map(
       "X-B3-ParentSpanId" -> parentSpanId
     ).flattenOption ++ values.map {
-      case (key, TraceValue.StringValue(s))  => key -> s
-      case (key, TraceValue.NumberValue(n))  => key -> n.toString
-      case (key, TraceValue.BooleanValue(b)) => key -> b.toString
+      case (key, v) => key -> v
     }
 
   def toTraceHeaders: Headers = Headers(toMap.map((Header.apply _).tupled).toList)
@@ -36,14 +33,24 @@ final case class Span(
 
 object Span {
 
-  private def newUUID[F[_]: Sync] =
-    Sync[F].delay(Identifier.Factory.EightBytesIdentifier.generate()).map(_.string)
+  private def newId[F[_]: Sync]: F[String] = {
+    val idLength = 16L
+
+    fs2
+      .Stream
+      .repeatEval(Sync[F].delay(scala.util.Random.nextInt(16)))
+      .take(idLength)
+      .map(_.toHexString)
+      .compile
+      .string
+  }
 
   def create[F[_]: Sync](name: String, parent: Option[Span] = None): F[Span] =
     parent match {
       case Some(parent) =>
-        newUUID[F].map(Span(name, parent.traceId, _, parent.spanId.some, Map.empty))
-      case None => (newUUID[F], newUUID[F]).mapN(Span(name, _, _, none, Map.empty))
+        newId[F].map(Span(name, parent.traceId, _, parent.spanId.some, Map.empty))
+
+      case None => (newId[F], newId[F]).mapN(Span(name, _, _, none, Map.empty))
     }
 
   def fromHeaders[F[_]: Sync](name: String)(headers: Headers): F[Span] = {
@@ -58,7 +65,7 @@ object Span {
 
     traceId.value.flatMap {
       case Some(traceId) =>
-        (spanId.getOrElseF(newUUID), parentId.value).tupled.map {
+        (spanId.getOrElseF(newId), parentId.value).tupled.map {
           case (spanId, parentSpanId) =>
             Span(
               name = name,
@@ -70,7 +77,7 @@ object Span {
         }
 
       case None =>
-        (newUUID, newUUID)
+        (newId, newId)
           .tupled
           .map {
             case (traceId, spanId) =>

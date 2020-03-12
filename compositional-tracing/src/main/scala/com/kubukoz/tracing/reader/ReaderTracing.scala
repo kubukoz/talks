@@ -77,7 +77,11 @@ object Zipkin {
 
                   val theSpan: Span[F] = new Span[F] {
                     def put(fields: (String, TraceValue)*): F[Unit] =
-                      spanRef.update(_.withValues(_ ++ fields))
+                      spanRef.update(_.withValues(_ ++ fields.map(_.map {
+                        case TraceValue.StringValue(s)  => s
+                        case TraceValue.NumberValue(n)  => n.toString
+                        case TraceValue.BooleanValue(b) => b.toString
+                      })))
 
                     val kernel: F[Kernel] = spanRef.get.map(span => Kernel(span.toMap))
 
@@ -266,14 +270,9 @@ object BusinessLogic {
       def execute(args: Args): F[Result] =
         for {
           _ <- Logger[F].info(show"Executing request $args")
-          _ <- Trace[F].span("child-span")(Timer[F].sleep(100.millis))
+          _ <- Timer[F].sleep(100.millis)
           _ <- client.successful(POST(uri"http://localhost:8080/execute"))
           _ <- Logger[F].info(show"Executed request $args")
-          _ <- ReaderTracing.withSetTraceInMdc(
-                goodOldDumbLogger.info(
-                  "I'm a good old dumb logger but I have the trace context!"
-                )
-              )
         } yield Result(show"${args.message} finished")
     }
   }

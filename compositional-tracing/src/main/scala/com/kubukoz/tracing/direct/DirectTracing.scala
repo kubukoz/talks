@@ -18,6 +18,7 @@ import scala.concurrent.duration._
 import cats.effect.Timer
 import com.kubukoz.tracing.TraceReporter
 import cats.effect.Blocker
+import zipkin2.Endpoint
 
 object DirectTracing extends IOApp {
 
@@ -26,8 +27,10 @@ object DirectTracing extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     Blocker[IO]
-      .flatMap(TraceReporter.zipkin[IO]("client", _))
-      .use { tracer =>
+      .flatMap(
+        TraceReporter.zipkin[IO](Endpoint.newBuilder().serviceName("client").build(), _)
+      )
+      .use { implicit tracer =>
         BlazeClientBuilder[IO](ExecutionContext.global).resource.use { implicit client =>
           val bl = BusinessLogic.instance
 
@@ -38,7 +41,7 @@ object DirectTracing extends IOApp {
               }
             }
 
-          exec("hello") &> exec("bye")
+          exec("hello") // &> exec("bye")
         } *> tracer.flush *> IO.never
       }
       .as(ExitCode.Success)
@@ -61,7 +64,8 @@ object BusinessLogic {
   def instance(
     implicit cs: ContextShift[IO],
     timer: Timer[IO],
-    client: Client[IO]
+    client: Client[IO],
+    tracer: TraceReporter[IO]
   ): BusinessLogic[IO] = {
     val logger = Slf4jLogger.getLogger[IO]
 
@@ -69,14 +73,44 @@ object BusinessLogic {
     import org.http4s.Method._
     import org.http4s.implicits._
 
+    def newSpan[A](
+      name: String,
+      parent: Span,
+      extraTags: Map[String, String] = Map.empty
+    )(
+      fa: Span => IO[A]
+    ): IO[A] =
+      Span
+        .create[IO](name, parent.some)
+        .map(_.withValues(_ ++ extraTags))
+        .flatMap(newSpan => tracer.trace(newSpan)(fa(newSpan)))
+
     new BusinessLogic[IO] {
+      private def databaseCall(rootSpan: Span) =
+        newSpan(
+          "db-call",
+          rootSpan,
+          Map("db.query" -> "select * from users where id = ?")
+        ) { span =>
+          logger.info(span.toMap)("Running db call") *>
+            IO.sleep(100.millis)
+        }
+
+      private def clientCall(rootSpan: Span) =
+        newSpan("remote-call", rootSpan) { child =>
+          client.successful(
+            POST(
+              uri"http://localhost:8080/execute",
+              child.toTraceHeaders.toList: _*
+            )
+          )
+        }
+
       def execute(args: Args, span: Span): IO[Result] =
         for {
           _ <- logger.info(span.toMap)(show"Executing request $args")
-          _ <- IO.sleep(100.millis)
-          _ <- client.successful(
-                POST(uri"http://localhost:8080/execute", span.toTraceHeaders.toList: _*)
-              )
+          _ <- databaseCall(span)
+          _ <- clientCall(span)
           _ <- logger.info(span.toMap)(show"Executed request $args")
         } yield Result(show"${args.message} finished")
     }
