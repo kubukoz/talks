@@ -154,8 +154,6 @@ object KamonTracing extends KamonApp {
             .compile
             .drain
 
-        show"aa"
-
         //run two in parallel, wait for both
         (exec("hello") &> exec("bye")) *> dumpKamon
     } *> (IO.sleep(1.second) *> IO( /*check for breakpoint*/ ()))
@@ -189,7 +187,7 @@ object BusinessLogic {
     import org.http4s.Method._
     import org.http4s.implicits._
 
-    def child[A](
+    def childSpan[A](
       name: String,
       extraTags: Map[String, String] = Map.empty
     )(
@@ -201,16 +199,16 @@ object BusinessLogic {
 
     new BusinessLogic[IO] {
       private val databaseCall =
-        child(
+        childSpan(
           "db-call",
           Map("db.query" -> "select * from users where id = ?")
         ) {
           logger.info("Running db call") *>
             IO.sleep(100.millis)
         }
-
+      //grab context before, set it again afterwards
       private val clientCall =
-        child("remote-call") {
+        childSpan("remote-call") {
           Tracing[IO].keepSpanAround {
             client.successful(POST(uri"http://localhost:8080/execute"))
           }

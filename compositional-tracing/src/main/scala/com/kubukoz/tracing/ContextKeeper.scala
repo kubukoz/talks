@@ -10,6 +10,7 @@ import cats.effect.Sync
 import kamon.Kamon
 import cats.effect.Resource
 
+//Common algebra for running things in context (used with MDC and Kamon alike)
 trait ContextKeeper[F[_], Context] {
   def withContext: Context => F ~> F
   def keepContextAround: F ~> F
@@ -74,7 +75,7 @@ object ContextKeeper {
 
     }
 
-    //todo: figure out if it's viable
+    //alternative implementation that sets context manually
     val _ = alternative
 
     val runWith = new UnsafeRunWithContext[KamonContext] {

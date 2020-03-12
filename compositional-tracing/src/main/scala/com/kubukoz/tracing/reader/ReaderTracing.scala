@@ -220,19 +220,17 @@ object ReaderTracing extends IOApp {
       implicit0(client: Client[Traced]) <- BlazeClientBuilder[IO](ExecutionContext.global)
                                             .resource
                                             .map(kleisliTracedClient(_))
-      entryPoint <- Zipkin.entryPoint[IO]("client", blocker)
-      // entryPoint = Log.entryPoint[IO]("client")
+      entryPoint2 <- Zipkin.entryPoint[IO]("client", blocker)
     } yield {
-      val bl = BusinessLogic.instance[Traced]
+      val businessLogic = BusinessLogic.instance[Traced]
 
       def exec(msg: String): IO[Unit] =
-        entryPoint
-          .root(msg)
+        Zipkin
+          .entryPoint[IO]("client", blocker)
           .use {
-            Kleisli
-              .liftF(IO(ju.UUID.randomUUID()).map(Args(_, msg)))
-              .flatMap(bl.execute(_))
-              .run
+            _.root(msg).use {
+              businessLogic.execute(Args(java.util.UUID.randomUUID(), msg)).run
+            }
           }
           .void
 
@@ -260,8 +258,6 @@ object BusinessLogic {
     val client = implicitly[Client[F]]
     val dsl = new org.http4s.client.dsl.Http4sClientDsl[F] {}
 
-    val goodOldDumbLogger = Slf4jLogger.getLogger[SyncIO]
-
     import dsl._
     import org.http4s.Method._
     import org.http4s.implicits._
@@ -270,7 +266,7 @@ object BusinessLogic {
       def execute(args: Args): F[Result] =
         for {
           _ <- Logger[F].info(show"Executing request $args")
-          _ <- Timer[F].sleep(100.millis)
+          _ <- Trace[F].span("db")(Timer[F].sleep(100.millis))
           _ <- client.successful(POST(uri"http://localhost:8080/execute"))
           _ <- Logger[F].info(show"Executed request $args")
         } yield Result(show"${args.message} finished")
