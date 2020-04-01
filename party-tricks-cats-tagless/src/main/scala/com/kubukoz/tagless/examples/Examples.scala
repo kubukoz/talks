@@ -22,8 +22,6 @@ import cats.tagless.diagnosis.Instrumentation
 import natchez.Trace
 import cats.tagless.diagnosis.Instrument
 import cats.tagless.FunctorK
-import cats.tagless.autoFunctorK
-import cats.tagless.autoInstrument
 
 object Examples {
 
