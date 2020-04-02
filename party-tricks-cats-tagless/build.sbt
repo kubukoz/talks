@@ -21,7 +21,8 @@ val commonSettings = Seq(
     "org.tpolecat" %% "doobie-core" % "0.8.6",
     "org.tpolecat" %% "natchez-core" % "0.0.11",
     "org.tpolecat" %% "natchez-log" % "0.0.11",
-    "ch.qos.logback" % "logback-classic" % "1.2.3"
+    "ch.qos.logback" % "logback-classic" % "1.2.3",
+    "org.typelevel" %% "simulacrum" % "1.0.0"
   ) ++ compilerPlugins
 )
 
