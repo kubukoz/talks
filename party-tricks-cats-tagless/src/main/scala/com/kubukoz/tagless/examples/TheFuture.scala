@@ -46,8 +46,8 @@ object TheFuture {
     }
   }
 
-  final case class WithParameters[F[_], Constraints[_], A](
-    value: F[A],
+  //todo needs rename
+  final case class WithParameters[Constraints[_], A](
     parameters: List[List[Parameter[Constraints]]],
     implicits: Option[NonEmptyList[Parameter[Constraints]]]
   )
@@ -64,21 +64,18 @@ object TheFuture {
         AllParameters[cats.Id],
         AllParameters[Constraints]
       ]
-    ): Alg[WithParameters[F, Constraints, *]]
+    ): Alg[WithParameters[Constraints, *]]
   }
 
   object Parameterized {
 
     type Aux[Alg[_[_]], AllParameters_[_[_]] <: HList] =
       Parameterized[Alg] {
-        type AllParameters[F[_]] = AllParameters_[F]
+        type AllParameters[Constraints[_]] = AllParameters_[Constraints]
       }
   }
 
-  final case class ReturnType[F[_], Constraints[_], A](
-    value: F[A],
-    constraints: Constraints[A]
-  )
+  final case class ReturnType[Constraints[_], A](constraints: Constraints[A])
 
   @typeclass
   trait ReturnTyped[Alg[_[_]]] {
@@ -92,7 +89,7 @@ object TheFuture {
         AllReturnTypes[cats.Id],
         AllReturnTypes[Constraints]
       ]
-    ): Alg[ReturnType[F, Constraints, *]]
+    ): Alg[ReturnType[Constraints, *]]
   }
 
   object ReturnTyped {
@@ -141,21 +138,19 @@ object TheFuture {
             AllReturnTypes[cats.Id],
             AllReturnTypes[Constraints]
           ]
-        ): Users[ReturnType[F, Constraints, *]] =
-          new Users[ReturnType[F, Constraints, *]] {
+        ): Users[ReturnType[Constraints, *]] =
+          new Users[ReturnType[Constraints, *]] {
 
             def withParameters(
               name: String,
               age: Int
-            ): ReturnType[F, Constraints, List[String]] =
+            ): ReturnType[Constraints, List[String]] =
               ReturnType(
-                alg.withParameters(name, age),
                 constraints.instances.select[Constraints[List[String]]]
               )
 
-            def byId(id: String): ReturnType[F, Constraints, Option[Int]] =
+            def byId(id: String): ReturnType[Constraints, Option[Int]] =
               ReturnType(
-                alg.byId(id),
                 constraints.instances.select[Constraints[Option[Int]]]
               )
 
@@ -163,9 +158,8 @@ object TheFuture {
               s: String
             )(
               implicit n: TC[String]
-            ): ReturnType[F, Constraints, String] =
+            ): ReturnType[Constraints, String] =
               ReturnType(
-                alg.withImplicit(s)(n),
                 constraints.instances.select[Constraints[String]]
               )
           }
@@ -184,15 +178,14 @@ object TheFuture {
             AllParameters[cats.Id],
             AllParameters[Constraints]
           ]
-        ): Users[WithParameters[F, Constraints, *]] =
-          new Users[WithParameters[F, Constraints, *]] {
+        ): Users[WithParameters[Constraints, *]] =
+          new Users[WithParameters[Constraints, *]] {
 
             def withParameters(
               name: String,
               age: Int
-            ): WithParameters[F, Constraints, List[String]] =
+            ): WithParameters[Constraints, List[String]] =
               WithParameters(
-                alg.withParameters(name, age),
                 List(
                   List(
                     Parameter.of(
@@ -207,9 +200,8 @@ object TheFuture {
                 None
               )
 
-            def byId(id: String): WithParameters[F, Constraints, Option[Int]] =
+            def byId(id: String): WithParameters[Constraints, Option[Int]] =
               WithParameters(
-                alg.byId(id),
                 List(
                   List(
                     Parameter.of(
@@ -226,8 +218,7 @@ object TheFuture {
               s: String
             )(
               implicit n: TC[String]
-            ): WithParameters[F, Constraints, String] = WithParameters(
-              alg.withImplicit(s),
+            ): WithParameters[Constraints, String] = WithParameters(
               List(
                 List(
                   Parameter.of("s", s, constraints.instances.select[Constraints[String]])
@@ -260,7 +251,7 @@ object TheFutureDemo extends IOApp {
 
     def logParameters[
       F[_]: FlatMap: cats.effect.Console,
-      Alg[_[_]]: FunctorK,
+      Alg[_[_]]: ApplyK,
       ParamsWithInstances[_[_]] <: HList
     ](
       tag: String,
@@ -271,11 +262,10 @@ object TheFutureDemo extends IOApp {
         Show
       ]]
     ): Alg[F] =
-      alg
-        .parameterized[Show]
-        .mapK(
-          λ[WithParameters[F, Show, *] ~> F] { rt =>
-            val paramString = rt
+      alg.map2K(alg.parameterized[Show])(
+        λ[Tuple2K[F, WithParameters[Show, *], *] ~> F] {
+          case Tuple2K(action, params) =>
+            val paramString = params
               .parameters
               .map {
                 _.map(param => param.name + " = " + param.constraints.show(param.value))
@@ -283,7 +273,7 @@ object TheFutureDemo extends IOApp {
               }
               .mkString
 
-            val implicitParamString = rt.implicits.foldMap {
+            val implicitParamString = params.implicits.foldMap {
               _.map(param => param.name + " = " + param.constraints.show(param.value))
                 .mkString_("(implicit ", ", ", ")")
             }
@@ -292,14 +282,13 @@ object TheFutureDemo extends IOApp {
             cats
               .effect
               .Console[F]
-              .putStrLn(show"[$tag] Parameters were: $fullParamString") *>
-              rt.value
-          }
-        )
+              .putStrLn(show"[$tag] Parameters were: $fullParamString") *> action
+        }
+      )
 
     def logResult[
       F[_]: FlatMap: cats.effect.Console,
-      Alg[_[_]]: FunctorK,
+      Alg[_[_]]: ApplyK,
       ParamsWithInstances[_[_]] <: HList
     ](
       tag: String,
@@ -310,17 +299,16 @@ object TheFutureDemo extends IOApp {
         Show
       ]]
     ): Alg[F] =
-      alg
-        .returnTyped[Show]
-        .mapK(
-          λ[ReturnType[F, Show, *] ~> F] { rt =>
-            rt.value.flatTap { result =>
+      alg.map2K(alg.returnTyped[Show])(
+        λ[Tuple2K[F, ReturnType[Show, *], *] ~> F] {
+          case Tuple2K(value, rt) =>
+            value.flatTap { result =>
               implicit val instance = rt.constraints
 
               cats.effect.Console[F].putStrLn(show"[$tag] Result was: $result")
             }
-          }
-        )
+        }
+      )
 
     def combineResults[
       F[_]: Apply,
@@ -336,14 +324,13 @@ object TheFutureDemo extends IOApp {
       ]]
     ): Alg[F] =
       alg1
-        .returnTyped[Semigroup]
-        .productK(alg2.returnTyped[Semigroup])
-        .mapK(
-          λ[Tuple2K[ReturnType[F, Semigroup, *], ReturnType[F, Semigroup, *], *] ~> F] {
-            rt =>
-              implicit val theMonoid = rt.first.constraints
+        .productK(alg2)
+        .map2K(alg1.returnTyped[Semigroup])(
+          λ[Tuple2K[Tuple2K[F, F, *], ReturnType[Semigroup, *], *] ~> F] {
+            case Tuple2K(Tuple2K(left, right), rt) =>
+              implicit val theMonoid = rt.constraints
 
-              (rt.first.value, rt.second.value).mapN(_ |+| _)
+              (left, right).mapN(_ |+| _)
           }
         )
 
