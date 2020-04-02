@@ -18,6 +18,8 @@ import cats.tagless.ApplyK
 import cats.tagless.autoApplyK
 import cats.data.Tuple2K
 import cats.kernel.Semigroup
+import com.kubukoz.tagless.examples.TheFuture.Parameterized
+import com.kubukoz.tagless.examples.TheFuture.WithParameters
 
 object TheFuture {
 
@@ -28,17 +30,49 @@ object TheFuture {
     def constraints: Constraints[Tpe]
   }
 
-  trait WithParameters[F[_], Constraints[_], A] {
-    def parameters: List[List[Parameter[Constraints]]]
-    def value: F[A]
+  object Parameter {
+    type Aux[Constraints[_], Tpe_] = Parameter[Constraints] { type Tpe = Tpe_ }
+
+    def of[Tpe0, Constraints[_]](
+      theName: String,
+      theValue: Tpe0,
+      theConstraints: Constraints[Tpe0]
+    ): Parameter.Aux[Constraints, Tpe0] = new Parameter[Constraints] {
+      type Tpe = Tpe0
+      val name: String = theName
+      val value: Tpe = theValue
+      val constraints: Constraints[Tpe] = theConstraints
+    }
   }
+
+  final case class WithParameters[F[_], Constraints[_], A](
+    value: F[A],
+    parameters: List[List[Parameter[Constraints]]]
+  )
 
   @typeclass
   trait Parameterized[Alg[_[_]]] {
+    type AllParameters <: HList
+    type AllParametersWithInstances[Constraints[_]] <: HList
 
     def parameterized[F[_], Constraints[_]](
       alg: Alg[F]
+    )(
+      implicit constraints: LiftAll.Aux[
+        Constraints,
+        AllParameters,
+        AllParametersWithInstances[Constraints]
+      ]
     ): Alg[WithParameters[F, Constraints, *]]
+  }
+
+  object Parameterized {
+
+    type Aux[Alg[_[_]], AllParameters_ <: HList, AllParametersWithInstances_[_[_]] <: HList] =
+      Parameterized[Alg] {
+        type AllParameters = AllParameters_
+        type AllParametersWithInstances[F[_]] = AllParametersWithInstances_[F]
+      }
   }
 
   final case class ReturnType[F[_], Constraints[_], A](
@@ -86,6 +120,11 @@ object TheFuture {
     type RTInstances[Constraints[_]] =
       Constraints[Option[Int]] :: Constraints[List[String]] :: HNil
 
+    type Ps = String :: Int :: HNil
+
+    type PInstances[Constraints[_]] =
+      Constraints[String] :: Constraints[Int] :: HNil
+
     implicit val returnTypedUsers: ReturnTyped.Aux[Users, RTs, RTInstances] =
       new ReturnTyped[Users] {
 
@@ -121,6 +160,60 @@ object TheFuture {
               )
           }
       }
+
+    implicit val parameterizedUsers: Parameterized.Aux[Users, Ps, PInstances] =
+      new Parameterized[Users] {
+
+        type AllParameters = Ps
+
+        type AllParametersWithInstances[Constraints[_]] =
+          PInstances[Constraints]
+
+        def parameterized[F[_], Constraints[_]](
+          alg: Users[F]
+        )(
+          implicit constraints: LiftAll.Aux[
+            Constraints,
+            AllParameters,
+            AllParametersWithInstances[Constraints]
+          ]
+        ): Users[WithParameters[F, Constraints, *]] =
+          new Users[WithParameters[F, Constraints, *]] {
+
+            def withParameters(
+              name: String,
+              age: Int
+            ): WithParameters[F, Constraints, List[String]] =
+              WithParameters(
+                alg.withParameters(name, age),
+                List(
+                  List(
+                    Parameter.of(
+                      "name",
+                      name,
+                      constraints.instances.select[Constraints[String]]
+                    ),
+                    Parameter
+                      .of("age", age, constraints.instances.select[Constraints[Int]])
+                  )
+                )
+              )
+
+            def byId(id: String): WithParameters[F, Constraints, Option[Int]] =
+              WithParameters(
+                alg.byId(id),
+                List(
+                  List(
+                    Parameter.of(
+                      "id",
+                      id,
+                      constraints.instances.select[Constraints[String]]
+                    )
+                  )
+                )
+              )
+          }
+      }
   }
 }
 
@@ -130,11 +223,42 @@ object TheFutureDemo extends IOApp {
   def run(args: List[String]): IO[ExitCode] = {
 
     import com.kubukoz.tagless.examples.TheFuture.ReturnTyped.ops._
+    import com.kubukoz.tagless.examples.TheFuture.Parameterized.ops._
 
     import cats.~>
     import cats.tagless.implicits._
 
     import shapeless._
+
+    def logParameters[
+      F[_]: FlatMap: cats.effect.Console,
+      Alg[_[_]]: FunctorK,
+      Params <: HList,
+      ParamsWithInstances[_[_]] <: HList
+    ](
+      tag: String,
+      alg: Alg[F]
+    )(
+      implicit returnTyped: Parameterized.Aux[Alg, Params, ParamsWithInstances],
+      liftParamsToShow: LiftAll.Aux[Show, Params, ParamsWithInstances[Show]]
+    ): Alg[F] =
+      alg
+        .parameterized[Show]
+        .mapK(
+          λ[WithParameters[F, Show, *] ~> F] { rt =>
+            val paramString = rt
+              .parameters
+              .map { paramList =>
+                paramList
+                  .map(param => param.name + " = " + param.constraints.show(param.value))
+                  .mkString("(", ", ", ")")
+              }
+              .mkString
+
+            cats.effect.Console[F].putStrLn(show"[$tag] Parameters were: $paramString") *>
+              rt.value
+          }
+        )
 
     def logResult[
       F[_]: FlatMap: cats.effect.Console,
@@ -202,7 +326,7 @@ object TheFutureDemo extends IOApp {
 
     val loggedInstance = logResult("users", users)
 
-    logResult("main", combineResults(loggedInstance, users2))
+    logParameters("main", logResult("main", combineResults(loggedInstance, users2)))
       .withParameters("hello", 42)
       .as(ExitCode.Success)
   }
