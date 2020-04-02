@@ -35,7 +35,6 @@ object Foo {}
 object Main extends IOApp {
 
   import Console.io._
-  import Console.implicits._
 
   import fs2.Stream
 

@@ -11,8 +11,6 @@ import cats.Show
 import shapeless.HNil
 import com.kubukoz.tagless.examples.TheFuture.ReturnTyped
 import cats.FlatMap
-import cats.tagless.FunctorK
-import com.kubukoz.tagless.examples.TheFuture.ReturnType
 import cats.Apply
 import cats.tagless.ApplyK
 import cats.tagless.autoApplyK
@@ -75,8 +73,6 @@ object TheFuture {
       }
   }
 
-  final case class ReturnType[Constraints[_], A](constraints: Constraints[A])
-
   @typeclass
   trait ReturnTyped[Alg[_[_]]] {
     type AllReturnTypes[Constraints[_]] <: HList
@@ -89,7 +85,7 @@ object TheFuture {
         AllReturnTypes[cats.Id],
         AllReturnTypes[Constraints]
       ]
-    ): Alg[ReturnType[Constraints, *]]
+    ): Alg[Constraints]
   }
 
   object ReturnTyped {
@@ -138,30 +134,17 @@ object TheFuture {
             AllReturnTypes[cats.Id],
             AllReturnTypes[Constraints]
           ]
-        ): Users[ReturnType[Constraints, *]] =
-          new Users[ReturnType[Constraints, *]] {
+        ): Users[Constraints] =
+          new Users[Constraints] {
 
-            def withParameters(
-              name: String,
-              age: Int
-            ): ReturnType[Constraints, List[String]] =
-              ReturnType(
-                constraints.instances.select[Constraints[List[String]]]
-              )
+            def withParameters(name: String, age: Int): Constraints[List[String]] =
+              constraints.instances.select[Constraints[List[String]]]
 
-            def byId(id: String): ReturnType[Constraints, Option[Int]] =
-              ReturnType(
-                constraints.instances.select[Constraints[Option[Int]]]
-              )
+            def byId(id: String): Constraints[Option[Int]] =
+              constraints.instances.select[Constraints[Option[Int]]]
 
-            def withImplicit(
-              s: String
-            )(
-              implicit n: TC[String]
-            ): ReturnType[Constraints, String] =
-              ReturnType(
-                constraints.instances.select[Constraints[String]]
-              )
+            def withImplicit(s: String)(implicit n: TC[String]): Constraints[String] =
+              constraints.instances.select[Constraints[String]]
           }
       }
 
@@ -300,10 +283,10 @@ object TheFutureDemo extends IOApp {
       ]]
     ): Alg[F] =
       alg.map2K(alg.returnTyped[Show])(
-        λ[Tuple2K[F, ReturnType[Show, *], *] ~> F] {
+        λ[Tuple2K[F, Show, *] ~> F] {
           case Tuple2K(value, rt) =>
             value.flatTap { result =>
-              implicit val instance = rt.constraints
+              implicit val instance = rt
 
               cats.effect.Console[F].putStrLn(show"[$tag] Result was: $result")
             }
@@ -326,9 +309,9 @@ object TheFutureDemo extends IOApp {
       alg1
         .productK(alg2)
         .map2K(alg1.returnTyped[Semigroup])(
-          λ[Tuple2K[Tuple2K[F, F, *], ReturnType[Semigroup, *], *] ~> F] {
+          λ[Tuple2K[Tuple2K[F, F, *], Semigroup, *] ~> F] {
             case Tuple2K(Tuple2K(left, right), rt) =>
-              implicit val theMonoid = rt.constraints
+              implicit val theSemigroup = rt
 
               (left, right).mapN(_ |+| _)
           }
