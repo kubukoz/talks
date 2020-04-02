@@ -13,7 +13,11 @@ import com.kubukoz.tagless.examples.TheFuture.ReturnTyped
 import cats.FlatMap
 import cats.tagless.FunctorK
 import com.kubukoz.tagless.examples.TheFuture.ReturnType
-import cats.tagless.autoFunctorK
+import cats.Apply
+import cats.tagless.ApplyK
+import cats.tagless.autoApplyK
+import cats.data.Tuple2K
+import cats.kernel.Semigroup
 
 object TheFuture {
 
@@ -67,7 +71,7 @@ object TheFuture {
       }
   }
 
-  @autoFunctorK
+  @autoApplyK
   trait Users[F[_]] {
     def withParameters(name: String, age: Int): F[List[String]]
     def byId(id: String): F[Option[Int]]
@@ -124,12 +128,6 @@ object TheFutureDemo extends IOApp {
   import cats.implicits._
 
   def run(args: List[String]): IO[ExitCode] = {
-    val users: Users[IO] = new Users[IO] {
-      def withParameters(name: String, age: Int): IO[List[String]] =
-        IO.pure(List("foo", "bar"))
-
-      def byId(id: String): IO[Option[Int]] = IO.pure(Some(42))
-    }
 
     import com.kubukoz.tagless.examples.TheFuture.ReturnTyped.ops._
 
@@ -144,6 +142,7 @@ object TheFutureDemo extends IOApp {
       Params <: HList,
       ParamsWithInstances[_[_]] <: HList
     ](
+      tag: String,
       alg: Alg[F]
     )(
       implicit returnTyped: ReturnTyped.Aux[Alg, Params, ParamsWithInstances],
@@ -156,13 +155,55 @@ object TheFutureDemo extends IOApp {
             rt.value.flatTap { result =>
               implicit val instance = rt.constraints
 
-              cats.effect.Console[F].putStrLn(show"Result was: $result")
+              cats.effect.Console[F].putStrLn(show"[$tag] Result was: $result")
             }
+          }
+        )
+
+    def combineResults[
+      F[_]: Apply,
+      Alg[_[_]]: ApplyK,
+      Params <: HList,
+      ParamsWithInstances[_[_]] <: HList
+    ](
+      alg1: Alg[F],
+      alg2: Alg[F]
+    )(
+      implicit returnTyped: ReturnTyped.Aux[Alg, Params, ParamsWithInstances],
+      liftParamsToShow: LiftAll.Aux[Semigroup, Params, ParamsWithInstances[Semigroup]]
+    ): Alg[F] =
+      alg1
+        .returnTyped[Semigroup]
+        .productK(alg2.returnTyped[Semigroup])
+        .mapK(
+          λ[Tuple2K[ReturnType[F, Semigroup, *], ReturnType[F, Semigroup, *], *] ~> F] {
+            rt =>
+              implicit val theMonoid = rt.first.constraints
+
+              (rt.first.value, rt.second.value).mapN(_ |+| _)
           }
         )
 
     import cats.effect.Console.implicits._
 
-    logResult(users).withParameters("hello", 42).as(ExitCode.Success)
+    val users: Users[IO] = new Users[IO] {
+      def withParameters(name: String, age: Int): IO[List[String]] =
+        IO.pure(List("foo", "bar"))
+
+      def byId(id: String): IO[Option[Int]] = IO.pure(Some(42))
+    }
+
+    val users2: Users[IO] = new Users[IO] {
+      def withParameters(name: String, age: Int): IO[List[String]] =
+        IO.pure(List("baz", "qux"))
+
+      def byId(id: String): IO[Option[Int]] = IO.pure(None)
+    }
+
+    val loggedInstance = logResult("users", users)
+
+    logResult("main", combineResults(loggedInstance, users2))
+      .withParameters("hello", 42)
+      .as(ExitCode.Success)
   }
 }
