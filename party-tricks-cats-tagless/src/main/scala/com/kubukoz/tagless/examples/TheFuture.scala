@@ -52,26 +52,24 @@ object TheFuture {
 
   @typeclass
   trait Parameterized[Alg[_[_]]] {
-    type AllParameters <: HList
-    type AllParametersWithInstances[Constraints[_]] <: HList
+    type AllParameters[Constraints[_]] <: HList
 
     def parameterized[F[_], Constraints[_]](
       alg: Alg[F]
     )(
       implicit constraints: LiftAll.Aux[
         Constraints,
-        AllParameters,
-        AllParametersWithInstances[Constraints]
+        AllParameters[cats.Id],
+        AllParameters[Constraints]
       ]
     ): Alg[WithParameters[F, Constraints, *]]
   }
 
   object Parameterized {
 
-    type Aux[Alg[_[_]], AllParameters_ <: HList, AllParametersWithInstances_[_[_]] <: HList] =
+    type Aux[Alg[_[_]], AllParameters_[_[_]] <: HList] =
       Parameterized[Alg] {
-        type AllParameters = AllParameters_
-        type AllParametersWithInstances[F[_]] = AllParametersWithInstances_[F]
+        type AllParameters[F[_]] = AllParameters_[F]
       }
   }
 
@@ -82,26 +80,24 @@ object TheFuture {
 
   @typeclass
   trait ReturnTyped[Alg[_[_]]] {
-    type AllReturnTypes <: HList
-    type AllReturnTypesWithInstances[Constraints[_]] <: HList
+    type AllReturnTypes[Constraints[_]] <: HList
 
     def returnTyped[F[_], Constraints[_]](
       alg: Alg[F]
     )(
       implicit constraints: LiftAll.Aux[
         Constraints,
-        AllReturnTypes,
-        AllReturnTypesWithInstances[Constraints]
+        AllReturnTypes[cats.Id],
+        AllReturnTypes[Constraints]
       ]
     ): Alg[ReturnType[F, Constraints, *]]
   }
 
   object ReturnTyped {
 
-    type Aux[Alg[_[_]], AllReturnTypes_ <: HList, AllReturnTypesWithInstances_[_[_]] <: HList] =
+    type Aux[Alg[_[_]], AllReturnTypes_[_[_]] <: HList] =
       ReturnTyped[Alg] {
-        type AllReturnTypes = AllReturnTypes_
-        type AllReturnTypesWithInstances[F[_]] = AllReturnTypesWithInstances_[F]
+        type AllReturnTypes[F[_]] = AllReturnTypes_[F]
       }
   }
 
@@ -115,22 +111,16 @@ object TheFuture {
 
     import shapeless._
 
-    type RTs = Option[Int] :: List[String] :: HNil
-
     type RTInstances[Constraints[_]] =
       Constraints[Option[Int]] :: Constraints[List[String]] :: HNil
-
-    type Ps = String :: Int :: HNil
 
     type PInstances[Constraints[_]] =
       Constraints[String] :: Constraints[Int] :: HNil
 
-    implicit val returnTypedUsers: ReturnTyped.Aux[Users, RTs, RTInstances] =
+    implicit val returnTypedUsers: ReturnTyped.Aux[Users, RTInstances] =
       new ReturnTyped[Users] {
 
-        type AllReturnTypes = RTs
-
-        type AllReturnTypesWithInstances[Constraints[_]] =
+        type AllReturnTypes[Constraints[_]] =
           RTInstances[Constraints]
 
         def returnTyped[F[_], Constraints[_]](
@@ -138,8 +128,8 @@ object TheFuture {
         )(
           implicit constraints: LiftAll.Aux[
             Constraints,
-            AllReturnTypes,
-            AllReturnTypesWithInstances[Constraints]
+            AllReturnTypes[cats.Id],
+            AllReturnTypes[Constraints]
           ]
         ): Users[ReturnType[F, Constraints, *]] =
           new Users[ReturnType[F, Constraints, *]] {
@@ -161,21 +151,18 @@ object TheFuture {
           }
       }
 
-    implicit val parameterizedUsers: Parameterized.Aux[Users, Ps, PInstances] =
+    implicit val parameterizedUsers: Parameterized.Aux[Users, PInstances] =
       new Parameterized[Users] {
 
-        type AllParameters = Ps
-
-        type AllParametersWithInstances[Constraints[_]] =
-          PInstances[Constraints]
+        type AllParameters[Constraints[_]] = PInstances[Constraints]
 
         def parameterized[F[_], Constraints[_]](
           alg: Users[F]
         )(
           implicit constraints: LiftAll.Aux[
             Constraints,
-            AllParameters,
-            AllParametersWithInstances[Constraints]
+            AllParameters[cats.Id],
+            AllParameters[Constraints]
           ]
         ): Users[WithParameters[F, Constraints, *]] =
           new Users[WithParameters[F, Constraints, *]] {
@@ -233,14 +220,15 @@ object TheFutureDemo extends IOApp {
     def logParameters[
       F[_]: FlatMap: cats.effect.Console,
       Alg[_[_]]: FunctorK,
-      Params <: HList,
       ParamsWithInstances[_[_]] <: HList
     ](
       tag: String,
       alg: Alg[F]
     )(
-      implicit returnTyped: Parameterized.Aux[Alg, Params, ParamsWithInstances],
-      liftParamsToShow: LiftAll.Aux[Show, Params, ParamsWithInstances[Show]]
+      implicit returnTyped: Parameterized.Aux[Alg, ParamsWithInstances],
+      liftParamsToShow: LiftAll.Aux[Show, ParamsWithInstances[cats.Id], ParamsWithInstances[
+        Show
+      ]]
     ): Alg[F] =
       alg
         .parameterized[Show]
@@ -263,14 +251,15 @@ object TheFutureDemo extends IOApp {
     def logResult[
       F[_]: FlatMap: cats.effect.Console,
       Alg[_[_]]: FunctorK,
-      Params <: HList,
       ParamsWithInstances[_[_]] <: HList
     ](
       tag: String,
       alg: Alg[F]
     )(
-      implicit returnTyped: ReturnTyped.Aux[Alg, Params, ParamsWithInstances],
-      liftParamsToShow: LiftAll.Aux[Show, Params, ParamsWithInstances[Show]]
+      implicit returnTyped: ReturnTyped.Aux[Alg, ParamsWithInstances],
+      liftParamsToShow: LiftAll.Aux[Show, ParamsWithInstances[cats.Id], ParamsWithInstances[
+        Show
+      ]]
     ): Alg[F] =
       alg
         .returnTyped[Show]
@@ -287,14 +276,15 @@ object TheFutureDemo extends IOApp {
     def combineResults[
       F[_]: Apply,
       Alg[_[_]]: ApplyK,
-      Params <: HList,
       ParamsWithInstances[_[_]] <: HList
     ](
       alg1: Alg[F],
       alg2: Alg[F]
     )(
-      implicit returnTyped: ReturnTyped.Aux[Alg, Params, ParamsWithInstances],
-      liftParamsToShow: LiftAll.Aux[Semigroup, Params, ParamsWithInstances[Semigroup]]
+      implicit returnTyped: ReturnTyped.Aux[Alg, ParamsWithInstances],
+      liftParamsToShow: LiftAll.Aux[Semigroup, ParamsWithInstances[cats.Id], ParamsWithInstances[
+        Semigroup
+      ]]
     ): Alg[F] =
       alg1
         .returnTyped[Semigroup]
