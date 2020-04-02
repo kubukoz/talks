@@ -20,6 +20,7 @@ import cats.data.Tuple2K
 import cats.kernel.Semigroup
 import com.kubukoz.tagless.examples.TheFuture.Parameterized
 import com.kubukoz.tagless.examples.TheFuture.WithParameters
+import cats.data.NonEmptyList
 
 object TheFuture {
 
@@ -47,7 +48,8 @@ object TheFuture {
 
   final case class WithParameters[F[_], Constraints[_], A](
     value: F[A],
-    parameters: List[List[Parameter[Constraints]]]
+    parameters: List[List[Parameter[Constraints]]],
+    implicits: Option[NonEmptyList[Parameter[Constraints]]]
   )
 
   @typeclass
@@ -101,10 +103,18 @@ object TheFuture {
       }
   }
 
+  trait TC[A]
+
+  object TC {
+    implicit def showTC[A]: Show[TC[A]] = _ => "TC[from the Show instance]"
+    implicit def forAny[A]: TC[A] = new TC[A] {}
+  }
+
   @autoApplyK
   trait Users[F[_]] {
     def withParameters(name: String, age: Int): F[List[String]]
     def byId(id: String): F[Option[Int]]
+    def withImplicit(s: String)(implicit n: TC[String]): F[String]
   }
 
   object Users {
@@ -112,10 +122,10 @@ object TheFuture {
     import shapeless._
 
     type RTInstances[Constraints[_]] =
-      Constraints[Option[Int]] :: Constraints[List[String]] :: HNil
+      Constraints[Option[Int]] :: Constraints[List[String]] :: Constraints[String] :: HNil
 
     type PInstances[Constraints[_]] =
-      Constraints[String] :: Constraints[Int] :: HNil
+      Constraints[String] :: Constraints[Int] :: Constraints[TC[String]] :: HNil
 
     implicit val returnTypedUsers: ReturnTyped.Aux[Users, RTInstances] =
       new ReturnTyped[Users] {
@@ -147,6 +157,16 @@ object TheFuture {
               ReturnType(
                 alg.byId(id),
                 constraints.instances.select[Constraints[Option[Int]]]
+              )
+
+            def withImplicit(
+              s: String
+            )(
+              implicit n: TC[String]
+            ): ReturnType[F, Constraints, String] =
+              ReturnType(
+                alg.withImplicit(s)(n),
+                constraints.instances.select[Constraints[String]]
               )
           }
       }
@@ -183,7 +203,8 @@ object TheFuture {
                     Parameter
                       .of("age", age, constraints.instances.select[Constraints[Int]])
                   )
-                )
+                ),
+                None
               )
 
             def byId(id: String): WithParameters[F, Constraints, Option[Int]] =
@@ -197,8 +218,28 @@ object TheFuture {
                       constraints.instances.select[Constraints[String]]
                     )
                   )
+                ),
+                None
+              )
+
+            def withImplicit(
+              s: String
+            )(
+              implicit n: TC[String]
+            ): WithParameters[F, Constraints, String] = WithParameters(
+              alg.withImplicit(s),
+              List(
+                List(
+                  Parameter.of("s", s, constraints.instances.select[Constraints[String]])
+                )
+              ),
+              Some(
+                NonEmptyList.one(
+                  Parameter
+                    .of("n", n, constraints.instances.select[Constraints[TC[String]]])
                 )
               )
+            )
           }
       }
   }
@@ -236,14 +277,22 @@ object TheFutureDemo extends IOApp {
           λ[WithParameters[F, Show, *] ~> F] { rt =>
             val paramString = rt
               .parameters
-              .map { paramList =>
-                paramList
-                  .map(param => param.name + " = " + param.constraints.show(param.value))
+              .map {
+                _.map(param => param.name + " = " + param.constraints.show(param.value))
                   .mkString("(", ", ", ")")
               }
               .mkString
 
-            cats.effect.Console[F].putStrLn(show"[$tag] Parameters were: $paramString") *>
+            val implicitParamString = rt.implicits.foldMap {
+              _.map(param => param.name + " = " + param.constraints.show(param.value))
+                .mkString_("(implicit ", ", ", ")")
+            }
+            val fullParamString = paramString ++ implicitParamString
+
+            cats
+              .effect
+              .Console[F]
+              .putStrLn(show"[$tag] Parameters were: $fullParamString") *>
               rt.value
           }
         )
@@ -305,6 +354,9 @@ object TheFutureDemo extends IOApp {
         IO.pure(List("foo", "bar"))
 
       def byId(id: String): IO[Option[Int]] = IO.pure(Some(42))
+
+      def withImplicit(s: String)(implicit n: TheFuture.TC[String]): IO[String] =
+        IO.pure("foo")
     }
 
     val users2: Users[IO] = new Users[IO] {
@@ -312,12 +364,16 @@ object TheFutureDemo extends IOApp {
         IO.pure(List("baz", "qux"))
 
       def byId(id: String): IO[Option[Int]] = IO.pure(None)
+
+      def withImplicit(s: String)(implicit n: TheFuture.TC[String]): IO[String] =
+        IO.pure("boo")
     }
 
     val loggedInstance = logResult("users", users)
 
-    logParameters("main", logResult("main", combineResults(loggedInstance, users2)))
-      .withParameters("hello", 42)
-      .as(ExitCode.Success)
+    val theInstance: Users[IO] =
+      logParameters("main", logResult("main", combineResults(loggedInstance, users2)))
+
+    theInstance.withImplicit("aaa").as(ExitCode.Success)
   }
 }
