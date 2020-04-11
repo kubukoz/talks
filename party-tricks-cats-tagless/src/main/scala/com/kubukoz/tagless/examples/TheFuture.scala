@@ -19,6 +19,8 @@ import cats.kernel.Semigroup
 import com.kubukoz.tagless.examples.TheFuture.Parameterized
 import com.kubukoz.tagless.examples.TheFuture.WithParameters
 import cats.data.NonEmptyList
+import cats.Monad
+import cats.tagless.autoFunctorK
 
 object TheFuture {
 

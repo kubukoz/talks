@@ -20,9 +20,9 @@ At the end, if you’ve been writing effect-polymorphic code in Scala without th
   - ✅ Fallback to different implementation - ApplyK with `orElse`
   - ✅ Race two implementations - ApplyK with `race andThen (_.map(_.merge))`
   - ✅ Run N implementations (potentially mixing effects) and keep results - ApplyK / @autoProductNK 
+  - ✅ Add time of execution
   - ✅ Lift effect into stream, repeating actions in exponentially growing spacing
   - ✅ Add retries / circuit breaker / semaphore / rate limiter
-  - ✅ Add time of execution
   - ✅ Create span for distributed tracing based on method name
   - Customize a bunch of algebras at once - only works if you only need FunctorK though :(
   - (possibly - see my latest issue) cache key calculation, logging failing values, adding tags to tracing spans
