@@ -14,7 +14,7 @@ val commonSettings = Seq(
   fork in Test := true,
   libraryDependencies ++= Seq(
     "org.typelevel" %% "cats-effect" % "2.1.2",
-    "org.typelevel" %% "cats-tagless-macros" % "0.11",
+    "org.typelevel" %% "cats-tagless-macros" % "0.12-SNAPSHOT-bb950d460c8c5029fe48c8b130009d23b48618b7",
     "dev.profunktor" %% "console4cats" % "0.8.1",
     "co.fs2" %% "fs2-core" % "2.3.0",
     "io.chrisdavenport" %% "log4cats-slf4j" % "1.0.1",
