@@ -1,0 +1,6 @@
+{
+  "window.zoomLevel": 4,
+  "files.watcherExclude": {
+    "**/target": true
+  }
+}
