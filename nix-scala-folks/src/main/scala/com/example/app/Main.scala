@@ -2,7 +2,6 @@ package com.example.app
 
 import cats.effect.IOApp
 import cats.effect.IO
-import java.nio.file.Path
 
 object Main extends IOApp.Simple:
   def run: IO[Unit] = IO.println("Hello Nix!")
@@ -10,12 +9,10 @@ object Main extends IOApp.Simple:
 case class Path(s: String)
 
 trait HasPath {
-  def path: Path
+  def path: IO[Path]
 }
 
-trait Derivation extends HasPath {
-  def build: IO[Unit]
-}
+trait Derivation extends HasPath
 
 def derivation(
   name: String,
@@ -48,4 +45,5 @@ object demo {
     },
   )
 
+  val result: IO[Path] = simpleNixBuild.path
 }

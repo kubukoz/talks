@@ -3,7 +3,7 @@
 sbt.mkDerivation rec {
   pname = "example";
   version = "0.1.0";
-  depsSha256 = "sha256-giFMIPm2dSVs33pxWITndpR8jwzVAxSFPvON4sHceFE=";
+  depsSha256 = "sha256-aLbNNgmVJYNHbSB1VhAxNWZOYwarXa6EgFH8iQDpU60=";
 
   depsWarmupCommand = ''
     sbt Test/compile
