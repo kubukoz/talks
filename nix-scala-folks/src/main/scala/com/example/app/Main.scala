@@ -12,18 +12,24 @@ trait HasPath {
   def path: IO[Path]
 }
 
-trait Derivation extends HasPath
+trait Package extends HasPath
+
+def makePackage(
+  dependencies: List[Package],
+  src: Path,
+  buildScript: String,
+): Package = ???
 
 def derivation(
   name: String,
-  buildDependencies: List[HasPath],
+  dependencies: List[HasPath],
   src: Path,
-  buildScript: Path => String,
+  buildScript: String,
   environment: Map[String, String] = Map.empty,
-): Derivation = ???
+): Package = ???
 
 class Nixpkgs {
-  val coreutils: Derivation = ???
+  val coreutils: Package = ???
 }
 
 def use(path: String): Nixpkgs = ???
@@ -34,15 +40,13 @@ object demo {
 
   val simpleNixBuild = derivation(
     name = "example-0.0.1",
-    buildDependencies = List(
+    dependencies = List(
       pkgs.coreutils
     ),
     src = Path("./."),
-    buildScript = { outPath =>
-      s"""
-        cat a.txt b.txt > $outPath
-      """
-    },
+    buildScript = """
+      cat a.txt b.txt > $outPath
+    """,
   )
 
   val result: IO[Path] = simpleNixBuild.path
