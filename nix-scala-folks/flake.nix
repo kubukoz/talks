@@ -15,8 +15,8 @@
         };
       in
       {
-        defaultPackage = pkgs.callPackage ./derivation.nix { inherit (inputs) gitignore-source; };
-        devShell = pkgs.mkShell { buildInputs = [ pkgs.sbt ]; };
+        packages.default = pkgs.callPackage ./derivation.nix { inherit (inputs) gitignore-source; };
+        devShells.default = pkgs.mkShell { buildInputs = [ pkgs.sbt ]; };
       }
     );
 }
