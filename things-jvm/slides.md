@@ -38,7 +38,7 @@ layout: two-cols
 
 # What's a classfile
 
-- binary file produced by a JVM language's compiler
+- binary file produced by a compiler (usually)
 - input format for the JVM
 - corresponds to **one** class/interface/module
 
