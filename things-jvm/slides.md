@@ -230,7 +230,9 @@ Error: LinkageError occurred while loading main class Foo
 
 ---
 
-<div style="overflow: scroll; height: 100%;">
+## What's that? A file input?
+
+<div style="overflow: scroll; height: 100%; margin-top: 2em; font-family: monospace;">
 <input
     type="file"
     id="file_input"
