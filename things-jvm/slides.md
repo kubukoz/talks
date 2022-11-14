@@ -120,6 +120,8 @@ case class ClassFile(
 )
 ```
 
+<p>everything in this talk is based on <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/index.html">the Java SE 17 spec</a>.</p>
+
 ---
 layout: center
 ---
@@ -133,7 +135,7 @@ layout: center
 - binary file: sequence of bits - e.g. `0b1100101010110101100`
 - bit: single digit in a base-2 numeric system - (`0` or `1`)
 - byte: a group of 8 bits (_usually_) - e.g. `0b10011111`, or `0x9f`
-- we'll be dealing with unsigned, big-endian integers only: `0b1110` / `0x0e` means <!-- Poprawic -->`14` in decimal
+- we'll mostly be dealing with unsigned, big-endian integers: `0x000e` means `14` in decimal
 
 ---
 layout: center
@@ -164,15 +166,13 @@ class: classfile-encoding-sample
 }
 </style>
 
-# Classfile encoding
-
-Magic number
+# Magic number
 
 `0b11001010111111101011101010111110`
 
 <p v-click>⁉️</p>
 
-<span v-click>`0xCAFEBABE`</span>
+<span v-click>`0xCAFEBABE` 💀</span>
 
 ::right::
 
@@ -190,7 +190,7 @@ layout: two-cols
 class: classfile-encoding-sample
 ---
 
-# Classfile encoding
+# JVM version
 
 Minor, major version
 
@@ -200,7 +200,7 @@ Minor, major version
 
 ::right::
 
-```c {1,3,4,6}
+```c {3,4}
 ClassFile {
     u4             magic;
     u2             minor_version;
@@ -211,13 +211,12 @@ ClassFile {
 
 ---
 
-# Classfile encoding
-
-Major versions:
+# Major versions
 
 - 52 (`0x0034`, Java 8)
 - 55 (`0x0037`, Java 11),
 - 61 (`0x003D`, Java 17)...
+- ...enough space to let us have Java 65491 :)
 
 If you get it wrong:
 
@@ -227,6 +226,177 @@ Error: LinkageError occurred while loading main class Foo
   of the Java Runtime (class file version 61.0), this version of the Java Runtime
   only recognizes class file versions up to 55.0
 ```
+
+---
+
+# Major version compatibility table
+
+<div style="width: 100%; height: 100%; display: block; overflow: scroll">
+<img src="compat-table.png" style="object-fit: contain; width: 50%;">
+</div>
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Constant pool
+
+- an ordered list of reusable constants
+- contains all literals, class/method/field/type names etc.
+- prefixed with the amount of constants included
+- each constant is prefixed with a discriminator byte (`u1 tag`)
+- indices and sizes are **off by one (+1)**: a single-item pool has size `2`, and the only index is `1`
+
+::right::
+
+```c {3,4}
+ClassFile {
+    ...
+    u2             constant_pool_count;
+    cp_info        constant_pool[constant_pool_count-1];
+    ...
+}
+```
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Integer_info constant
+
+- tag: `3` (`0x03`)
+- content: `u4` (32-bit) signed integer
+- example: `48` -> `0x00000030`
+
+::right::
+
+```c
+CONSTANT_Integer_info {
+    u1 tag;
+    u4 bytes;
+}
+```
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Class_info constant
+
+- tag: `7` (`0x07`)
+- content: `u1`: index to the constant pool
+- **must** target an UTF-8 string constant (class name)
+- example: index 2 (third item in pool) -> `0x03`
+
+::right::
+
+```c
+CONSTANT_Class_info {
+    u1 tag;
+    u2 name_index;
+}
+```
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Utf8_info constant
+
+- tag: `1` (`0x01`)
+- content:
+  - `u2 length`: the amount of remaining bytes
+  - `u1` x `length`: "modified UTF-8"-encoded
+
+::right::
+
+```c
+CONSTANT_Utf8_info {
+    u1 tag;
+    u2 length;
+    u1 bytes[length];
+}
+```
+
+---
+
+# Modified UTF-8 encoding
+
+- <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html#jvms-4.4.7">pretty complex</a>, but space efficieffffffnt: ASCII characters only use 1 byte each
+- can be encoded/decoded with JDK's `DataOutputStream` / `DataInputStream`
+- also used in Java Serialiation
+
+Examples:
+
+| input   | length   | data               |
+| ------- | -------- | ------------------ |
+| `hello` | `0x0005` | `0x68656c6c6f`     |
+| `łódź`  | `0x0007` | `0xc582c3b364c5ba` |
+
+---
+
+# Real example
+
+`javap -v Hello`
+
+```rust
+public class Foo
+  minor version: 0
+  major version: 48
+  flags: (0x0021) ACC_PUBLIC, ACC_SUPER
+  this_class: #2                          // Foo
+  super_class: #4                         // java/lang/Object
+  interfaces: 0, fields: 0, methods: 1, attributes: 1
+Constant pool:
+   #1 = Utf8               Hello
+   #2 = Class              #1             // Hello
+   #3 = Utf8               java/lang/Object
+   #4 = Class              #3             // java/lang/Object
+```
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Long_info constant
+
+- tag: `5` (`0x05`)
+- content:
+  - `u4`: high bytes
+  - `u4`: low bytes
+
+**but wait!**
+
+::right::
+
+```c
+CONSTANT_Long_info {
+    u1 tag;
+    u4 high_bytes;
+    u4 low_bytes;
+}
+```
+
+---
+
+## Long_info / Double_info
+
+> All 8-byte constants take up two entries in the constant_pool table of the class file
+
+<div v-click>
+e.g. with this constant pool
+
+| index    | 1    | 2     | 3   | 4        | 5   | 6    |
+| -------- | ---- | ----- | --- | -------- | --- | ---- |
+| contents | utf8 | class | int | **long** | ❌   | utf8 |
+
+the pool's size is still 6 (encoded as `0x0007`)!
+</div>
 
 ---
 
