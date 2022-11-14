@@ -71,6 +71,12 @@ Classfile encoding
 </div>
 
 ---
+layout: center
+---
+
+# Classfile overview
+
+---
 layout: two-cols
 class: whats-a-classfile
 ---
@@ -115,6 +121,12 @@ case class ClassFile(
 ```
 
 ---
+layout: center
+---
+
+# Binary files 101
+
+---
 
 # Binary files 101
 
@@ -122,6 +134,12 @@ case class ClassFile(
 - bit: single digit in a base-2 numeric system - (`0` or `1`)
 - byte: a group of 8 bits (_usually_) - e.g. `0b10011111`, or `0x9f`
 - we'll be dealing with unsigned, big-endian integers only: `0b1110` / `0x0e` means <!-- Poprawic -->`14` in decimal
+
+---
+layout: center
+---
+
+# Classfile encoding
 
 ---
 
@@ -209,3 +227,15 @@ Error: LinkageError occurred while loading main class Foo
   of the Java Runtime (class file version 61.0), this version of the Java Runtime
   only recognizes class file versions up to 55.0
 ```
+
+---
+
+<div style="overflow: scroll; height: 100%;">
+<input
+    type="file"
+    id="file_input"
+    accept=".class"
+    onchange="fileUploadedSimple()"
+  />
+<div id="output"></div>
+</div>

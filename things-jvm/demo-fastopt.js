@@ -1,0 +1,1 @@
+/Users/kubukoz/projects/scodec-java-classfile/demo/.js/target/scala-3.2.1/demo-fastopt.js
