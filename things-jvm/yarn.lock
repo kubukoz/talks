@@ -246,13 +246,6 @@
   dependencies:
     "@iconify/types" "*"
 
-"@iconify-json/bi@^1.1.11":
-  version "1.1.11"
-  resolved "https://registry.yarnpkg.com/@iconify-json/bi/-/bi-1.1.11.tgz#2cb6b7c8d5b9ebee27eea534971b2bb87488d173"
-  integrity sha512-Tg/JovOzujq4QveCyPTKTAvZ3TEzigAkdb1cgR+Xf11lIiPSPmPZaBwR+N+AYxts/l6VHZfTgpiABzh7uOVHvQ==
-  dependencies:
-    "@iconify/types" "*"
-
 "@iconify-json/carbon@^1.1.9":
   version "1.1.9"
   resolved "https://registry.yarnpkg.com/@iconify-json/carbon/-/carbon-1.1.9.tgz#a3b2225fd935347f384234877dae4878d2e7112d"
@@ -267,24 +260,10 @@
   dependencies:
     "@iconify/types" "*"
 
-"@iconify-json/grommet-icons@^1.1.4":
-  version "1.1.4"
-  resolved "https://registry.yarnpkg.com/@iconify-json/grommet-icons/-/grommet-icons-1.1.4.tgz#0bccd9caefb1948744f2119441210d7ebadcd6ac"
-  integrity sha512-wpZoJZDZ0SUoSDg9dGPyt+HK5jURxjx85O2hTdVQJTerdVjNSjFbpSFG+p7pd5qlEmGhAhwl7oZTOm/teya3NQ==
-  dependencies:
-    "@iconify/types" "*"
-
 "@iconify-json/ph@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@iconify-json/ph/-/ph-1.1.2.tgz#8827e1ef5ce814941faa992453a955103788cb54"
   integrity sha512-NuTdtt/UmuxIHS4hfdyv3BP5JiWikNkr81hFHXDScXlH0GUMdRSY/B5T9vDvbXDY/esMLFnIAXoFVDLsGinhpw==
-  dependencies:
-    "@iconify/types" "*"
-
-"@iconify-json/uim@^1.1.2":
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/@iconify-json/uim/-/uim-1.1.2.tgz#027ffa2cee1f4581d83f5bfe05bdfb56b2ef597d"
-  integrity sha512-y30D/pUfqyIdKxIR+xOthDiQPSTRIM9cOy8PIOmeuTgh4Yc8gTwL8kWuoDenVxPhk0fXsRw16bn441PK6iuDTQ==
   dependencies:
     "@iconify/types" "*"
 

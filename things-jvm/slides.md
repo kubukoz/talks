@@ -19,23 +19,7 @@ css: unocss
 
 # Things I didn't want to know about JVM bytecode but learned anyway
 
-Jakub Kozłowski
-
-TODOS:
-
-- move overviews of each classfile section to the overview section of the slides
-- TBH this should be happening while we look at the `case class ClassFile` on the RHS with highlights on the relevant parts
-- focus on abstract ideas first (e.g. attribute), with possible examples in Scala/java code
-- consider trimming the parts we're not gonna look at from the `ClassFile` struct snippet that reappears throughout the later slides
-- show the dirty bytecode deets later
-- some interesting attribute examples, e.g. Code to show instructions
-- show instruction count (~285 in JRE 17)
-- show quirk about alignment of the godforsaken switch instructions
-- ending slides: resources
-- ending slides: contact info, link to slides
-- more reveals without huge dumps all at once
-- add remaining trivia from Obsidian
-- mayyyyybe have a summary slide with all the trivia pointed out
+Jakub Kozłowski | The Art Of Scala 2nd edition | 16.11.2022
 
 ---
 
