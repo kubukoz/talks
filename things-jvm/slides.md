@@ -103,9 +103,9 @@ class: whats-a-classfile
 
 - binary file
 - **output** of a compiler
-- **input** format for the JVM
-- respresents **one** class/interface/~~module~~
 - a single source can produce 0..n classes
+- **input** format for the JVM
+- represents **one** class/interface/~~module~~
 
 ::right::
 
