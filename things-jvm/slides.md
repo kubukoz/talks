@@ -23,6 +23,14 @@ Jakub Kozłowski | The Art Of Scala 2nd edition | 16.11.2022
 
 ---
 
+# Disclaimer
+
+- I don't work directly on JVM bytecode during the workweek
+- This was purely for fun and learning
+- No JVMs were hurt while making this talk
+
+---
+
 <style>
 .columnz {
   display: flex;
@@ -111,12 +119,12 @@ case class ClassFile(
   majorVersion: Int,
   constants: ConstantPool,
   accessFlags: Set[ClassAccessFlag],
-  thisClass: ClassName,
-  superClass: ClassName,
+  thisClass: String,
+  superClass: String,
   interfaces: List[InterfaceName],
   fields: List[FieldInfo],
   methods: List[MethodInfo],
-  attributes: List[AttributeInfo],
+  attributes: Map[AttributeName, AttributeInfo],
 )
 ```
 
@@ -132,10 +140,9 @@ layout: center
 
 # Binary files 101
 
-- binary file: sequence of bits - e.g. `0b1100101010110101100`
+- binary (non-text) file: sequence of bits - e.g. `0b1100101010110101100`
 - bit: single digit in a base-2 numeric system - (`0` or `1`)
 - byte: a group of 8 bits (_usually_) - e.g. `0b10011111`, or `0x9f`
-- we'll mostly be dealing with unsigned, big-endian integers: `0x000e` means `14` in decimal
 
 ---
 layout: center
@@ -147,7 +154,6 @@ layout: center
 
 # Classfile binary format
 
-- big-endian 8-bit unsigned bytes
 - `u1`: 1 unsigned byte
 - `u2`: 2 unsigned bytes
 - `u4`: ...
@@ -206,9 +212,11 @@ class: classfile-encoding-sample
 
 Minor, major version
 
-- major - minimum JVM version required to run this
-- minor - since JDK 12, either `0x0000` or `0xffff`&nbsp;(65&nbsp;535)
 - minor goes first (for some reason)
+- major - minimum JVM version required to run this
+- minor - since JDK 12, either:
+  - `0x0000` (0, normal classfile) or
+  - `0xffff` (65 535) - experimental features required
 
 ::right::
 
@@ -237,10 +245,10 @@ ClassFile {
 
 # Major versions
 
-- 52 (`0x0034`, Java 8)
-- 55 (`0x0037`, Java 11),
-- 61 (`0x003D`, Java 17)...
-- ...enough space to let us have Java 65491 :)
+- 52 (Java 8)
+- 55 (Java 11),
+- 61 (Java 17)...
+- ...enough space (`u2`) to let us have Java 65491 :)
 
 If you get it wrong:
 
@@ -268,9 +276,9 @@ class: classfile-encoding-sample
 
 - an ordered list of reusable constants
 - contains all literals, class/method/field/type names etc.
-- prefixed with `u2` for the amount of constants included`*`
-- each constant is prefixed with a discriminator byte (`u1 tag`)
-- indices and sizes are **off by one (+1)**: a single-item pool has size `2`, and the only index is `1`
+- prefixed with 2 bytes for the pool size
+- each constant is prefixed with a discriminator byte (`tag`)
+- indices and sizes are **off by one (start at 1)**
 
 ::right::
 
@@ -302,8 +310,7 @@ class: classfile-encoding-sample
 
 # Integer_info constant
 
-- tag: `3` (`0x03`)
-- content: `u4` (32-bit) signed integer
+- content: 4-byte (32-bit) **signed** integer
 - example: `48` -> `0x00000030`
 
 ::right::
@@ -320,32 +327,10 @@ layout: two-cols
 class: classfile-encoding-sample
 ---
 
-# Class_info constant
-
-- tag: `7` (`0x07`)
-- content: `u1`: index to the constant pool
-- **must** target an UTF-8 string constant (class name)
-- example: index 2 (third item in pool) -> `0x03`
-
-::right::
-
-```c
-CONSTANT_Class_info {
-    u1 tag;
-    u2 name_index;
-}
-```
-
----
-layout: two-cols
-class: classfile-encoding-sample
----
-
 # Utf8_info constant
 
-- tag: `1` (`0x01`)
 - content:
-  - `u2 length`: the amount of remaining bytes
+  - `u2 length`: the amount of data bytes
   - `u1` x `length`: "modified UTF-8"-encoded data
 
 ::right::
@@ -373,18 +358,39 @@ Examples:
 | `"hello"` | `0x0005` | `0x68656c6c6f`     |
 | `"łódź"`  | `0x0007` | `0xc582c3b364c5ba` |
 
+
+---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Class_info constant
+
+- content: `u2 name_index`: index to the constant pool
+  - **must** target a `UTF8_Info` constant (class name)
+- example: index 2 (third item in pool) -> `0x03`
+
+::right::
+
+```c
+CONSTANT_Class_info {
+    u1 tag;
+    u2 name_index;
+}
+```
+
 ---
 
 # Real example
 
 `javap -v Hello`
 
-```rust
-public class Foo
+```rust {all|5|10|9|6|12|11}
+public class Hello
   minor version: 0
   major version: 48
   flags: (0x0021) ACC_PUBLIC, ACC_SUPER
-  this_class: #2                          // Foo
+  this_class: #2                          // Hello
   super_class: #4                         // java/lang/Object
   interfaces: 0, fields: 0, methods: 1, attributes: 1
 Constant pool:
@@ -402,7 +408,6 @@ class: classfile-encoding-sample
 
 # (last one I promise) Long_info constant
 
-- tag: `5` (`0x05`)
 - content:
   - `u4`: high bytes
   - `u4`: low bytes
@@ -421,7 +426,7 @@ CONSTANT_Long_info {
 
 ---
 
-## Long_info / Double_info
+# Long_info / Double_info
 
 > All 8-byte constants take up two entries in the constant_pool table of the class file
 
@@ -432,7 +437,7 @@ e.g. with this constant pool
 | -------- | ---- | ----- | --- | -------- | --- | ---- |
 | contents | utf8 | class | int | **long** | ❌   | utf8 |
 
-the pool's size is still 6 (encoded as `0x0007`)!
+the pool's size is still 6 (encoded as `7`)!
 </div>
 
 ---
@@ -450,7 +455,7 @@ class: classfile-encoding-sample enums
 
 # Access flags
 
-- `u2` bitmask
+- `u2` (16-bit) bitmask
 - info about class modifiers under non-overlapping bits:
 
 ```scala
@@ -465,6 +470,8 @@ Enum -> 0x4000,
 ```
 
 example: `Public` + `Enum` == `0x4001`
+
+Not a lot of space left!
 
 ::right::
 
@@ -601,7 +608,10 @@ class: classfile-encoding-sample
 
 # Attributes
 
+- A "second class" construct
+- key-value mapping (think `Map[String, Attribute]`)
 - prefixed with `u2` for the amount of attributes
+- each attribute has variable length
 
 ::right::
 
@@ -633,10 +643,9 @@ class: classfile-encoding-sample
 
 # Attributes inside
 
-- A "second class" key-value mapping
-- `u2` for the attribute **name** (constant pool index, `Utf8_Info` constant)
-- `u4`: for the attribute's data length
-- `u1` x `length`: attribute data
+- `u2`: **name** constant pool index (`Utf8_Info` constant)
+- `u4`: data length
+- `u1` x `length`: data
 
 ::right::
 
@@ -649,6 +658,37 @@ attribute_info {
 ```
 
 ---
+layout: two-cols
+class: classfile-encoding-sample
+---
+
+# Example attributes - Code
+
+- method attribute containing the actual "bytecode" of the method
+- it has its own attributes!
+
+::right::
+
+```c {6,7,14,15}
+Code_attribute {
+    u2 attribute_name_index;
+    u4 attribute_length;
+    u2 max_stack;
+    u2 max_locals;
+    u4 code_length;
+    u1 code[code_length];
+    u2 exception_table_length;
+    {   u2 start_pc;
+        u2 end_pc;
+        u2 handler_pc;
+        u2 catch_type;
+    } exception_table[exception_table_length];
+    u2 attributes_count;
+    attribute_info attributes[attributes_count];
+}
+```
+
+---
 
 # Attribute trivia
 
@@ -656,10 +696,23 @@ attribute_info {
   - 7 **must** be supported by JVMs (e.g. `Code`)
   - 10 **must** be supported by JDK libraries (e.g. `LineNumberTable`)
   - 13 are non-critical metadata (e.g. `Deprecated`)
+
+<br/>
+
 - Unrecognized attributes **must** be ignored
+
+<br/>
+
 - JVMs **must** ignore attributes that don't exist in a given classfile format
   - e.g. the `Record` attribute will be ignored in old JVMs even if the file targets an old major version
-- Attributes can contain more attributes, e.g. `Code` has `LineNumberTable`
+
+---
+
+# Instruction trivia
+
+- in JRE 17, there are ~202 opcodes
+- most are constant-size but some are not
+  - e.g.`tableswitch` (`0xaa`) has optional 0-3 byte padding after the opcode to ensure alignment
 
 ---
 
@@ -677,7 +730,7 @@ attribute_info {
 
 ---
 
-## Built with scodec
+# Built with [scodec](http://scodec.org/)
 
 ```scala
 val classFile: Codec[ClassFile] =
@@ -704,3 +757,25 @@ val classFile: Codec[ClassFile] =
       attributes
   ).dropUnits.as[ClassFile]
 ```
+
+---
+
+# Resources
+
+- [Java SE 17 spec (classfile format)](https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-4.html)
+- [Inside the JVM book](https://www.artima.com/insidejvm/blurb.html)
+- [Mateusz's JVM book :)](https://leanpub.com/jvm-scala-book)
+
+# Tools
+
+- `javap`, `javap -v` (Metals can show these too!)
+- `xxd` / `hexdump` / a dozen other binary editors/viewers
+- `java.io` `DataInput`/`DataOutput`
+
+---
+
+# Thank you
+
+- Watch my YouTube! <a href="https://yt.kubukoz.com">yt.kubukoz.com</a>
+- Contact + slides + YT: <a href="https://linktr.ee/kubukoz">linktr.ee/kubukoz</a>
+
