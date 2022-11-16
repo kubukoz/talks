@@ -91,7 +91,7 @@ class: whats-a-classfile
 
 <style>
   .whats-a-classfile.col-right {
-    background-image: url("compilation.png");
+    background-image: url("/compilation.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: contain;
@@ -264,7 +264,7 @@ Error: LinkageError occurred while loading main class Foo
 # Major version compatibility table
 
 <div style="width: 100%; height: 100%; display: block; overflow: scroll">
-<img src="compat-table.png" style="object-fit: contain; width: 50%;">
+<img src="/compat-table.png" style="object-fit: contain; width: 50%;">
 </div>
 
 ---
