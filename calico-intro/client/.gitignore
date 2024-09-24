@@ -1,0 +1,12 @@
+.direnv/
+.scala-build/
+**/target
+.bsp/
+
+node_modules/
+.smithy.lsp.log
+
+SeqApp.js
+wsc.js
+.parcel-cache
+dist
