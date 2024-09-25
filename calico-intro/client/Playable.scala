@@ -1,8 +1,9 @@
 import monocle.syntax.all.*
 import cats.derived.*
 import cats.kernel.Hash
+import io.circe.Codec
 
-enum Playable derives Hash {
+enum Playable derives Hash, Codec.AsObject {
   case Play(noteId: Int, velocity: Int)
   case Rest
 
