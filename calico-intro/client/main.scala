@@ -95,22 +95,6 @@ object SeqApp extends IOWebApp {
           .compile
           .drain
           .background
-      _ <-
-        KeyStatus
-          .forKey("ArrowUp")
-          .filter(identity)
-          .foreach(_ => transposeRef.update(_ + 12))
-          .compile
-          .drain
-          .background
-      _ <-
-        KeyStatus
-          .forKey("ArrowDown")
-          .filter(identity)
-          .foreach(_ => transposeRef.update(_ - 12))
-          .compile
-          .drain
-          .background
       _ <- (0 to 9).toList.traverse_ { key =>
         KeyStatus
           .forKey(key.show)
