@@ -98,6 +98,14 @@ object DataChannel {
       def state: Signal[F, State] = Signal.constant(State.Connected)
     }
 
+  // This is a bit messy, but so is the actual problem.
+  // The problem we have here is that WebSocket connections can fail, and this happens outside of our direct control.
+  // A close can be recognized by the fact that the receive stream completes. In our case here, this means the DataChannel's receive stream ends.
+  // This event triggers a reconnect attempt, and any attempts to send will fail (with a retry) until the connection is re-established.
+  // The implementation is imperfect, and requires the connection to succeed the first time (at initialization) before progress can be made on the downstream
+  // (e.g. rendering UI).
+  // A proper implementation would encapsulate the reconnection logic and allow this to initialize the connection in the background,
+  // while also queueing up any messages that are sent before the connection is established (in a controlled manner). Exercise for the reader ;)
   def fromFallible[F[_]: Temporal: cats.effect.std.Console](
     make: Resource[F, DataChannel[F]]
   ): Resource[F, DataChannel[F]] =
@@ -117,7 +125,6 @@ object DataChannel {
               .resource(swap.get)
               .flatMap {
                 _.liftTo[F](new Exception("channel not available!"))
-                  .retrying("receive")
                   .pipe(fs2.Stream.eval(_))
                   .flatMap(_.receive)
               }
