@@ -56,7 +56,7 @@ object SeqApp extends IOWebApp {
         if isLeader then trackState.read.get.flatMap(trackState.set).background
         else
           // request broadcast of latest state
-          dataChannel.send(Message.Get).background
+          dataChannel.send(Message.Get).toResource
 
       currentNoteRef <- SignallingRef[IO].of(0).toResource
       holdAtRef <- SignallingRef[IO].of(none[Int]).toResource
