@@ -25,7 +25,7 @@ object SequencerView {
         (0 until stepCount).map { i =>
           th(
             holdAtRef.map { holdAt =>
-              holdAt.getOrElse(i).show
+              (holdAt.getOrElse(i) + 1).show
             },
             styleAttr <-- currentNoteRef.map { current =>
               if i == current then "color: red"
