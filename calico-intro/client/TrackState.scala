@@ -1,7 +1,7 @@
-import cats.MonadThrow
-import cats.effect.IO
 import cats.effect.Concurrent
+import cats.effect.IO
 import cats.effect.Temporal
+import cats.effect.implicits.*
 import cats.effect.kernel.Resource
 import cats.effect.std.Hotswap
 import cats.syntax.all.*
@@ -11,7 +11,7 @@ import io.circe.Codec
 import io.circe.syntax.*
 import org.http4s.client.websocket.WSConnectionHighLevel
 import org.http4s.client.websocket.WSFrame.Text
-import cats.effect.implicits.*
+
 import scala.concurrent.duration.*
 import scala.util.chaining.*
 
