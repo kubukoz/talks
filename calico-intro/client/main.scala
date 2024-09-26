@@ -52,7 +52,11 @@ object SeqApp extends IOWebApp {
 
       // Propagate state whenever a leader shows up
       // todo: also request state when a new follower shows up
-      _ <- trackState.read.get.flatMap(trackState.set).background.whenA(isLeader)
+      _ <-
+        if isLeader then trackState.read.get.flatMap(trackState.set).background
+        else
+          // request broadcast of latest state
+          dataChannel.send(Message.Get).background
 
       currentNoteRef <- SignallingRef[IO].of(0).toResource
       holdAtRef <- SignallingRef[IO].of(none[Int]).toResource
@@ -173,6 +177,32 @@ object NoteEditor {
               }
             }
           },
+          styleAttr <-- trackState
+            .read
+            .map(_(editedTrack)(editedNote) match {
+              case Playable.Rest => "display: none"
+              case _             => ""
+            }),
+        ),
+        button(
+          "C4",
+          onClick --> {
+            _.foreach { _ =>
+              trackState.update { tracks =>
+                tracks
+                  .updated(
+                    editedTrack,
+                    tracks(editedTrack).updated(editedNote, Playable.C4),
+                  )
+              }
+            }
+          },
+          styleAttr <-- trackState
+            .read
+            .map(_(editedTrack)(editedNote) match {
+              case _: Playable.Play => "display: none"
+              case _                => ""
+            }),
         ),
         button(
           "pitch up",
@@ -183,6 +213,20 @@ object NoteEditor {
                   .updated(
                     editedTrack,
                     tracks(editedTrack).updated(editedNote, tracks(editedTrack)(editedNote) + 1),
+                  )
+              }
+            }
+          },
+        ),
+        button(
+          "pitch down",
+          onClick --> {
+            _.foreach { _ =>
+              trackState.update { tracks =>
+                tracks
+                  .updated(
+                    editedTrack,
+                    tracks(editedTrack).updated(editedNote, tracks(editedTrack)(editedNote) - 1),
                   )
               }
             }

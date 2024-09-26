@@ -40,7 +40,10 @@ object TrackState {
         // consume external changes
         channel
           .receive
-          .evalMap { case Message.Set(state) => ref.set(state) }
+          .evalMap {
+            case Message.Set(state) => ref.set(state)
+            case Message.Get        => ref.get.map(Message.Set(_)).flatMap(channel.send)
+          }
           .compile
           .drain
           .background
@@ -64,6 +67,7 @@ object TrackState {
 
 enum Message derives Codec.AsObject {
   case Set(state: List[List[Playable]])
+  case Get
 }
 
 trait DataChannel[F[_]] {

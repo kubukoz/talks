@@ -1,8 +1,8 @@
 object data {
 
-  val C3 = Playable.play(48)
-  val C4 = Playable.play(60)
-  val C5 = Playable.play(72)
+  val C4 = Playable.C4
+  val C3 = C4 - 12
+  val C5 = C4 + 12
   val REST = Playable.Rest
 
   val plucks = List(
