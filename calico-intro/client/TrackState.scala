@@ -119,27 +119,28 @@ object DataChannel {
             )
             .retrying("send")
 
-          def receive: fs2.Stream[F, Message] =
-            fs2
-              .Stream
-              .resource(swap.get)
-              .flatMap {
-                _.liftTo[F](new Exception("channel not available!"))
-                  .pipe(fs2.Stream.eval(_))
-                  .flatMap(_.receive)
-              }
-              .onFinalizeCase { ec =>
+          def receive: fs2.Stream[F, Message] = fs2
+            .Stream
+            .resource(swap.get)
+            .flatMap {
+              _.liftTo[F](new Exception("channel not available!"))
+                .pipe(fs2.Stream.eval(_))
+                .flatMap(_.receive)
+            }
+            .onFinalizeCase { ec =>
+              cats.effect.std.Console[F].println(s"DataChannel closed: $ec") *>
                 swap.clear *>
-                  stateRef.set(State.Connecting) *>
-                  swap
-                    .swap(make)
-                    .retrying("reconnect")
-                    .void *>
-                  stateRef.set(State.Connected)
-              }
-              .attempt
-              .drain
-              .repeat
+                stateRef.set(State.Connecting) *>
+                swap
+                  .swap(make)
+                  .retrying("reconnect")
+                  .void *>
+                stateRef.set(State.Connected)
+            }
+            .attempt
+            .repeat
+            // do NOT drain this ;)
+            .collect { case Right(msg) => msg }
 
           def state: Signal[F, State] = stateRef
 
