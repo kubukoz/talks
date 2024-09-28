@@ -69,16 +69,16 @@ object ws extends IOApp.Simple {
           .eval(UUIDGen[IO].randomUUID.debug("connected"))
           .flatMap { myId =>
             input
+              .debug(s"send ($myId): " + _)
               .tupleLeft(myId)
-              .debug()
               .through(messages.publish)
               .mergeHaltBoth(
                 messages
                   .subscribeUnbounded
                   .filterNot(_.sender == myId)
+                  .debug(s"receive ($myId): " + _)
                   .map(_.frame)
               )
-              .debug()
               .onFinalize(IO.pure(myId).debug("disconnected").void)
           }
       }

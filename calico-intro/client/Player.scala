@@ -16,17 +16,26 @@ object Player {
     currentNoteRef: Ref[IO, Int],
     playingRef: Signal[IO, Boolean],
     transposeRef: Ref[IO, Int],
-  ): Resource[IO, Unit] = Window[IO]
-    .navigator
-    .requestMIDIAccess
-    .flatMap(_.outputs)
-    .map(_.values.head)
+  ): Resource[IO, Unit] = playingRef
+    .waitUntil(identity)
+    .productR(
+      Window[IO]
+        .navigator
+        .requestMIDIAccess
+        .flatMap(_.outputs)
+        .map(_.values.head)
+    )
     .toResource
     .flatMap { output =>
       val period = 1.minute / 120 / 4
       fs2
         .Stream
-        .fixedRateStartImmediately[IO](period)
+        .exec(IO.println("Starting player for device: " + output.name))
+        .append {
+          fs2
+            .Stream
+            .fixedRateStartImmediately[IO](period)
+        }
         .zipRight(fs2.Stream.emits(0 until stepCount).repeat)
         .pauseWhen(playingRef.map(!_))
         .evalTap(currentNoteRef.set)

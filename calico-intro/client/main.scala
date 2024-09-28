@@ -3,6 +3,7 @@ import calico.html.io.*
 import calico.html.io.given
 import cats.effect.IO
 import cats.effect.kernel.Resource
+import cats.effect.implicits.*
 import cats.syntax.all.*
 import fs2.concurrent.Signal
 import fs2.concurrent.SignallingRef
@@ -70,17 +71,18 @@ object SeqApp extends IOWebApp {
       channelRef <- SignallingRef[IO].of(2).toResource
       playingRef <- SignallingRef[IO].of(false).toResource
       transposeRef <- SignallingRef[IO].of(0).toResource
-      _ <- Player
-        .run(
-          trackState = trackState,
-          midiChannel = channelRef,
-          holdAtRef = holdAtRef,
-          currentNoteRef = currentNoteRef,
-          playingRef = playingRef,
-          transposeRef = transposeRef,
-        )
-        // skip on followers for now
-        .whenA(isLeader)
+      _ <-
+        Player
+          .run(
+            trackState = trackState,
+            midiChannel = channelRef,
+            holdAtRef = holdAtRef,
+            currentNoteRef = currentNoteRef,
+            playingRef = playingRef,
+            transposeRef = transposeRef,
+          )
+          .background
+          .flattenK
       _ <-
         KeyStatus
           .forKey("h")

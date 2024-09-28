@@ -88,6 +88,7 @@ object MIDIAccess {
 }
 
 trait MIDIOutput[F[_]] {
+  def name: String
   def send(data: IArray[Int]): F[Unit]
   def clear: F[Unit]
 }
@@ -97,6 +98,7 @@ object MIDIOutput {
   private[ext] def wrap[F[_]: Sync](output: natives.MIDIOutput): MIDIOutput[F] =
     new {
 
+      val name: String = output.name
       def send(data: IArray[Int]): F[Unit] = Sync[F].delay {
         output.send(data.toJSArray)
       }
@@ -124,6 +126,7 @@ object natives {
   @js.native
   @JSGlobal
   class MIDIOutput extends js.Any {
+    def name: String = js.native
     def send(data: scala.scalajs.js.Array[Int]): Unit = js.native
     def clear(): Unit = js.native
   }
