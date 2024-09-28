@@ -13,6 +13,7 @@ import org.http4s.dom.WebSocketClient
 import org.http4s.implicits.*
 import org.http4s.client.websocket.WSRequest
 import DataChannel.State
+import org.http4s.Uri
 val stepCount = 16
 
 object SeqApp extends IOWebApp {
@@ -30,13 +31,19 @@ object SeqApp extends IOWebApp {
           }
           .toResource
 
+      host <- window.location.hostname.get.toResource
+      secure <- window.location.protocol.get.toResource.map(_ == "https:")
       makeWs = WebSocketClient[IO]
         .connectHighLevel(
-          WSRequest(
-            if isLeader then uri"ws://localhost:8080/leader"
+          WSRequest {
+            val protocol =
+              if secure then "wss"
+              else
+                "ws"
+            if isLeader then Uri.unsafeFromString(s"$protocol://$host:8080/leader")
             else
-              uri"ws://localhost:8080"
-          )
+              Uri.unsafeFromString(s"$protocol://$host:8080")
+          }
         )
         .evalTap(_ => IO.println("Acquired new WebSocket connection"))
 
@@ -63,14 +70,17 @@ object SeqApp extends IOWebApp {
       channelRef <- SignallingRef[IO].of(2).toResource
       playingRef <- SignallingRef[IO].of(false).toResource
       transposeRef <- SignallingRef[IO].of(0).toResource
-      _ <- Player.run(
-        trackState = trackState,
-        midiChannel = channelRef,
-        holdAtRef = holdAtRef,
-        currentNoteRef = currentNoteRef,
-        playingRef = playingRef,
-        transposeRef = transposeRef,
-      )
+      _ <- Player
+        .run(
+          trackState = trackState,
+          midiChannel = channelRef,
+          holdAtRef = holdAtRef,
+          currentNoteRef = currentNoteRef,
+          playingRef = playingRef,
+          transposeRef = transposeRef,
+        )
+        // skip on followers for now
+        .whenA(isLeader)
       _ <-
         KeyStatus
           .forKey("h")

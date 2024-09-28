@@ -18,6 +18,8 @@ import fs2.concurrent.SignallingRef
 import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.Response
 
+import com.comcast.ip4s.*
+
 object ws extends IOApp.Simple {
 
   def run: IO[Unit] = {
@@ -28,6 +30,8 @@ object ws extends IOApp.Simple {
           EmberServerBuilder
             .default[IO]
             .withShutdownTimeout(Duration.Zero)
+            .withHost(host"0.0.0.0")
+            .withPort(port"8080")
             .withHttpWebSocketApp { builder =>
               val respond = build(builder, messages)
 
