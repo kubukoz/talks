@@ -1,20 +1,21 @@
+import DataChannel.State
 import calico.IOWebApp
 import calico.html.io.*
 import calico.html.io.given
 import cats.effect.IO
-import cats.effect.kernel.Resource
 import cats.effect.implicits.*
+import cats.effect.kernel.Resource
 import cats.syntax.all.*
 import fs2.concurrent.Signal
 import fs2.concurrent.SignallingRef
 import fs2.dom.*
 import fs2.dom.ext.FS2DomExtensions.*
-
+import fs2.dom.ext.MIDIOutput
+import org.http4s.Uri
+import org.http4s.client.websocket.WSRequest
 import org.http4s.dom.WebSocketClient
 import org.http4s.implicits.*
-import org.http4s.client.websocket.WSRequest
-import DataChannel.State
-import org.http4s.Uri
+
 val stepCount = 16
 
 object SeqApp extends IOWebApp {
@@ -71,9 +72,25 @@ object SeqApp extends IOWebApp {
       channelRef <- SignallingRef[IO].of(2).toResource
       playingRef <- SignallingRef[IO].of(false).toResource
       transposeRef <- SignallingRef[IO].of(0).toResource
+      recordingRef <- SignallingRef[IO].of(false).toResource
+      recordingTrackRef <- SignallingRef[IO].of(1).toResource
+
+      midiAccessLazy <-
+        window
+          .navigator
+          .requestMIDIAccess
+          .flatMap(_.outputs)
+          .map(_.head._2)
+          .flatTap(out => IO.println(s"Connected device: ${out.name}"))
+          .memoize
+          .toResource
+
+      instrument = Instrument.suspend(midiAccessLazy.map(Instrument.fromMidiOutput))
+
       _ <-
         Player
           .run(
+            instrument = instrument,
             trackState = trackState,
             midiChannel = channelRef,
             holdAtRef = holdAtRef,
@@ -85,7 +102,7 @@ object SeqApp extends IOWebApp {
           .flattenK
       _ <-
         KeyStatus
-          .forKey("h")
+          .forKey("b")
           .changes
           .evalMap {
             // we inc by one because we want to hold the next note
@@ -116,6 +133,17 @@ object SeqApp extends IOWebApp {
           .drain
           .background
       }
+      _ <-
+        Recorder
+          .run(
+            instrument,
+            currentNoteRef,
+            recordingRef,
+            recordingTrackRef,
+            trackState,
+            channelRef,
+          )
+          .background
       editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
     } yield div(
       ChannelSelector.show(channelRef),
@@ -135,6 +163,8 @@ object SeqApp extends IOWebApp {
         currentNoteRef,
         holdAtRef,
         editedNoteRef,
+        recordingTrackRef,
+        recordingRef,
       ),
       NoteEditor.show(editedNoteRef, trackState),
       div(
@@ -147,6 +177,24 @@ object SeqApp extends IOWebApp {
     )
 
   }.flatten
+
+}
+
+trait Instrument {
+  def send(midi: MIDI): IO[Unit]
+}
+
+object Instrument {
+
+  def fromMidiOutput(output: MIDIOutput[IO]): Instrument =
+    new {
+      def send(midi: MIDI): IO[Unit] = output.send(midi.toArray)
+    }
+
+  def suspend(f: IO[Instrument]): Instrument =
+    new {
+      def send(midi: MIDI): IO[Unit] = f.flatMap(_.send(midi))
+    }
 
 }
 

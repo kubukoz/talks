@@ -15,6 +15,8 @@ object SequencerView {
     currentNoteRef: Signal[IO, Int],
     holdAtRef: Signal[IO, Option[Int]],
     editedNoteRef: SignallingRef[IO, (Int, Int)],
+    recordingTrackRef: SignallingRef[IO, Int],
+    recordingRef: SignallingRef[IO, Boolean],
   ): Resource[IO, HtmlTableElement[IO]] = table(
     styleAttr := """
                    |border: 2px solid black
@@ -34,6 +36,19 @@ object SequencerView {
             },
           )
         }.toList,
+        th(
+          "Rec",
+          input.withSelf { self =>
+            (
+              `type` := "checkbox",
+              checked <-- recordingRef,
+              onChange --> {
+                _.foreach(_ => self.checked.get.flatMap(recordingRef.set))
+              },
+            )
+          },
+        ),
+        th(""),
       ),
       styleAttr := """
                      |border: 2px solid black
@@ -80,6 +95,40 @@ object SequencerView {
               },
             )
           },
+          td(
+            input.withSelf { self =>
+              (
+                `type` := "radio",
+                nameAttr := "recording-track",
+                value := trackIndex.toString,
+                checked <-- recordingTrackRef.map(_ == trackIndex),
+                onChange --> {
+                  _.foreach { _ =>
+                    self.value.get.flatMap { value =>
+                      recordingTrackRef.set(value.toInt)
+                    }
+                  }
+                },
+                disabled <-- recordingRef.map(!_),
+              )
+            }
+          ),
+          td(
+            button(
+              "clear",
+              onClick --> {
+                _.foreach { _ =>
+                  trackState.update { tracks =>
+                    tracks
+                      .updated(
+                        trackIndex,
+                        tracks(trackIndex).as(Playable.Rest),
+                      )
+                  }
+                }
+              },
+            )
+          ),
         )
       } <-- trackState.read.map(_.zipWithIndex)
     ),

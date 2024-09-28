@@ -47,7 +47,8 @@ object data {
     REST,
     REST,
     REST,
-  ).map(_.atVelocity(0x7f))
+  )
+    .map(_.atVelocity(0x7f))
 
   val bass = List(
     C3,
