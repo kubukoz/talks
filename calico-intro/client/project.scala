@@ -8,6 +8,8 @@
 //> using dep org.typelevel::keypool::0.4.10
 //> using platform js
 //> using jsModuleKind common
+// //> using jsModuleKind es
 //> using option -no-indent
+//> using option -deprecation
 //> using option -Wunused:all
 //> using option -Xkind-projector

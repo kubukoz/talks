@@ -92,7 +92,7 @@ object DataChannel {
         .collect { case Text(data, _) => data }
         .evalMap(io.circe.parser.decode[Message](_).liftTo[F])
         .onError { case e =>
-          fs2.Stream.eval_(cats.effect.std.Console[F].println(s"WebSocket error: $e"))
+          fs2.Stream.exec(cats.effect.std.Console[F].println(s"WebSocket error: $e"))
         }
         .onFinalizeCase { ec =>
           cats.effect.std.Console[F].print(s"WebSocket closed: $ec")

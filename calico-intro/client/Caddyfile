@@ -1,0 +1,15 @@
+{
+    # Global options (optional)
+    auto_https off
+}
+
+:2222 {
+    # Proxy all requests starting with /ws to localhost:8080 with WebSocket support
+    @websockets {
+        path /ws*
+    }
+    reverse_proxy @websockets localhost:8080
+
+    # Proxy everything else to localhost:1234
+    reverse_proxy localhost:1234
+}

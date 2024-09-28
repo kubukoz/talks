@@ -19,6 +19,7 @@ import org.http4s.server.websocket.WebSocketBuilder2
 import org.http4s.Response
 
 import com.comcast.ip4s.*
+import org.http4s.HttpRoutes
 
 object ws extends IOApp.Simple {
 
@@ -35,10 +36,12 @@ object ws extends IOApp.Simple {
             .withHttpWebSocketApp { builder =>
               val respond = build(builder, messages)
 
-              HttpApp.apply[IO] {
-                case GET -> Root / "leader" => respond(Peer.Leader)
-                case _                      => respond(Peer.Follower)
-              }
+              HttpRoutes
+                .of[IO] {
+                  case GET -> Root / "ws" / "leader" => respond(Peer.Leader)
+                  case GET -> Root / "ws"            => respond(Peer.Follower)
+                }
+                .orNotFound
             }
             .build
         _ <-

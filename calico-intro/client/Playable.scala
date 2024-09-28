@@ -7,7 +7,7 @@ enum Playable derives Hash, Codec.AsObject {
   case Play(noteId: Int, velocity: Int)
   case Rest
 
-  def atVelocity(velocity: Int): Playable = mapPlay(_.focus(_.velocity).set(velocity))
+  def atVelocity(velocity: Int): Playable = mapPlay(_.focus(_.velocity).replace(velocity))
   def +(semitones: Int): Playable = mapPlay(_.focus(_.noteId).modify(_ + semitones))
   def -(semitones: Int): Playable = mapPlay(_.focus(_.noteId).modify(_ - semitones))
 

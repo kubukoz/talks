@@ -31,7 +31,7 @@ object SeqApp extends IOWebApp {
           }
           .toResource
 
-      host <- window.location.hostname.get.toResource
+      host <- window.location.host.get.toResource
       secure <- window.location.protocol.get.toResource.map(_ == "https:")
       makeWs = WebSocketClient[IO]
         .connectHighLevel(
@@ -40,9 +40,9 @@ object SeqApp extends IOWebApp {
               if secure then "wss"
               else
                 "ws"
-            if isLeader then Uri.unsafeFromString(s"$protocol://$host:8080/leader")
+            if isLeader then Uri.unsafeFromString(s"$protocol://$host/ws/leader")
             else
-              Uri.unsafeFromString(s"$protocol://$host:8080")
+              Uri.unsafeFromString(s"$protocol://$host/ws")
           }
         )
         .evalTap(_ => IO.println("Acquired new WebSocket connection"))
