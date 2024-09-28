@@ -40,6 +40,11 @@ object FS2DomExtensions {
       )
       .map(KeyboardEvent[F](_))
 
+    def querySelector(selector: String): F[Option[HtmlElement[F]]] = Sync[F].delay {
+      Option(doc.asInstanceOf[HTMLDocument].querySelector(selector))
+        .map(_.asInstanceOf[HtmlElement[F]])
+    }
+
   }
 
   extension [F[_]: Async](unused: Navigator[F]) {
@@ -60,6 +65,14 @@ object FS2DomExtensions {
         )
       }
       .map(MIDIAccess.wrap)
+
+  }
+
+  extension [F[_]: Sync](unused: Window[F]) {
+
+    def open(url: String): F[Unit] = Sync[F].delay {
+      dom.window.open(url)
+    }
 
   }
 

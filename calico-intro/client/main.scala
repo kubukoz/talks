@@ -14,7 +14,8 @@ import fs2.dom.ext.MIDIOutput
 import org.http4s.Uri
 import org.http4s.client.websocket.WSRequest
 import org.http4s.dom.WebSocketClient
-import org.http4s.implicits.*
+
+import scala.scalajs.js.JSConverters.*
 
 val stepCount = 16
 
@@ -173,6 +174,16 @@ object SeqApp extends IOWebApp {
           case State.Connected  => span(styleAttr := "color: green", "Connected")
           case State.Connecting => span(styleAttr := "color: orange", "Connecting...")
         },
+      ),
+      div(
+        button(
+          "Download state",
+          onClick --> {
+            _.foreach { _ =>
+              trackState.read.get.flatMap(JsonDownload.runDownload(_))
+            }
+          },
+        )
       ),
     )
 
