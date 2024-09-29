@@ -79,6 +79,7 @@ object SeqApp extends IOWebApp {
       channelRef <- SignallingRef[IO].of(2).toResource
       playingRef <- SignallingRef[IO].of(false).toResource
       transposeRef <- SignallingRef[IO].of(0).toResource
+      octavesRef <- SignallingRef[IO].of(0).toResource
       recordingRef <- SignallingRef[IO].of(false).toResource
       recordingTrackRef <- SignallingRef[IO].of(1).toResource
       editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
@@ -151,6 +152,7 @@ object SeqApp extends IOWebApp {
       _ <- (0 to 9).toList.traverse_ { key =>
         KeyStatus
           .forKey(key.show)
+          .changes
           .filter(identity)
           .foreach(_ => transposeRef.set(key))
           .compile
@@ -165,6 +167,7 @@ object SeqApp extends IOWebApp {
             recordingRef,
             recordingTrackRef,
             trackState,
+            octavesRef,
           )
           .background
     } yield div(
@@ -195,7 +198,7 @@ object SeqApp extends IOWebApp {
             "paused"
         }
       ),
-      div("transpose: ", transposeRef.map(_.show)),
+      div("transpose playback: ", transposeRef.map(_.show)),
       SequencerView.show(
         trackState,
         currentNoteRef,
@@ -204,6 +207,7 @@ object SeqApp extends IOWebApp {
         recordingTrackRef,
         recordingRef,
       ),
+      div("transpose keyboard (octaves): ", octavesRef.map(_.show)),
       NoteEditor.show(editedNoteRef, trackState),
       div(
         "Connection state: ",
