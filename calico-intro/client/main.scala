@@ -54,14 +54,11 @@ object SeqApp extends IOWebApp {
         .evalTap(_ => IO.println("Acquired new WebSocket connection"))
 
       dataChannel <- DataChannel.fromFallible(makeWs.map(DataChannel.fromWebSocket))
-      trackState <- TrackState.remote(dataChannel, data.initTracks)
-      // trackState <- makeWs
-      //   .map(DataChannel.fromWebSocket)
-      //   .flatMap(TrackState.remote(_, data.initTracks))
-      // trackState <- SignallingRef[IO]
-      //   .of(data.initTracks)
-      //   .toResource
-      //   .map(TrackState.fromSignallingRef)
+      trackState <- SignallingRef[IO]
+        .of(data.initTracks)
+        .toResource
+        .map(TrackState.fromSignallingRef)
+        .flatMap(TrackState.remote(dataChannel, _))
 
       // Propagate state from the leader every 5 seconds, starting now.
       // Request state propagation when a new follower shows up
@@ -84,6 +81,8 @@ object SeqApp extends IOWebApp {
       transposeRef <- SignallingRef[IO].of(0).toResource
       recordingRef <- SignallingRef[IO].of(false).toResource
       recordingTrackRef <- SignallingRef[IO].of(1).toResource
+      editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
+
       instrumentRef <- SignallingRef[IO].of["sos" | "midi"]("midi").toResource
       instrumentLock <- Semaphore[IO](Int.MaxValue).toResource
       instrumentLockExclusive =
@@ -168,7 +167,6 @@ object SeqApp extends IOWebApp {
             trackState,
           )
           .background
-      editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
     } yield div(
       div(
         "Instrument:",

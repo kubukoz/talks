@@ -44,27 +44,21 @@ object TrackState {
         .map(_(trackIndex)(step))
     }
 
-  def remote(channel: DataChannel[IO], init: List[List[Playable]]): Resource[IO, TrackState] =
-    SignallingRef[IO]
-      .of(init)
-      .toResource
-      .map(fromSignallingRef)
-      .flatTap { underlying =>
-        // consume external changes
-        channel
-          .receive
-          .evalMap {
-            case Message.Clear(trackIndex) => underlying.clear(trackIndex)
-            case Message.Set(state)        => underlying.set(state)
-            case Message.Update(trackIndex, step, playable) =>
-              underlying.updateAtAndGet(trackIndex, step)(_ => playable)
-            case Message.Get => underlying.read.get.map(Message.Set(_)).flatMap(channel.send)
-          }
-          .compile
-          .drain
-          .background
+  def remote(channel: DataChannel[IO], underlying: TrackState): Resource[IO, TrackState] =
+    // consume external changes
+    channel
+      .receive
+      .evalMap {
+        case Message.Clear(trackIndex) => underlying.clear(trackIndex)
+        case Message.Set(state)        => underlying.set(state)
+        case Message.Update(trackIndex, step, playable) =>
+          underlying.updateAtAndGet(trackIndex, step)(_ => playable)
+        case Message.Get => underlying.read.get.map(Message.Set(_)).flatMap(channel.send)
       }
-      .map { underlying =>
+      .compile
+      .drain
+      .background
+      .as {
         new {
           val read: Signal[IO, List[List[Playable]]] = underlying.read
           def clear(trackIndex: Int): IO[Unit] =
