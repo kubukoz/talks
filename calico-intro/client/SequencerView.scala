@@ -30,9 +30,9 @@ object SequencerView {
               (holdAt.getOrElse(i) + 1).show
             },
             styleAttr <-- currentNoteRef.map { current =>
-              if i == current then "color: red"
+              if i == current then "color: red".some
               else
-                ""
+                none
             },
           )
         }.toList,
