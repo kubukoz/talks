@@ -10,6 +10,7 @@ object Player {
 
   def run(
     instrument: Instrument,
+    instrumentLock: Resource[IO, Unit],
     trackState: TrackState,
     holdAtRef: Ref[IO, Option[Int]],
     currentNoteRef: Ref[IO, Int],
@@ -34,13 +35,10 @@ object Player {
               .parTraverse_ { track =>
                 (track(holdAt.getOrElse(noteIndex)) + transpose) match {
                   case Playable.Play(noteId, velocity) =>
-                    IO.uncancelable { poll =>
-                      // playing is cancelable, stopping isn't.
-                      // (browsers ignore this anyway though)
-                      poll(
-                        instrument.play(noteId, velocity)
-                      ) *>
+                    instrumentLock.surround {
+                      instrument.play(noteId, velocity).guarantee {
                         instrument.stop(noteId).delayBy(period / 4)
+                      }
                     }
                   case Playable.Rest => IO.unit
                 }

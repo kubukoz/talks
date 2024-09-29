@@ -9,7 +9,8 @@ import org.http4s.implicits.*
 
 object ChannelSelector {
 
-  def show(midiChannel: SignallingRef[IO, Int]): Resource[IO, HtmlDivElement[IO]] = div(
+  def show(midiChannel: SignallingRef[IO, Int], instrumentLock: Resource[IO, Unit])
+    : Resource[IO, HtmlDivElement[IO]] = div(
     "MIDI Channel:",
     select.withSelf { self =>
       (
@@ -25,7 +26,7 @@ object ChannelSelector {
               .get
               /* wishful thinking */
               .map(_.toInt)
-              .flatMap(midiChannel.set)
+              .flatMap(v => instrumentLock.surround(midiChannel.set(v)))
           )
         },
       )

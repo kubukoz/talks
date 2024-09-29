@@ -17,6 +17,7 @@ import org.http4s.dom.WebSocketClient
 import org.scalajs.dom
 
 import scala.scalajs.js.JSConverters.*
+import cats.effect.std.Semaphore
 
 val stepCount = 16
 
@@ -77,6 +78,11 @@ object SeqApp extends IOWebApp {
       recordingRef <- SignallingRef[IO].of(false).toResource
       recordingTrackRef <- SignallingRef[IO].of(1).toResource
       instrumentRef <- SignallingRef[IO].of["sos" | "midi"]("midi").toResource
+      instrumentLock <- Semaphore[IO](Int.MaxValue).toResource
+      instrumentLockExclusive =
+        Resource.make(instrumentLock.acquireN(Int.MaxValue))(_ =>
+          instrumentLock.releaseN(Int.MaxValue)
+        )
 
       midiAccessLazy <-
         window
@@ -103,6 +109,7 @@ object SeqApp extends IOWebApp {
         Player
           .run(
             instrument = instrument,
+            instrumentLock = instrumentLock.permit,
             trackState = trackState,
             holdAtRef = holdAtRef,
             currentNoteRef = currentNoteRef,
@@ -165,15 +172,16 @@ object SeqApp extends IOWebApp {
             onChange --> {
               _.foreach { _ =>
                 self.value.get.flatMap {
-                  case v @ ("sos" | "midi") => instrumentRef.set(v)
-                  case _                    => IO.unit
+                  case v @ ("sos" | "midi") =>
+                    instrumentLockExclusive.surround(instrumentRef.set(v))
+                  case _ => IO.unit
                 }
               }
             },
           )
         },
       ),
-      ChannelSelector.show(channelRef),
+      ChannelSelector.show(channelRef, instrumentLockExclusive),
       div("hold: ", holdAtRef.map(_.show)),
       div(
         playingRef.map {
