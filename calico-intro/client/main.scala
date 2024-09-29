@@ -14,6 +14,7 @@ import fs2.dom.ext.MIDIOutput
 import org.http4s.Uri
 import org.http4s.client.websocket.WSRequest
 import org.http4s.dom.WebSocketClient
+import org.scalajs.dom
 
 import scala.scalajs.js.JSConverters.*
 
@@ -175,18 +176,31 @@ object SeqApp extends IOWebApp {
           case State.Connecting => span(styleAttr := "color: orange", "Connecting...")
         },
       ),
+      button(
+        "Download track",
+        onClick --> {
+          _.foreach { _ =>
+            trackState.read.get.flatMap(JsonDownload.runDownload(_))
+          }
+        },
+      ),
       div(
-        button(
-          "Download state",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.read.get.flatMap(JsonDownload.runDownload(_))
-            }
-          },
-        )
+        "Upload track:",
+        input.withSelf { self =>
+          (
+            `type` := "file",
+            onChange --> {
+              _.foreach { _ =>
+                IO.fromPromise(IO(self.asInstanceOf[dom.HTMLInputElement].files(0).text()))
+                  .flatMap(io.circe.parser.decode[List[List[Playable]]](_).liftTo[IO])
+                  .flatMap(trackState.set)
+                  .handleErrorWith(IO.consoleForIO.printStackTrace(_))
+              }
+            },
+          )
+        },
       ),
     )
-
   }.flatten
 
 }
