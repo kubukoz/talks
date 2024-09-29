@@ -1,5 +1,4 @@
 import cats.effect.IO
-import cats.effect.implicits.*
 import cats.effect.kernel.Ref
 import cats.syntax.all.*
 import fs2.concurrent.SignallingRef
