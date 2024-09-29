@@ -20,19 +20,17 @@ object FileDownload {
         },
       )
 
-    Resource
-      .make(IO(dom.URL.createObjectURL(blob)))(url => IO(dom.URL.revokeObjectURL(url)))
-      .flatMap { url =>
-        a(styleAttr := "display: none", href := url, download := "track.json")
-      }
-      .flatTap { elem =>
-        Window[IO].document.querySelector("body").toResource.flatMap {
-          _.traverse_ { parent =>
-            Resource.make(parent.appendChild(elem))(_ => parent.removeChild(elem))
-          }
+    for {
+      url <-
+        Resource.make(IO(dom.URL.createObjectURL(blob)))(url => IO(dom.URL.revokeObjectURL(url)))
+      elem <- a(styleAttr := "display: none", href := url, download := "track.json")
+      _ <- Window[IO].document.querySelector("body").toResource.flatMap {
+        _.traverse_ { parent =>
+          Resource.make(parent.appendChild(elem))(_ => parent.removeChild(elem))
         }
       }
-      .use(_.click)
+    } yield elem
   }
+    .use(_.click)
 
 }

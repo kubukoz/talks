@@ -11,7 +11,6 @@ object Recorder {
     recordingRef: Ref[IO, Boolean],
     recordingTrackRef: Ref[IO, Int],
     trackState: TrackState,
-    midiChannel: Ref[IO, Int],
   ): IO[Unit] = "awsedftgyhujkolp".toList.zipWithIndex.parTraverse_ { (key, i) =>
     KeyStatus
       .forKey(key.show)
@@ -20,11 +19,10 @@ object Recorder {
         val noteToPlay = i + 60
         val velocity = 100
 
-        val play = midiChannel.get.flatMap { channel =>
-          if isOn then instrument.send(MIDI.NoteOn(channel, noteToPlay, velocity))
+        val play =
+          if isOn then instrument.play(noteToPlay, velocity)
           else
-            instrument.send(MIDI.NoteOff(channel, noteToPlay, 0))
-        }
+            instrument.stop(noteToPlay)
 
         val register = (currentNoteRef.get, recordingRef.get, recordingTrackRef.get).flatMapN {
           case (currentNote, true, track) =>

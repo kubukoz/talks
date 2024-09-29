@@ -10,12 +10,11 @@ import fs2.concurrent.Signal
 import fs2.concurrent.SignallingRef
 import fs2.dom.*
 import fs2.dom.ext.FS2DomExtensions.*
-import fs2.dom.ext.MIDIOutput
+import io.circe.syntax.*
 import org.http4s.Uri
 import org.http4s.client.websocket.WSRequest
 import org.http4s.dom.WebSocketClient
 import org.scalajs.dom
-import io.circe.syntax.*
 
 import scala.scalajs.js.JSConverters.*
 
@@ -88,14 +87,16 @@ object SeqApp extends IOWebApp {
           .memoize
           .toResource
 
-      instrument = Instrument.suspend(midiAccessLazy.map(Instrument.fromMidiOutput))
+      instrument = Instrument.fromSos()
+      // instrument = Instrument.suspend(
+      //   midiAccessLazy.map(Instrument.fromMidiOutput(_, channelRef.get))
+      // )
 
       _ <-
         Player
           .run(
             instrument = instrument,
             trackState = trackState,
-            midiChannel = channelRef,
             holdAtRef = holdAtRef,
             currentNoteRef = currentNoteRef,
             playingRef = playingRef,
@@ -144,7 +145,6 @@ object SeqApp extends IOWebApp {
             recordingRef,
             recordingTrackRef,
             trackState,
-            channelRef,
           )
           .background
       editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
@@ -203,24 +203,6 @@ object SeqApp extends IOWebApp {
       ),
     )
   }.flatten
-
-}
-
-trait Instrument {
-  def send(midi: MIDI): IO[Unit]
-}
-
-object Instrument {
-
-  def fromMidiOutput(output: MIDIOutput[IO]): Instrument =
-    new {
-      def send(midi: MIDI): IO[Unit] = output.send(midi.toArray)
-    }
-
-  def suspend(f: IO[Instrument]): Instrument =
-    new {
-      def send(midi: MIDI): IO[Unit] = f.flatMap(_.send(midi))
-    }
 
 }
 

@@ -11,7 +11,6 @@ object Player {
   def run(
     instrument: Instrument,
     trackState: TrackState,
-    midiChannel: Ref[IO, Int],
     holdAtRef: Ref[IO, Option[Int]],
     currentNoteRef: Ref[IO, Int],
     playingRef: Signal[IO, Boolean],
@@ -26,8 +25,8 @@ object Player {
       .pauseWhen(playingRef.map(!_))
       .evalTap(currentNoteRef.set)
       .foreach { noteIndex =>
-        (midiChannel.get, holdAtRef.get, transposeRef.get, trackState.read.get)
-          .flatMapN { (channel, holdAt, transpose, tracks) =>
+        (holdAtRef.get, transposeRef.get, trackState.read.get)
+          .flatMapN { (holdAt, transpose, tracks) =>
             // we play notes of each track in parallel
             // because their Off messages need to be sent at roughly the same time
             // and we can't wait for one note to finish before starting the next
@@ -39,9 +38,9 @@ object Player {
                       // playing is cancelable, stopping isn't.
                       // (browsers ignore this anyway though)
                       poll(
-                        instrument.send(MIDI.NoteOn(channel, noteId, velocity))
+                        instrument.play(noteId, velocity)
                       ) *>
-                        instrument.send(MIDI.NoteOff(channel, noteId, 0)).delayBy(period / 4)
+                        instrument.stop(noteId).delayBy(period / 4)
                     }
                   case Playable.Rest => IO.unit
                 }
