@@ -67,13 +67,14 @@ object SequencerView {
                              |""".stripMargin,
               (holdAtRef, trackState.read)
                 .mapN {
-                  case (None, _)              => playable
+                  case (None, tracks)         => tracks(trackIndex)(noteIndex)
                   case (Some(holdAt), tracks) => tracks(trackIndex)(holdAt)
                 }
                 .map {
                   case Playable.Rest                   => "_"
                   case Playable.Play(noteId, velocity) => "x"
-                },
+                }
+                .changes,
               input.withSelf { self =>
                 (
                   `type` := "radio",
