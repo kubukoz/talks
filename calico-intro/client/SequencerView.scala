@@ -55,12 +55,12 @@ object SequencerView {
                      |""".stripMargin,
     ),
     tbody(
-      children[(List[Playable], Int)] { (track, trackIndex) =>
+      List.tabulate(trackCount) { trackIndex =>
         tr(
           td(
             ""
           ),
-          track.zipWithIndex.map { (playable, noteIndex) =>
+          List.tabulate(stepCount) { noteIndex =>
             td(
               styleAttr := """
                              |border: 2px solid black
@@ -125,7 +125,7 @@ object SequencerView {
             )
           ),
         )
-      } <-- trackState.read.map(_.zipWithIndex)
+      }
     ),
   )
 

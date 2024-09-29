@@ -20,6 +20,7 @@ import org.scalajs.dom
 import scala.concurrent.duration.{span as _, *}
 import scala.scalajs.js.JSConverters.*
 
+val trackCount = 3
 val stepCount = 16
 
 object SeqApp extends IOWebApp {
