@@ -200,6 +200,7 @@ object SeqApp extends IOWebApp {
         }
       ),
       div("transpose playback: ", transposeRef.map(_.show)),
+      div("transpose keyboard (octaves): ", octavesRef.map(_.show)),
       SequencerView.show(
         trackState,
         currentNoteRef,
@@ -208,7 +209,6 @@ object SeqApp extends IOWebApp {
         recordingTrackRef,
         recordingRef,
       ),
-      div("transpose keyboard (octaves): ", octavesRef.map(_.show)),
       NoteEditor.show(editedNoteRef, trackState),
       div(
         "Connection state: ",

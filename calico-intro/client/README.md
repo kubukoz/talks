@@ -7,5 +7,5 @@ Feature status:
 - [x] Transposing by octave
 - [x] Websocket connection (retriable)
   - [ ] More problem-immune retries (graceful startup in case of initial failure etc.)
-- [ ] Testing with multiple consumers
-- [ ] More editing capabilities
+- [ ] Better UI
+- [ ] Maybe some state reconciliation beyond broadcasting from leader
