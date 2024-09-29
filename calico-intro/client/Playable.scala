@@ -13,6 +13,18 @@ enum Playable derives Hash, Codec.AsObject {
 
   def mapPlay(f: Play => Play): Playable = this.focus(_.as[Play]).modify(f)
 
+  def ifRest[A](f: => A): Option[A] =
+    this match {
+      case Rest => Some(f)
+      case _    => None
+    }
+
+  def ifPlay[A](f: Play => A): Option[A] =
+    this match {
+      case play: Play => Some(f(play))
+      case _          => None
+    }
+
 }
 
 object Playable {

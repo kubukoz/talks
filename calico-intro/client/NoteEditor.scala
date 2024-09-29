@@ -27,13 +27,10 @@ object NoteEditor {
           },
           styleAttr <-- trackState
             .read
-            .map(_(editedTrack)(editedNote) match {
-              case Playable.Rest => "display: none"
-              case _             => ""
-            }),
+            .map(_(editedTrack)(editedNote).ifRest("display: none")),
         ),
         button(
-          "C4",
+          "Play C4",
           onClick --> {
             _.foreach { _ =>
               trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.C4).void
@@ -41,10 +38,7 @@ object NoteEditor {
           },
           styleAttr <-- trackState
             .read
-            .map(_(editedTrack)(editedNote) match {
-              case _: Playable.Play => "display: none"
-              case _                => ""
-            }),
+            .map(_(editedTrack)(editedNote).ifPlay(_ => "display: none")),
         ),
         button(
           "pitch up",
@@ -53,6 +47,9 @@ object NoteEditor {
               trackState.updateAtAndGet(editedTrack, editedNote)(_ + 1).void
             }
           },
+          styleAttr <-- trackState
+            .read
+            .map(_(editedTrack)(editedNote).ifRest("display: none")),
         ),
         button(
           "pitch down",
@@ -61,6 +58,9 @@ object NoteEditor {
               trackState.updateAtAndGet(editedTrack, editedNote)(_ - 1).void
             }
           },
+          styleAttr <-- trackState
+            .read
+            .map(_(editedTrack)(editedNote).ifRest("display: none")),
         ),
       )
   }
