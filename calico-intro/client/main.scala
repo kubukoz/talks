@@ -174,7 +174,6 @@ object SeqApp extends IOWebApp {
         },
       ),
       ChannelSelector.show(channelRef),
-      div("current note: ", currentNoteRef.map(_.show)),
       div("hold: ", holdAtRef.map(_.show)),
       div(
         playingRef.map {
