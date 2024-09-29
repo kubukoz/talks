@@ -181,7 +181,7 @@ object SeqApp extends IOWebApp {
         "Download track",
         onClick --> {
           _.foreach { _ =>
-            trackState.read.get.map(_.asJson.noSpaces).flatMap(JsonDownload.runDownload)
+            trackState.read.get.map(_.asJson.noSpaces).flatMap(FileDownload.runDownload)
           }
         },
       ),

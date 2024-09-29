@@ -9,7 +9,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js.JSConverters.*
 
-object JsonDownload {
+object FileDownload {
 
   def runDownload(data: String): IO[Unit] = {
     val blob =
