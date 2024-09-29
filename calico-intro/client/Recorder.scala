@@ -27,7 +27,7 @@ object Recorder {
       .parJoinUnbounded
       .parEvalMapUnbounded { (isOn, i, octaves) =>
         val noteToPlay = i + 60 + (octaves * 12)
-        val velocity = 100100
+        val velocity = 100
 
         val play =
           if isOn then instrument.play(noteToPlay, velocity)
