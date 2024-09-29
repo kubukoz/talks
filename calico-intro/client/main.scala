@@ -5,6 +5,7 @@ import calico.html.io.given
 import cats.effect.IO
 import cats.effect.implicits.*
 import cats.effect.kernel.Resource
+import cats.effect.std.Semaphore
 import cats.syntax.all.*
 import fs2.concurrent.Signal
 import fs2.concurrent.SignallingRef
@@ -16,9 +17,8 @@ import org.http4s.client.websocket.WSRequest
 import org.http4s.dom.WebSocketClient
 import org.scalajs.dom
 
+import scala.concurrent.duration.{span as _, *}
 import scala.scalajs.js.JSConverters.*
-import cats.effect.std.Semaphore
-import scala.concurrent.duration.{span => _, *}
 
 val stepCount = 16
 
@@ -187,7 +187,6 @@ object SeqApp extends IOWebApp {
         },
       ),
       ChannelSelector.show(channelRef, instrumentLockExclusive),
-      div("hold: ", holdAtRef.map(_.show)),
       div(
         playingRef.map {
           if _
@@ -239,81 +238,5 @@ object SeqApp extends IOWebApp {
       ),
     )
   }.flatten
-
-}
-
-object NoteEditor {
-
-  def show(
-    editedNoteRef: Signal[IO, (Int, Int)],
-    trackState: TrackState,
-  ): Signal[IO, Resource[IO, HtmlDivElement[IO]]] = editedNoteRef.map {
-    case (editedTrack, editedNote) =>
-      div(
-        "edited note: ",
-        trackState.read.map(_(editedTrack)(editedNote).toString()),
-        button(
-          "clear",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.Rest).void
-            }
-          },
-          styleAttr <-- trackState
-            .read
-            .map(_(editedTrack)(editedNote) match {
-              case Playable.Rest => "display: none"
-              case _             => ""
-            }),
-        ),
-        button(
-          "C4",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.C4).void
-            }
-          },
-          styleAttr <-- trackState
-            .read
-            .map(_(editedTrack)(editedNote) match {
-              case _: Playable.Play => "display: none"
-              case _                => ""
-            }),
-        ),
-        button(
-          "pitch up",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ + 1).void
-            }
-          },
-        ),
-        button(
-          "pitch down",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ - 1).void
-            }
-          },
-        ),
-      )
-  }
-
-}
-
-object KeyStatus {
-
-  def forKey(key: String): fs2.Stream[IO, Boolean] = Window[IO]
-    .document
-    .onKeyDown
-    .filter(_.key == key)
-    .as(true)
-    .merge(
-      Window[IO]
-        .document
-        .onKeyUp
-        .filter(_.key == key)
-        .as(false)
-    )
 
 }
