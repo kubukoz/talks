@@ -76,6 +76,7 @@ object SeqApp extends IOWebApp {
       transposeRef <- SignallingRef[IO].of(0).toResource
       recordingRef <- SignallingRef[IO].of(false).toResource
       recordingTrackRef <- SignallingRef[IO].of(1).toResource
+      instrumentRef <- SignallingRef[IO].of["sos" | "midi"]("midi").toResource
 
       midiAccessLazy <-
         window
@@ -87,10 +88,16 @@ object SeqApp extends IOWebApp {
           .memoize
           .toResource
 
-      instrument = Instrument.fromSos()
-      // instrument = Instrument.suspend(
-      //   midiAccessLazy.map(Instrument.fromMidiOutput(_, channelRef.get))
-      // )
+      instrument = Instrument.suspend {
+        instrumentRef.get.map {
+          Map(
+            "midi" -> Instrument.suspend(
+              midiAccessLazy.map(Instrument.fromMidiOutput(_, channelRef.get))
+            ),
+            "sos" -> Instrument.fromSos(),
+          )
+        }
+      }
 
       _ <-
         Player
@@ -149,6 +156,23 @@ object SeqApp extends IOWebApp {
           .background
       editedNoteRef <- SignallingRef[IO].of((0, 0)).toResource
     } yield div(
+      div(
+        "Instrument:",
+        select.withSelf { self =>
+          (
+            option("MIDI", value := "midi"),
+            option("Sounds of Scala", value := "sos"),
+            onChange --> {
+              _.foreach { _ =>
+                self.value.get.flatMap {
+                  case v @ ("sos" | "midi") => instrumentRef.set(v)
+                  case _                    => IO.unit
+                }
+              }
+            },
+          )
+        },
+      ),
       ChannelSelector.show(channelRef),
       div("current note: ", currentNoteRef.map(_.show)),
       div("hold: ", holdAtRef.map(_.show)),
