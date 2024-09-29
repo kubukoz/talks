@@ -18,6 +18,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js.JSConverters.*
 import cats.effect.std.Semaphore
+import scala.concurrent.duration.{span => _, *}
 
 val stepCount = 16
 
@@ -62,10 +63,16 @@ object SeqApp extends IOWebApp {
       //   .toResource
       //   .map(TrackState.fromSignallingRef)
 
-      // Propagate state whenever a leader shows up
-      // todo: also request state when a new follower shows up
+      // Propagate state from the leader every 5 seconds, starting now.
+      // Request state propagation when a new follower shows up
       _ <-
-        if isLeader then trackState.read.get.flatMap(trackState.set).background
+        if isLeader then trackState
+          .read
+          .get
+          .flatMap(trackState.set)
+          .andWait(5.seconds)
+          .foreverM
+          .background
         else
           // request broadcast of latest state
           dataChannel.send(Message.Get).toResource
@@ -251,13 +258,7 @@ object NoteEditor {
           "clear",
           onClick --> {
             _.foreach { _ =>
-              trackState.update { tracks =>
-                tracks
-                  .updated(
-                    editedTrack,
-                    tracks(editedTrack).updated(editedNote, Playable.Rest),
-                  )
-              }
+              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.Rest).void
             }
           },
           styleAttr <-- trackState
@@ -271,13 +272,7 @@ object NoteEditor {
           "C4",
           onClick --> {
             _.foreach { _ =>
-              trackState.update { tracks =>
-                tracks
-                  .updated(
-                    editedTrack,
-                    tracks(editedTrack).updated(editedNote, Playable.C4),
-                  )
-              }
+              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.C4).void
             }
           },
           styleAttr <-- trackState
@@ -291,13 +286,7 @@ object NoteEditor {
           "pitch up",
           onClick --> {
             _.foreach { _ =>
-              trackState.update { tracks =>
-                tracks
-                  .updated(
-                    editedTrack,
-                    tracks(editedTrack).updated(editedNote, tracks(editedTrack)(editedNote) + 1),
-                  )
-              }
+              trackState.updateAtAndGet(editedTrack, editedNote)(_ + 1).void
             }
           },
         ),
@@ -305,13 +294,7 @@ object NoteEditor {
           "pitch down",
           onClick --> {
             _.foreach { _ =>
-              trackState.update { tracks =>
-                tracks
-                  .updated(
-                    editedTrack,
-                    tracks(editedTrack).updated(editedNote, tracks(editedTrack)(editedNote) - 1),
-                  )
-              }
+              trackState.updateAtAndGet(editedTrack, editedNote)(_ - 1).void
             }
           },
         ),

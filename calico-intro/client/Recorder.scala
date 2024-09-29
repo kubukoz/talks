@@ -26,12 +26,8 @@ object Recorder {
 
         val register = (currentNoteRef.get, recordingRef.get, recordingTrackRef.get).flatMapN {
           case (currentNote, true, track) =>
-            trackState.update { tracks =>
-              tracks
-                .updated(
-                  track,
-                  tracks(track).updated(currentNote, Playable.Play(noteToPlay, velocity)),
-                )
+            trackState.updateAtAndGet(track, currentNote) { _ =>
+              Playable.Play(noteToPlay, velocity)
             }
           case _ => IO.unit
         }

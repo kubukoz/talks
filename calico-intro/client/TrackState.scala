@@ -19,8 +19,9 @@ import scala.util.chaining.*
 /// which can be used to hide networking etc.
 trait TrackState {
   def read: Signal[IO, List[List[Playable]]]
+  def clear(trackIndex: Int): IO[Unit]
   def set(state: List[List[Playable]]): IO[Unit]
-  def update(f: List[List[Playable]] => List[List[Playable]]): IO[Unit]
+  def updateAtAndGet(trackIndex: Int, step: Int)(f: Playable => Playable): IO[Playable]
 }
 
 object TrackState {
@@ -28,37 +29,57 @@ object TrackState {
   def fromSignallingRef(ref: SignallingRef[IO, List[List[Playable]]]): TrackState =
     new TrackState {
       def read: Signal[IO, List[List[Playable]]] = ref
+      def clear(trackIndex: Int): IO[Unit] = ref.update { tracks =>
+        tracks.updated(trackIndex, tracks(trackIndex).as(Playable.Rest))
+      }
+
       def set(state: List[List[Playable]]): IO[Unit] = ref.set(state)
-      def update(f: List[List[Playable]] => List[List[Playable]]): IO[Unit] = ref.update(f)
+      def updateAtAndGet(trackIndex: Int, step: Int)(f: Playable => Playable): IO[Playable] = ref
+        .updateAndGet { tracks =>
+          tracks.updated(
+            trackIndex,
+            tracks(trackIndex).updated(step, f(tracks(trackIndex)(step))),
+          )
+        }
+        .map(_(trackIndex)(step))
     }
 
   def remote(channel: DataChannel[IO], init: List[List[Playable]]): Resource[IO, TrackState] =
     SignallingRef[IO]
       .of(init)
       .toResource
-      .flatTap { ref =>
+      .map(fromSignallingRef)
+      .flatTap { underlying =>
         // consume external changes
         channel
           .receive
           .evalMap {
-            case Message.Set(state) => ref.set(state)
-            case Message.Get        => ref.get.map(Message.Set(_)).flatMap(channel.send)
+            case Message.Clear(trackIndex) => underlying.clear(trackIndex)
+            case Message.Set(state)        => underlying.set(state)
+            case Message.Update(trackIndex, step, playable) =>
+              underlying.updateAtAndGet(trackIndex, step)(_ => playable)
+            case Message.Get => underlying.read.get.map(Message.Set(_)).flatMap(channel.send)
           }
           .compile
           .drain
           .background
       }
-      .map { ref =>
+      .map { underlying =>
         new {
-          def read: Signal[IO, List[List[Playable]]] = ref
+          val read: Signal[IO, List[List[Playable]]] = underlying.read
+          def clear(trackIndex: Int): IO[Unit] =
+            underlying.clear(trackIndex) *>
+              channel.send(Message.Clear(trackIndex))
           def set(state: List[List[Playable]]): IO[Unit] =
-            ref.set(state) *>
+            underlying.set(state) *>
               channel.send(Message.Set(state))
 
-          def update(f: List[List[Playable]] => List[List[Playable]])
-            : IO[Unit] = ref.updateAndGet(f).flatMap { newState =>
-            channel.send(Message.Set(newState))
-          }
+          def updateAtAndGet(trackIndex: Int, step: Int)(f: Playable => Playable): IO[Playable] =
+            underlying
+              .updateAtAndGet(trackIndex, step)(f)
+              .flatTap { playable =>
+                channel.send(Message.Update(trackIndex, step, playable))
+              }
         }
 
       }
@@ -67,6 +88,8 @@ object TrackState {
 
 enum Message derives Codec.AsObject {
   case Set(state: List[List[Playable]])
+  case Update(trackIndex: Int, step: Int, playable: Playable)
+  case Clear(trackIndex: Int)
   case Get
 }
 

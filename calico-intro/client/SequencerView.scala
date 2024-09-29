@@ -118,13 +118,7 @@ object SequencerView {
               "clear",
               onClick --> {
                 _.foreach { _ =>
-                  trackState.update { tracks =>
-                    tracks
-                      .updated(
-                        trackIndex,
-                        tracks(trackIndex).as(Playable.Rest),
-                      )
-                  }
+                  trackState.clear(trackIndex)
                 }
               },
             )
