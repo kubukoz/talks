@@ -5,18 +5,16 @@ import cats.effect.kernel.Resource
 import cats.syntax.all.*
 import fs2.dom.*
 import fs2.dom.ext.FS2DomExtensions.*
-import io.circe.syntax.*
 import org.scalajs.dom
 
 import scala.scalajs.js.JSConverters.*
-import io.circe.Encoder
 
 object JsonDownload {
 
-  def runDownload[A: Encoder](data: A): IO[Unit] = {
+  def runDownload(data: String): IO[Unit] = {
     val blob =
       new dom.Blob(
-        Array(data.asJson.noSpaces).toJSArray,
+        Array(data).toJSArray,
         new dom.BlobPropertyBag {
           `type` = "application/octet-stream"
         },
