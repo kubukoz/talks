@@ -14,6 +14,6 @@ Feature status:
 
 1. Make sure server is up (see instructions in `../server`)
 2. Tab 1: `scala-cli package . -f` (`-w` for watch mode)
-3. Tab 2: `npx parcel index.html`
+3. Tab 2: `npm start`
 4. Tab 3: `caddy run` (yeah I don't like this either)
 5. Tab 4 (later): `ngrok http 2222` (exposes caddy)

@@ -15,6 +15,7 @@ lazy val jsdocs = project
 lazy val docs = project // new documentation project
   .in(file("myproject-docs")) // important: it must not be docs/
   .settings(
-    mdocJS := Some(jsdocs)
+    mdocJS := Some(jsdocs),
+    mdocExtraArguments := List("--no-livereload")
   )
   .enablePlugins(MdocPlugin)
