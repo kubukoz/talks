@@ -3,7 +3,6 @@ import calico.IOWebApp
 import calico.html.io.*
 import calico.html.io.given
 import cats.effect.IO
-import cats.effect.implicits.*
 import cats.effect.kernel.Resource
 import cats.effect.std.Semaphore
 import cats.syntax.all.*
@@ -125,7 +124,6 @@ object SeqApp extends IOWebApp {
             transposeRef = transposeRef,
           )
           .background
-          .flattenK
       _ <-
         KeyStatus
           .forKey("b")

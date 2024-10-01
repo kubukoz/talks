@@ -16,7 +16,7 @@ object Player {
     currentNoteRef: Ref[IO, Int],
     playingRef: Signal[IO, Boolean],
     transposeRef: Ref[IO, Int],
-  ): Resource[IO, Unit] = {
+  ): IO[Unit] = {
     val period = 1.minute / 120 / 4
 
     fs2
@@ -47,8 +47,6 @@ object Player {
       }
       .compile
       .drain
-      .background
-      .void
   }
 
 }
