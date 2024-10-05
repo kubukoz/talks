@@ -1,31 +1,165 @@
+# <a href="https://armanbilge.com/calico/" target="_blank">Calico</a> – the functional frontend library you didn’t know you needed
+## Jakub Kozłowski | Art Of Scala | 10.10.2024, Warsaw
+Slides, contact etc.: https://linktr.ee/kubukoz
+
+<div style="width: 100%; text-align: center">
+  <br/>
+  <a href="https://typelevel.org" target="_blank"><img src="img/typelevel.png" style="height: 100px"/></a>
+  <a href="https://typelevel.org/cats-effect" target="_blank"><img src="img/cats-effect.png" style="height: 100px"/></a>
+  <a href="https://fs2.io" target="_blank"><img src="img/fs2.png" style="height: 100px"/></a>
+</div>
+
+
+---
+
+## ⚠️ Warning: optimized for replay value™️
+
+<div style="width: 100%; text-align: center">
+  <img src="./img/replay-value.png" style="width: 800px"/>
+</div>
+
+Check out **the recording, slides and links** later!
+
+---
+
 ```scala mdoc:js:shared:invisible
 import scalajs.js
+import cats.syntax.all.*
 import calico.html.io.*
 import calico.html.io.given
 import calico.syntax.*
 import calico.syntax.given
 import cats.effect.IO
-import scala.concurrent.duration.{span => _, *}
+import cats.effect.Ref
+import cats.effect.Resource
 import fs2.dom.Node
 import org.scalajs.dom
-import cats.effect.Resource
-import cats.syntax.all.*
 import fs2.concurrent.Signal
-import fs2.Chunk
 import fs2.concurrent.SignallingRef
+import fs2.Chunk
 import org.http4s.dom.*
 import org.http4s.implicits.*
 import demo.IntersectionObserver
 import demo.WebSocketStreamClient
+import demo.WebSocketStreamClient.*
+import scala.concurrent.duration.{span => _, *}
+import cats.effect.unsafe.implicits.*
 
 extension [A <: Node[IO]](ioRes: Resource[IO, A]) {
   def renderHere(node: dom.Node) = {
     ioRes
       .renderInto(node.asInstanceOf[Node[IO]])
-      .useForever.unsafeRunAndForget()(using cats.effect.unsafe.IORuntime.global)
+      .useForever.unsafeRunAndForget()
   }
 }
 ```
+
+```scala
+// core idea
+val component: Resource[IO, HtmlElement[IO]] = ???
+```
+
+---
+
+## `cats.effect.Resource`
+
+```scala
+trait Resource[F[_], A] {
+  def use[B](f: A => F[B]): F[B]
+}
+
+object Resource {
+  def make[F[_], A](acquire: F[A])(release: A => F[Unit]): Resource[F, A]
+}
+```
+
+Encapsulates the lifecycle of a stateful resource: creation, usage, and cleanup.
+
+---
+
+## Resource composition? 😬
+
+```scala
+mkConnection.use { conn =>
+  makeClient(conn).use { client =>
+    makeServer(conn).use { server =>
+      client.call(server)
+    }
+  }
+}
+```
+
+Looks familiar...
+
+---
+
+<img src="img/hadouken.jpg" style="width: 800px"/>
+
+---
+
+## Resource composition: ✨ `flatMap` ✨
+
+```scala
+val myApp = for {
+  conn   <- mkConnection
+  client <- makeClient(conn)
+  server <- makeServer(conn)
+} yield (client, server)
+
+myApp.use { (client, server) =>
+  client.call(server)
+}
+```
+
+---
+
+## Components in Calico are Resources...
+
+...with syntax sugar!
+
+```scala
+// tired
+val myComponent = for {
+  div1 <- div("Hello, world!")
+  div2 <- div("Goodbye, world!")
+} yield div(div1, div2)
+
+// wired
+val myComponent = div(
+  div("Hello, world!"),
+  div("Goodbye, world!")
+)
+```
+
+---
+
+## OK, we have a component that's a resource.
+
+Now what?
+
+```scala mdoc:js
+val comp = div(
+  "hello!",
+  " ",
+  button("click me!"),
+)
+
+// custom helper I'm using for the slides, you don't have to do this
+comp.renderHere(node)
+```
+
+---
+
+## Let's get some action
+
+```scala mdoc:js
+input (
+  onInput --> (_.foreach(_ => IO.println("Got some input!"))),
+)
+.renderHere(node)
+```
+
+---
 
 ```scala mdoc:js
 fs2.Stream.awakeEvery[IO](100.millis).holdResource(0.seconds).flatMap { signal =>
@@ -35,15 +169,6 @@ fs2.Stream.awakeEvery[IO](100.millis).holdResource(0.seconds).flatMap { signal =
     " seconds."
   )
 }
-.renderHere(node)
-```
-
----
-
-```scala mdoc:js
-input (
-  onInput --> (_.foreach(_ => IO.println("Got some input!"))),
-)
 .renderHere(node)
 ```
 
@@ -148,7 +273,7 @@ def showLetter(k: Char, state: Signal[IO, Boolean]) =
 import org.http4s.client.websocket.{WSRequest, WSFrame}
 
 // Implementation of unstable web API: https://github.com/http4s/http4s-dom/pull/384
-val wsMessages = WebSocketStreamClient[IO]
+val wsMessages = WebSocketStreamClient[IO].withFallback(WebSocketClient[IO])
   .connectHighLevel(
     WSRequest(uri"ws://localhost:8080")
   )

@@ -13,3 +13,7 @@
 //> using option -deprecation
 //> using option -Wunused:all
 //> using option -Xkind-projector
+//> using publish.repository ivy2local
+//> using publish.organization com.kubukoz
+//> using publish.name calico-fun-frontend
+//> using publish.version 0.1.0-SNAPSHOT

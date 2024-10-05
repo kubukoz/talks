@@ -33,6 +33,7 @@ import cats.Foldable
 import scodec.bits.ByteVector
 import fs2.Chunk
 import fs2.dom.AbortController
+import scala.scalajs.js.JavaScriptException
 
 object demo {
   IntersectionObserver.isVisible(dom.document.body).flatMap { visible =>
@@ -150,6 +151,30 @@ object WebSocketStreamClient {
           def subprotocol: Option[String] = ???
         }
       }
+  }
+
+  extension [F[_]: Async](wsc: WSClientHighLevel[F]) {
+    def withFallback(other: WSClientHighLevel[F]) = new WSClientHighLevel[F] {
+      def connectHighLevel(
+          request: WSRequest
+      ): Resource[F, WSConnectionHighLevel[F]] =
+        wsc.connectHighLevel(request).recoverWith {
+          case jse: JavaScriptException if jse.exception match {
+                case ref: js.ReferenceError
+                    if ref.message.contains("WebSocketStream") =>
+                  true
+                case _ => false
+              } =>
+            Sync[F]
+              .delay(
+                println(
+                  "WebSocketStream not available, falling back to WebSocketClient"
+                )
+              )
+              .toResource *>
+              other.connectHighLevel(request)
+        }
+    }
   }
 
   private object facades {
