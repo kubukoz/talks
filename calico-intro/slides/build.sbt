@@ -7,7 +7,7 @@ lazy val jsdocs = project
     libraryDependencies ++= Seq(
       "org.scala-js" %%% "scalajs-dom" % "2.0.0",
       "org.http4s" %%% "http4s-dom" % "0.2.11",
-      "com.armanbilge" %%% "calico" % "0.2.2",
+      "com.armanbilge" %%% "calico" % "0.2.2-92-a2041d8-SNAPSHOT",
       "com.kubukoz" %%% "calico-fun-frontend" % "0.1.0-SNAPSHOT"
     )
   )

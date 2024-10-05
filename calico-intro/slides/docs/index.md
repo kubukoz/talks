@@ -73,7 +73,7 @@ object Resource {
 }
 ```
 
-Encapsulates the lifecycle of a stateful resource: creation, usage, and cleanup.
+Encapsulates the lifecycle of a stateful resource: **allocation** -> usage -> **cleanup**.
 
 ---
 
@@ -115,7 +115,7 @@ myApp.use { (client, server) =>
 
 ## Components in Calico are Resources...
 
-...with syntax sugar!
+...on steroids!
 
 ```scala
 // tired
@@ -139,9 +139,9 @@ Now what?
 
 ```scala mdoc:js
 val comp = div(
-  "hello!",
+  "Hello!",
   " ",
-  button("click me!"),
+  button("Click me!"),
 )
 
 // custom helper I'm using for the slides, you don't have to do this
@@ -150,12 +150,24 @@ comp.renderHere(node)
 
 ---
 
-## Let's get some action
+## We can add listeners...
 
 ```scala mdoc:js
-input (
-  onInput --> (_.foreach(_ => IO.println("Got some input!"))),
+button(
+  onClick(IO(dom.window.alert("Button clicked!"))),
+  "Click me!"
 )
+.renderHere(node)
+```
+
+---
+
+## We can get state out of the DOM...
+
+```scala mdoc:js
+input.withSelf { self =>
+  onChange(self.value.get.flatMap { value => IO(dom.window.alert(value))})
+}
 .renderHere(node)
 ```
 
@@ -180,7 +192,7 @@ SignallingRef[IO].of("").toResource.flatMap { ref =>
     input.withSelf { self =>
       (
         value <-- ref,
-        onInput --> (_.foreach(_ => self.value.get.flatMap(ref.set))),
+        onInput(self.value.get.flatMap(ref.set)),
         placeholder := "What's your name?"
       )
     },
@@ -200,10 +212,10 @@ SignallingRef[IO].of(List.empty[String]).toResource.flatMap { log =>
         input.withSelf { self =>
           (
             value <-- ref,
-            onInput --> (_.foreach(_ => self.value.get.flatMap(ref.set)))
+            onInput(self.value.get.flatMap(ref.set))
           )
         },
-        onSubmit --> (_.foreach(_.preventDefault *> ref.get.flatMap(v => log.update(_ :+ v)) *> ref.set("")))
+        onSubmit(_.preventDefault *> ref.get.flatMap(v => log.update(_ :+ v)) *> ref.set(""))
       ),
       ul(children <-- log.map(_.map(li(_))))
     )
@@ -303,12 +315,12 @@ shrek(node)
 
 ---
 
-Pure FP?
+_Actually_ pure FP
 
 ```scala mdoc:js
 val component = SignallingRef[IO].of(0).toResource.flatMap { ref =>
   button(
-    onClick --> (_.foreach(_ => ref.update(_ + 1))),
+    onClick(ref.update(_ + 1)),
     "Clicks: ", ref.map(_.toString),
 
     styleAttr <-- ref.map(s => s"font-size: ${(s + 1)}em")
