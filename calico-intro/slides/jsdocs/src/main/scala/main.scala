@@ -31,6 +31,8 @@ import org.http4s.client.websocket.WSDataFrame
 import cats.effect.implicits.*
 import cats.Foldable
 import scodec.bits.ByteVector
+import fs2.Chunk
+import fs2.dom.AbortController
 
 object demo {
   IntersectionObserver.isVisible(dom.document.body).flatMap { visible =>
@@ -44,11 +46,15 @@ object demo {
           .map(_.key)
           .foreach(conn.sendText)
           .merge(conn.receiveStream)
-          .collect { case WSFrame.Text(text, _) =>
-            text
+          .collect {
+            case WSFrame.Text(text, _) =>
+              Chunk.array(text.getBytes())
+            case WSFrame.Binary(bytes, _) =>
+              Chunk.byteVector(bytes)
           }
-          .sliding(2)
-          .map(_.mkString_("\n"))
+          .unchunks
+          .through(fs2.text.utf8.decode)
+          .through(fs2.text.lines)
           .holdOptionResource
       }
       .map(_.map(_.toString()))
@@ -99,11 +105,18 @@ object WebSocketStreamClient {
         stream <- Resource
           .make {
             Sync[F]
-              .delay(new facades.WebSocketStream(request.uri.renderString))
+              .delay(
+                new facades.WebSocketStream(
+                  request.uri.renderString,
+                  js.Dynamic.literal( /* signal = abortSignal */ )
+                )
+              )
           } { stream => Sync[F].delay(stream.close()) }
 
         opened <- Async[F].fromPromise(Sync[F].delay(stream.opened)).toResource
-        reader <- Sync[F].delay(opened.readable.getReader()).toResource
+        reader <- Resource.make(Sync[F].delay(opened.readable.getReader()))(
+          reader => Async[F].fromPromise(Sync[F].delay(reader.cancel()))
+        )
       } yield {
 
         new WSConnectionHighLevel[F] {
@@ -143,8 +156,9 @@ object WebSocketStreamClient {
 
     @js.native
     @JSGlobal("WebSocketStream")
-    class WebSocketStream(url: String) extends js.Any {
+    class WebSocketStream(url: String, args: js.Dynamic) extends js.Any {
       def opened: js.Promise[WebSocketStreamOpened] = js.native
+      def closed: js.Promise[WebSocketStreamClosed] = js.native
       def close(): Unit = js.native
     }
 
@@ -154,5 +168,10 @@ object WebSocketStreamClient {
       // val writable: WriteableStream[js.Any]
     }
 
+    @js.native
+    trait WebSocketStreamClosed extends js.Object {
+      val closeCode: Int
+      val reason: String
+    }
   }
 }

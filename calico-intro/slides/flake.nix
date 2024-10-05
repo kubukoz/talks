@@ -15,7 +15,6 @@
       {
         devShell = pkgs.mkShell {
           buildInputs = [
-            pkgs.websocat
             pkgs.pv
             pkgs.marp-cli
           ];

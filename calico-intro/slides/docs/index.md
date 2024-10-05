@@ -11,6 +11,7 @@ import org.scalajs.dom
 import cats.effect.Resource
 import cats.syntax.all.*
 import fs2.concurrent.Signal
+import fs2.Chunk
 import fs2.concurrent.SignallingRef
 import org.http4s.dom.*
 import org.http4s.implicits.*
@@ -143,30 +144,36 @@ def showLetter(k: Char, state: Signal[IO, Boolean]) =
 
 ---
 
-```scala mdoc:js
+```scala mdoc:js:shared
 import org.http4s.client.websocket.{WSRequest, WSFrame}
 
 // Implementation of unstable web API: https://github.com/http4s/http4s-dom/pull/384
 val wsMessages = WebSocketStreamClient[IO]
   .connectHighLevel(
-    WSRequest(uri"ws://localhost:9091")
+    WSRequest(uri"ws://localhost:8080")
   )
   .flatMap {
     _.receiveStream.collect { case WSFrame.Text(text, _) => text }
-      .prefetchN(120).metered(1.second / 120)
+      .filterNot(_.isBlank)
+      .sliding(10).map(lines => div(lines.map(p(_)).toList))
+      .metered(1.second / 5)
       .holdOptionResource
   }
-  .map(_.map(_.map(code(_))))
 
-IntersectionObserver.isVisible(node).flatMap { visible =>
+def shrek(node: org.scalajs.dom.Element) = IntersectionObserver.isVisible(node).flatMap { visible =>
   div(
     visible.map {
       case true  => div(wsMessages)
       case false => div("")
     }
   )
-}
-.renderHere(node)
+}.renderHere(node)
+```
+
+---
+
+```scala mdoc:js
+shrek(node)
 ```
 
 ---

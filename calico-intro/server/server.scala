@@ -20,6 +20,8 @@ import org.http4s.Response
 
 import com.comcast.ip4s.*
 import org.http4s.HttpRoutes
+import fs2.io.file.Files
+import fs2.io.file.Path
 
 object ws extends IOApp.Simple {
 
@@ -40,6 +42,21 @@ object ws extends IOApp.Simple {
                 .of[IO] {
                   case GET -> Root / "ws" / "leader" => respond(Peer.Leader)
                   case GET -> Root / "ws"            => respond(Peer.Follower)
+                  case GET -> Root =>
+                    builder.build {
+                      _.drain.merge(
+                        fs2.Stream.exec(IO.println("new file listener")) ++
+                          Files[IO]
+                            .readAll(Path(sys.env("HOME") + "/Downloads/shrek.txt"))
+                            .through(fs2.text.utf8.decode)
+                            .through(fs2.text.lines)
+                            // .repeat
+                            .map(WebSocketFrame.Text(_))
+                            .onFinalizeCase { ec =>
+                              IO.println(s"file listener DC: $ec")
+                            }
+                      )
+                    }
                 }
                 .orNotFound
             }
