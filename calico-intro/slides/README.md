@@ -1,8 +1,8 @@
 # Instructions
 
-1. Tab 1: `sbt docs/mdoc --watch`
-2. Tab 2: `./serve.sh`
-3. Tab 3: `./run-ws-server.sh`
-4. Open `localhost:9090` in anything but Firefox (Chrome should do) - we need [WebSocketStream][wss] support.
+1. Make sure `server` is running (see its readme)
+2. Tab 1: `sbt docs/mdoc --watch`
+3. Tab 2: `./serve.sh`
+4. Open `localhost:9090`, ideally in anything but Firefox (Chrome is fine) - we need [WebSocketStream][wss] support (there's a fallback to plain `WebSocket`).
 
 [wss]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocketStream
