@@ -128,42 +128,30 @@ myApp.use { (client, server) =>
 
 ...on steroids!
 
-```scala
-// tired
-val myComponent = for {
-  div1 <- div("Hello, world!")
-  div2 <- div("Goodbye, world!")
-} yield div(div1, div2)
+```scala mdoc:js
+val myComponent1 = for {
+  d <- div("Hello, world!")
+  b <- button("Click me!")
+} yield div(d, b)
 
-// wired
-val myComponent = div(
+// or, usually better:
+val myComponent2 = div(
   div("Hello, world!"),
-  div("Goodbye, world!")
+  button("Click me!")
 )
-```
 
-Generally you want to do #2.
+myComponent2.renderHere(node)
+```
 
 ---
 
 ## OK, we have a component that's a resource.
 
-Now what?
-
-```scala mdoc:js
-val comp = div(
-  "Hello!",
-  " ",
-  button("Click me!"),
-)
-
-// custom helper I'm using for the slides, you don't have to do this
-comp.renderHere(node)
-```
+How do we make it interactive?
 
 ---
 
-## We can add listeners...
+## 👂 We can add listeners...
 
 ```scala mdoc:js
 button(
@@ -187,6 +175,10 @@ input.withSelf { self =>
 ---
 
 ## How do we share state between elements?
+
+Hint: it's the same as with any other cats-effect application.
+
+---
 
 `cats.effect.Ref`!
 
@@ -229,12 +221,14 @@ Resource.eval(Ref[IO].of("")).flatMap { ref =>
   div(
     input.withSelf { self =>
       (
+        // set
         onInput(self.value.get.flatMap(ref.set)),
         placeholder := "What's your name?"
       )
     },
     button(
       "Submit",
+      // get
       onClick(ref.get.flatMap(name => IO(dom.window.alert(s"Hello, $name!"))))
     )
   )
@@ -260,6 +254,15 @@ Ref[IO].of(0).toResource.flatMap { ref =>
   )
 }
 ```
+
+---
+
+## We need something that can:
+
+- provide a value to be displayed, and
+- notify us when the state changes
+
+🤔
 
 ---
 
