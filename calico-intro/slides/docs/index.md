@@ -1,3 +1,10 @@
+<!-- TODOs
+
+- emphasize earlier on that the concurrency primitives are just fs2/CE?
+- lead up to the demo with a short story (think about whether I can put it in the beginning)
+
+ -->
+
 # <a href="https://armanbilge.com/calico/" target="_blank">Calico</a> – the functional frontend library you didn’t know you needed
 ## Jakub Kozłowski | Art Of Scala | 10.10.2024, Warsaw
 Slides, contact etc.: https://linktr.ee/kubukoz
@@ -33,6 +40,7 @@ import cats.effect.IO
 import cats.effect.Ref
 import cats.effect.Resource
 import fs2.dom.Node
+import fs2.dom.HtmlDivElement
 import org.scalajs.dom
 import fs2.concurrent.Signal
 import fs2.concurrent.SignallingRef
@@ -44,6 +52,9 @@ import demo.WebSocketStreamClient
 import demo.WebSocketStreamClient.*
 import scala.concurrent.duration.{span => _, *}
 import cats.effect.unsafe.implicits.*
+import org.http4s.client.websocket.WSRequest
+import org.http4s.client.websocket.WSFrame
+
 
 extension [A <: Node[IO]](ioRes: Resource[IO, A]) {
   def renderHere(node: dom.Node) = {
@@ -56,7 +67,7 @@ extension [A <: Node[IO]](ioRes: Resource[IO, A]) {
 
 ```scala
 // core idea
-val component: Resource[IO, HtmlElement[IO]] = ???
+def div(...): Resource[IO, HtmlElement[IO]]
 ```
 
 ---
@@ -131,6 +142,8 @@ val myComponent = div(
 )
 ```
 
+Generally you want to do #2.
+
 ---
 
 ## OK, we have a component that's a resource.
@@ -173,30 +186,57 @@ input.withSelf { self =>
 
 ---
 
-```scala mdoc:js
-fs2.Stream.awakeEvery[IO](100.millis).holdResource(0.seconds).flatMap { signal =>
-  div(
-    "The presentation has been running for ",
-    signal.map(_.toSeconds.toString),
-    " seconds."
-  )
+## How do we share state between elements?
+
+`cats.effect.Ref`!
+
+```scala
+// simplified
+trait Ref[A] {
+  def get: IO[A]
+  def update(f: A => A): IO[Unit]
 }
-.renderHere(node)
+
+Ref[IO].of(initialValue: A): IO[Ref[A]]
 ```
 
 ---
 
+## `Ref` 101
+
+```scala
+val mkRef = Ref[IO].of(0)
+
+// results in 1
+mkRef.flatMap { ref =>
+  ref.update(_ + 1) *>
+    ref.get
+}
+
+// results in 0
+mkRef.flatMap(_.update(_ + 1)) *>
+  mkRef.flatMap(_.get)
+```
+
+To share a `Ref`, you need to pass it around after **creating it once**.
+
+---
+
+## `Ref`s in Calico
+
 ```scala mdoc:js
-SignallingRef[IO].of("").toResource.flatMap { ref =>
-  form(
+Resource.eval(Ref[IO].of("")).flatMap { ref =>
+  div(
     input.withSelf { self =>
       (
-        value <-- ref,
         onInput(self.value.get.flatMap(ref.set)),
         placeholder := "What's your name?"
       )
     },
-    div("Hello, ", ref, "!")
+    button(
+      "Submit",
+      onClick(ref.get.flatMap(name => IO(dom.window.alert(s"Hello, $name!"))))
+    )
   )
 }
 .renderHere(node)
@@ -204,40 +244,124 @@ SignallingRef[IO].of("").toResource.flatMap { ref =>
 
 ---
 
-```scala mdoc:js
-SignallingRef[IO].of(List.empty[String]).toResource.flatMap { log =>
-  SignallingRef[IO].of("").toResource.flatMap { ref =>
-    div(
-      form(
-        input.withSelf { self =>
-          (
-            value <-- ref,
-            onInput(self.value.get.flatMap(ref.set))
-          )
-        },
-        onSubmit(_.preventDefault *> ref.get.flatMap(v => log.update(_ :+ v)) *> ref.set(""))
-      ),
-      ul(children <-- log.map(_.map(li(_))))
+## OK, so we can store state in a Ref.
+
+But how do we display it as it changes?
+
+```scala
+Ref[IO].of(0).toResource.flatMap { ref =>
+  div(
+    "Counter: ",
+    value := ref, // compile error
+    button(
+      onClick(ref.update(_ + 1)),
+      "Increment"
     )
-  }
+  )
 }
-.renderHere(node)
 ```
 
 ---
+
+## We need a `Signal`!
+
+```scala
+// simplified
+trait Signal[A] {
+  def continuous: fs2.Stream[IO, A]
+  def discrete: fs2.Stream[IO, A]
+  def get: IO[A]
+}
+```
+
+- always has a value that can be read
+- provides continuous/discrete updates as streams
+
+---
+
+## Signals come in two main flavors
+
+- A signal from an `fs2.Stream`: `.hold` and its variants
+- A `SignallingRef` (`Ref` + `Signal` created together)
+
+---
+
+## `Signal` from a `Stream`
+
+```scala mdoc:js
+fs2.Stream
+  .awakeEvery[IO](100.millis).holdResource(0.seconds)
+  .flatMap { signal =>
+    div(
+      "The presentation has been running for ",
+      signal.map(_.toSeconds.toString),
+      " seconds."
+    )
+  }
+  .renderHere(node)
+```
+
+---
+
+## `SignallingRef`
+
+Acts like a `Ref`, is also a `Signal`
+
+```scala mdoc:js
+SignallingRef[IO].of(0).toResource
+  .flatMap { ref =>
+    button(
+      onClick(ref.update(_ + 1)),
+      styleAttr := "font-size: 1em",
+      ref.map(_.toString),
+      " clicks"
+    )
+  }
+  .renderHere(node)
+```
+
+---
+
+## `Signal`s can be used for more than just displaying state
+
+For example, styling:
+
+<!-- also shows separation of refs -->
+
+```scala mdoc:js
+val component = SignallingRef[IO].of(0).toResource.flatMap { ref =>
+  button(
+    onClick(ref.update(_ + 1)),
+    "Clicks: ", ref.map(_.toString),
+
+    styleAttr <-- ref.map(s => s"font-size: ${(s + 1)}em")
+  )
+}
+
+div(component, component).renderHere(node)
+```
+
+---
+
+## There's plenty of Streams in the DOM
+
+Courtesy of [fs2-dom](https://github.com/armanbilge/fs2-dom)
 
 ```scala mdoc:js
 val mouseEvents = fs2.dom.events[IO, dom.MouseEvent](dom.document, "mousemove")
 
-mouseEvents.map(e => (e.clientX, e.clientY)).holdResource((0, 0)).flatMap {
-  sig => div(sig.map(_.toString))
-}
-.renderHere(node)
+mouseEvents
+  .map(e => (e.clientX, e.clientY))
+  .holdResource((0, 0))
+  .flatMap {
+    sig => div(sig.map(_.toString))
+  }
+  .renderHere(node)
 ```
 
 ---
 
-Some setup...
+## With some setup...
 
 ```scala mdoc:js:shared
 def keyboardEvent(key: Char, tpe: String) =
@@ -249,27 +373,33 @@ def keyEvents(key: Char) =
   ).map(_.isLeft)
 
 def showBool(b: Boolean) = if b then "✅" else "❌"
-```
 
-And the show begins!
-
-```scala mdoc:js
-keyEvents('k')
-  .holdResource(false)
-  .flatMap {
-    sig => div("k: ", sig.map(showBool))
-  }
-  .renderHere(node)
+def showLetter(k: Char, state: Signal[IO, Boolean]) =
+  div(code(k.toString), ": ", state.map(showBool))
 ```
 
 ---
 
+## ...we can display live keyboard state
+
 ```scala mdoc:js
-def showLetter(k: Char, state: Signal[IO, Boolean]) =
-  div(code(k.toString), ": ", state.map(showBool))
+keyEvents('k')
+  .holdResource(false)
+  .flatMap(showLetter('k', _))
+  .renderHere(node)
+```
+
+What if we want to track more keys?
+
+---
+
+<!-- Monadic composition of Resource in a traverse -->
+
+```scala mdoc:js
 
 "qwerty"
   .toList
+  // !
   .traverse { key =>
     keyEvents(key).holdResource(false).tupleLeft(key)
   }
@@ -281,22 +411,30 @@ def showLetter(k: Char, state: Signal[IO, Boolean]) =
 
 ---
 
-```scala mdoc:js:shared
-import org.http4s.client.websocket.{WSRequest, WSFrame}
+## What about something more complex?
 
-// Implementation of unstable web API: https://github.com/http4s/http4s-dom/pull/384
-val wsMessages = WebSocketStreamClient[IO].withFallback(WebSocketClient[IO])
-  .connectHighLevel(
-    WSRequest(uri"ws://localhost:8080")
-  )
+Like a WebSocket stream?
+
+---
+
+<!-- WebSocketStreamClient: Implementation of unstable web API: https://github.com/http4s/http4s-dom/pull/384 -->
+
+```scala mdoc:js:shared
+val client = WebSocketStreamClient[IO].withFallback(WebSocketClient[IO])
+
+val wsMessages = client.connectHighLevel(WSRequest(uri"ws://localhost:8080"))
   .flatMap {
     _.receiveStream.collect { case WSFrame.Text(text, _) => text }
       .filterNot(_.isBlank)
       .sliding(10).map(lines => div(lines.map(p(_)).toList))
-      .metered(1.second / 5)
-      .holdOptionResource
+      .metered(1.second / 1000)
+      .holdResource(div(""))
   }
+```
 
+---
+
+```scala mdoc:js:shared
 def shrek(node: org.scalajs.dom.Element) = IntersectionObserver.isVisible(node).flatMap { visible =>
   div(
     visible.map {
@@ -315,17 +453,20 @@ shrek(node)
 
 ---
 
-_Actually_ pure FP
+![rmba-20](./img/rbma.avif)
 
-```scala mdoc:js
-val component = SignallingRef[IO].of(0).toResource.flatMap { ref =>
-  button(
-    onClick(ref.update(_ + 1)),
-    "Clicks: ", ref.map(_.toString),
+---
 
-    styleAttr <-- ref.map(s => s"font-size: ${(s + 1)}em")
-  )
-}
+## Demo time!
 
-div(component, component).renderHere(node)
-```
+<video src="./img/rbma-demo.MOV" width="320" height="240" controls loop></video>
+
+---
+
+
+## Summary
+
+- `Resource`s and `Stream`s are powerful constructs
+- They compose well with each other, and can model DOM interactions effectively
+- These are **the same constructs** and **the same patterns** as those we use in backend code
+
