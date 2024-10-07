@@ -16,19 +16,6 @@ Slides, contact etc.: https://linktr.ee/kubukoz
   <a href="https://fs2.io" target="_blank"><img src="img/fs2.png" style="height: 100px"/></a>
 </div>
 
-
----
-
-## ⚠️ Warning: optimized for replay value™️
-
-<div style="width: 100%; text-align: center">
-  <img src="./img/replay-value.png" style="width: 800px"/>
-</div>
-
-Check out **the recording, slides and links** later!
-
----
-
 ```scala mdoc:js:shared:invisible
 import scalajs.js
 import cats.syntax.all.*
@@ -64,6 +51,25 @@ extension [A <: Node[IO]](ioRes: Resource[IO, A]) {
   }
 }
 ```
+
+---
+
+## ⚠️ Warning: optimized for replay value™️
+
+<div style="width: 100%; text-align: center">
+  <img src="./img/replay-value.png" style="width: 800px"/>
+</div>
+
+Check out **the recording, slides and links** later!
+
+---
+
+## What's Calico?
+
+- A _truly_ functional frontend library for Scala.js
+- Builds up on cats-effect and fs2
+
+---
 
 ```scala
 // core idea
@@ -430,7 +436,7 @@ val wsMessages = client.connectHighLevel(WSRequest(uri"ws://localhost:8080"))
     _.receiveStream.collect { case WSFrame.Text(text, _) => text }
       .filterNot(_.isBlank)
       .sliding(10).map(lines => div(lines.map(p(_)).toList))
-      .metered(1.second / 1000)
+      .metered(1.second / 10)
       .holdResource(div(""))
   }
 ```
@@ -473,3 +479,10 @@ shrek(node)
 - They compose well with each other, and can model DOM interactions effectively
 - These are **the same constructs** and **the same patterns** as those we use in backend code
 
+---
+
+## Thank you
+
+- Slides: https://linktr.ee/kubukoz
+- My YouTube: https://www.youtube.com/@kubukoz_
+- Calico: https://armanbilge.com/calico/
