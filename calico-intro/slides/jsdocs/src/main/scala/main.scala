@@ -34,6 +34,7 @@ import scodec.bits.ByteVector
 import fs2.Chunk
 import fs2.dom.AbortController
 import scala.scalajs.js.JavaScriptException
+import cats.Applicative
 
 object demo {
   IntersectionObserver.isVisible(dom.document.body).flatMap { visible =>
@@ -128,9 +129,10 @@ object WebSocketStreamClient {
           ): F[Unit] = ???
 
           def receive: F[Option[WSDataFrame]] = Async[F]
-            .fromPromise {
+            .fromPromiseCancelable {
+              // this has to be made cancelable if we want to have the ability to stop consuming without shutting down the entire connection
               Sync[F].delay {
-                reader.read()
+                (reader.read(), Applicative[F].unit)
               }
             }
             .map { chunk =>
@@ -145,7 +147,6 @@ object WebSocketStreamClient {
                   )
 
               }
-
             }
 
           def subprotocol: Option[String] = ???

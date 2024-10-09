@@ -1,10 +1,3 @@
-<!-- TODOs
-
-- emphasize earlier on that the concurrency primitives are just fs2/CE?
-- lead up to the demo with a short story (think about whether I can put it in the beginning)
-
- -->
-
 # <a href="https://armanbilge.com/calico/" target="_blank">Calico</a> – the functional frontend library you didn’t know you needed
 ## Jakub Kozłowski | Art Of Scala | 10.10.2024, Warsaw
 Slides, contact etc.: https://linktr.ee/kubukoz
@@ -54,7 +47,7 @@ extension [A <: Node[IO]](ioRes: Resource[IO, A]) {
 
 ---
 
-## ⚠️ Warning: optimized for replay value™️
+## ⚠️ Warning: optimized for _replay value™️_
 
 <div style="width: 100%; text-align: center">
   <img src="./img/replay-value.png" style="width: 800px"/>
@@ -81,12 +74,13 @@ def div(...): Resource[IO, HtmlElement[IO]]
 ## `cats.effect.Resource`
 
 ```scala
-trait Resource[F[_], A] {
-  def use[B](f: A => F[B]): F[B]
+// simplified
+trait Resource[A] {
+  def use[B](f: A => IO[B]): IO[B]
 }
 
 object Resource {
-  def make[F[_], A](acquire: F[A])(release: A => F[Unit]): Resource[F, A]
+  def make[A](acquire: IO[A])(release: A => IO[Unit]): Resource[A]
 }
 ```
 
@@ -94,7 +88,7 @@ Encapsulates the lifecycle of a stateful resource: **allocation** -> usage -> **
 
 ---
 
-## Resource composition? 😬
+## But does it compose? 😬
 
 ```scala
 mkConnection.use { conn =>
@@ -138,7 +132,8 @@ myApp.use { (client, server) =>
 val myComponent1 = for {
   d <- div("Hello, world!")
   b <- button("Click me!")
-} yield div(d, b)
+  c <- div(d, b)
+} yield c
 
 // or, usually better:
 val myComponent2 = div(
@@ -178,6 +173,8 @@ input.withSelf { self =>
 .renderHere(node)
 ```
 
+(similar to `useRef` in React)
+
 ---
 
 ## How do we share state between elements?
@@ -198,12 +195,14 @@ trait Ref[A] {
 Ref[IO].of(initialValue: A): IO[Ref[A]]
 ```
 
+Recommended talk: [Shared state in pure FP](https://www.youtube.com/watch?v=aeGQiq4HTTA)
+
 ---
 
 ## `Ref` 101
 
 ```scala
-val mkRef = Ref[IO].of(0)
+val mkRef: IO[Ref[IO, Int]] = Ref[IO].of(0)
 
 // results in 1
 mkRef.flatMap { ref =>
@@ -252,7 +251,7 @@ But how do we display it as it changes?
 Ref[IO].of(0).toResource.flatMap { ref =>
   div(
     "Counter: ",
-    value := ref, // compile error
+    ref, // compile error
     button(
       onClick(ref.update(_ + 1)),
       "Increment"
@@ -265,14 +264,15 @@ Ref[IO].of(0).toResource.flatMap { ref =>
 
 ## We need something that can:
 
-- provide a value to be displayed, and
-- notify us when the state changes
-
+```diff
+  allow us to get a value to be displayed
++ notify us when the state changes
+```
 🤔
 
 ---
 
-## We need a `Signal`!
+## We need an `fs2.concurrent.Signal`!
 
 ```scala
 // simplified
@@ -283,7 +283,7 @@ trait Signal[A] {
 }
 ```
 
-- always has a value that can be read
+- always has a value that can be read instantly
 - provides continuous/discrete updates as streams
 
 ---
@@ -322,6 +322,7 @@ SignallingRef[IO].of(0).toResource
     button(
       onClick(ref.update(_ + 1)),
       styleAttr := "font-size: 1em",
+      // Signal#map
       ref.map(_.toString),
       " clicks"
     )
@@ -436,7 +437,7 @@ val wsMessages = client.connectHighLevel(WSRequest(uri"ws://localhost:8080"))
     _.receiveStream.collect { case WSFrame.Text(text, _) => text }
       .filterNot(_.isBlank)
       .sliding(10).map(lines => div(lines.map(p(_)).toList))
-      .metered(1.second / 10)
+      // .metered(1.second / 10)
       .holdResource(div(""))
   }
 ```
@@ -444,11 +445,13 @@ val wsMessages = client.connectHighLevel(WSRequest(uri"ws://localhost:8080"))
 ---
 
 ```scala mdoc:js:shared
-def shrek(node: org.scalajs.dom.Element) = IntersectionObserver.isVisible(node).flatMap { visible =>
+def shrek(node: org.scalajs.dom.Element) = {
   div(
-    visible.map {
-      case true  => div(wsMessages)
-      case false => div("")
+    IntersectionObserver.isVisible(node).map { visibleSig =>
+      visibleSig.map {
+        case true  => div(wsMessages)
+        case false => div("")
+      }
     }
   )
 }.renderHere(node)
@@ -466,18 +469,21 @@ shrek(node)
 
 ---
 
-## Demo time!
-
 <video src="./img/rbma-demo.MOV" width="320" height="240" controls loop></video>
 
 ---
 
+## Demo time!
+
+---
 
 ## Summary
 
 - `Resource`s and `Stream`s are powerful constructs
-- They compose well with each other, and can model DOM interactions effectively
 - These are **the same constructs** and **the same patterns** as those we use in backend code
+- They compose well with each other, and can model a vast variety of processes, like DOM interactions, effectively
+
+<!-- this is what powers our http4s servers etc. -->
 
 ---
 
@@ -486,3 +492,5 @@ shrek(node)
 - Slides: https://linktr.ee/kubukoz
 - My YouTube: https://www.youtube.com/@kubukoz_
 - Calico: https://armanbilge.com/calico/
+- fs2 docs: https://fs2.io
+- Aquascape (visual fs2 docs): https://zainab-ali.github.io/aquascape/
