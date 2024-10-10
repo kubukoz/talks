@@ -17,3 +17,8 @@ Feature status:
 3. Tab 2: `npm start`
 4. Tab 3: `caddy run` (yeah I don't like this either)
 5. Tab 4 (later): `ngrok http 2222` (exposes caddy)
+
+## Trivia
+
+Vite seems to perform terribly compared to Parcel in development (in this particular app), but Parcel emits `dist` packages
+that cause the browser to OOM. So, I used Parcel in development and Vite for the final build.
