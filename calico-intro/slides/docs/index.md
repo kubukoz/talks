@@ -460,6 +460,8 @@ def shrek(node: org.scalajs.dom.Element) = {
 ---
 
 ```scala mdoc:js
+// This will not work if you're viewing the slides online.
+// Please watch the recording!
 shrek(node)
 ```
 
