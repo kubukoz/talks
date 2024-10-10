@@ -437,7 +437,7 @@ val wsMessages = client.connectHighLevel(WSRequest(uri"ws://localhost:8080"))
     _.receiveStream.collect { case WSFrame.Text(text, _) => text }
       .filterNot(_.isBlank)
       .sliding(10).map(lines => div(lines.map(p(_)).toList))
-      // .metered(1.second / 10)
+      .metered(1.second / 10)
       .holdResource(div(""))
   }
 ```
