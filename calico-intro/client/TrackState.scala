@@ -14,6 +14,7 @@ import org.http4s.client.websocket.WSFrame.Text
 
 import scala.concurrent.duration.*
 import scala.util.chaining.*
+import cats.Applicative
 
 /// Abstraction for track state storage
 /// which can be used to hide networking etc.
@@ -98,6 +99,7 @@ object DataChannel {
   enum State {
     case Connected
     case Connecting
+    case Unavailable
   }
 
   def fromWebSocket[F[_]: Concurrent: cats.effect.std.Console](ws: WSConnectionHighLevel[F])
@@ -175,5 +177,12 @@ object DataChannel {
           }
         }
       }
+
+  def unavailable[F[_]: Concurrent: cats.effect.std.Console]: DataChannel[F] =
+    new {
+      def send(msg: Message): F[Unit] = Applicative[F].unit
+      def receive: fs2.Stream[F, Message] = fs2.Stream.empty
+      def state: Signal[F, State] = Signal.constant(State.Unavailable)
+    }
 
 }

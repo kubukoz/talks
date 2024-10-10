@@ -53,7 +53,18 @@ object SeqApp extends IOWebApp {
         )
         .evalTap(_ => IO.println("Acquired new WebSocket connection"))
 
-      dataChannel <- DataChannel.fromFallible(makeWs.map(DataChannel.fromWebSocket))
+      dataChannel <- DataChannel
+        .fromFallible(makeWs.map(DataChannel.fromWebSocket))
+        // fun fact: without annotating Throwable, you get a type error
+        .handleErrorWith { (e: Throwable) =>
+          IO.consoleForIO
+            .errorln(
+              "Websocket connection not available, disabling data channel. Have you started the server (and proxy)?"
+            )
+            .toResource *>
+            IO.consoleForIO.printStackTrace(e).toResource *>
+            Resource.pure[IO, DataChannel[IO]](DataChannel.unavailable[IO])
+        }
       trackState <- SignallingRef[IO]
         .of(data.initTracks)
         .toResource
@@ -213,6 +224,8 @@ object SeqApp extends IOWebApp {
         dataChannel.state.map {
           case State.Connected  => span(styleAttr := "color: green", "Connected")
           case State.Connecting => span(styleAttr := "color: orange", "Connecting...")
+          case State.Unavailable =>
+            span(styleAttr := "color: red", "Unavailable. Multiplayer editing disabled.")
         },
       ),
       button(
