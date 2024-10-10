@@ -14,7 +14,7 @@ lazy val jsdocs = project
   .enablePlugins(ScalaJSPlugin)
 
 lazy val docs = project // new documentation project
-  .in(file("myproject-docs")) // important: it must not be docs/
+  .in(file("doc-sources")) // important: it must not be docs/
   .settings(
     mdocJS := Some(jsdocs),
     mdocExtraArguments := List("--no-livereload")
