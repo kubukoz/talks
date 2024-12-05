@@ -187,13 +187,10 @@ object SeqApp extends IOWebApp {
           (
             option("MIDI", value := "midi"),
             option("Sounds of Scala", value := "sos"),
-            onChange --> {
-              _.foreach { _ =>
-                self.value.get.flatMap {
-                  case v @ ("sos" | "midi") =>
-                    instrumentLockExclusive.surround(instrumentRef.set(v))
-                  case _ => IO.unit
-                }
+            onChange {
+              self.value.get.flatMap {
+                case v @ ("sos" | "midi") => instrumentLockExclusive.surround(instrumentRef.set(v))
+                case _                    => IO.unit
               }
             },
           )
@@ -230,10 +227,8 @@ object SeqApp extends IOWebApp {
       ),
       button(
         "Download track",
-        onClick --> {
-          _.foreach { _ =>
-            trackState.read.get.map(_.asJson.noSpaces).flatMap(FileDownload.runDownload)
-          }
+        onClick {
+          trackState.read.get.map(_.asJson.noSpaces).flatMap(FileDownload.runDownload)
         },
       ),
       div(
@@ -241,13 +236,11 @@ object SeqApp extends IOWebApp {
         input.withSelf { self =>
           (
             `type` := "file",
-            onChange --> {
-              _.foreach { _ =>
-                IO.fromPromise(IO(self.asInstanceOf[dom.HTMLInputElement].files(0).text()))
-                  .flatMap(io.circe.parser.decode[List[List[Playable]]](_).liftTo[IO])
-                  .flatMap(trackState.set)
-                  .handleErrorWith(IO.consoleForIO.printStackTrace(_))
-              }
+            onChange {
+              IO.fromPromise(IO(self.asInstanceOf[dom.HTMLInputElement].files(0).text()))
+                .flatMap(io.circe.parser.decode[List[List[Playable]]](_).liftTo[IO])
+                .flatMap(trackState.set)
+                .handleErrorWith(IO.consoleForIO.printStackTrace(_))
             },
           )
         },

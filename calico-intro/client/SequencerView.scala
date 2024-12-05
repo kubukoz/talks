@@ -42,8 +42,8 @@ object SequencerView {
             (
               `type` := "checkbox",
               checked <-- recordingRef,
-              onChange --> {
-                _.foreach(_ => self.checked.get.flatMap(recordingRef.set))
+              onChange {
+                self.checked.get.flatMap(recordingRef.set)
               },
             )
           },
@@ -83,13 +83,11 @@ object SequencerView {
                   checked <-- editedNoteRef.map { case (editedTrack, editedNote) =>
                     editedTrack == trackIndex && editedNote == noteIndex
                   },
-                  onChange --> {
-                    _.foreach { _ =>
-                      self.value.get.flatMap {
-                        case s"$trackIndex,$noteIndex" =>
-                          editedNoteRef.set((trackIndex.toInt, noteIndex.toInt))
-                        case _ => IO.raiseError(new Exception("invalid value of edit-playable"))
-                      }
+                  onChange {
+                    self.value.get.flatMap {
+                      case s"$trackIndex,$noteIndex" =>
+                        editedNoteRef.set((trackIndex.toInt, noteIndex.toInt))
+                      case _ => IO.raiseError(new Exception("invalid value of edit-playable"))
                     }
                   },
                 )
@@ -103,11 +101,9 @@ object SequencerView {
                 nameAttr := "recording-track",
                 value := trackIndex.toString,
                 checked <-- recordingTrackRef.map(_ == trackIndex),
-                onChange --> {
-                  _.foreach { _ =>
-                    self.value.get.flatMap { value =>
-                      recordingTrackRef.set(value.toInt)
-                    }
+                onChange {
+                  self.value.get.flatMap { value =>
+                    recordingTrackRef.set(value.toInt)
                   }
                 },
                 disabled <-- recordingRef.map(!_),
@@ -117,10 +113,8 @@ object SequencerView {
           td(
             button(
               "clear",
-              onClick --> {
-                _.foreach { _ =>
-                  trackState.clear(trackIndex)
-                }
+              onClick {
+                trackState.clear(trackIndex)
               },
             )
           ),

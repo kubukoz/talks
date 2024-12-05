@@ -20,10 +20,8 @@ object NoteEditor {
         trackState.read.map(_(editedTrack)(editedNote).toString()),
         button(
           "clear",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.Rest).void
-            }
+          onClick {
+            trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.Rest).void
           },
           styleAttr <-- trackState
             .read
@@ -31,10 +29,8 @@ object NoteEditor {
         ),
         button(
           "Play C4",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.C4).void
-            }
+          onClick {
+            trackState.updateAtAndGet(editedTrack, editedNote)(_ => Playable.C4).void
           },
           styleAttr <-- trackState
             .read
@@ -42,10 +38,8 @@ object NoteEditor {
         ),
         button(
           "pitch up",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ + 1).void
-            }
+          onClick {
+            trackState.updateAtAndGet(editedTrack, editedNote)(_ + 1).void
           },
           styleAttr <-- trackState
             .read
@@ -53,10 +47,8 @@ object NoteEditor {
         ),
         button(
           "pitch down",
-          onClick --> {
-            _.foreach { _ =>
-              trackState.updateAtAndGet(editedTrack, editedNote)(_ - 1).void
-            }
+          onClick {
+            trackState.updateAtAndGet(editedTrack, editedNote)(_ - 1).void
           },
           styleAttr <-- trackState
             .read

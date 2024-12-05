@@ -19,15 +19,13 @@ object ChannelSelector {
           option(i.toString)
         }.toList,
         value <-- midiChannel.map(_.toString),
-        onChange --> {
-          _.foreach(_ =>
-            self
-              .value
-              .get
-              /* wishful thinking */
-              .map(_.toInt)
-              .flatMap(v => instrumentLock.surround(midiChannel.set(v)))
-          )
+        onChange {
+          self
+            .value
+            .get
+            /* wishful thinking */
+            .map(_.toInt)
+            .flatMap(v => instrumentLock.surround(midiChannel.set(v)))
         },
       )
     },
