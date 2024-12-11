@@ -7,11 +7,11 @@ let
 in mkSbtDerivation {
   inherit pname;
   version = "0.1.0";
-  depsSha256 = "sha256-lf0t3hEVdQjaTo4/RFrQC7Bk8nI8iBzL875SA/8viM8=";
+  depsSha256 = "sha256-FscWGui2ygAebIpmFcBSFv7W84twe2aY7chJ4keMc5k=";
   inherit buildInputs;
 
   depsWarmupCommand = ''
-    sbt appNative/compile
+    sbt compile
   '';
   overrideDepsAttrs = final: prev: {
     inherit buildInputs;
@@ -22,11 +22,11 @@ in mkSbtDerivation {
   src = ./.;
 
   buildPhase = ''
-    sbt appNative/nativeLink
+    sbt root/nativeLink
   '';
 
   installPhase = ''
     mkdir -p $out/bin
-    cp app/native/target/scala-3.5.2/app $out/bin/$pname
+    cp target/scala-3.5.2/native/com.kubukoz.hidapidemo.demo $out/bin/hidapi-demo
   '';
 }

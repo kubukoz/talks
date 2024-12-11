@@ -1,13 +1,19 @@
-package com.kubukoz.hid4s
+package com.kubukoz.hidapidemo
 
 import libhidapi.all.*
 
 import scalanative.unsafe.*
 import scalanative.unsigned.*
 import scalanative.*
-import com.kubukoz.hid4s.CExtras.wcstombs
+import com.kubukoz.hidapidemo.CExtras.wcstombs
 
-trait HIDPlatform {
+trait HID {
+  def getInfos(): List[DeviceInfo]
+}
+
+case class DeviceInfo(vendorId: Int, productId: Int, productString: String)
+
+object HID {
 
   def instance: HID = new {
 
