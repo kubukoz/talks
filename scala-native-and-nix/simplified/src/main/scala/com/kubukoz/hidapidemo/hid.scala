@@ -23,6 +23,8 @@ object HID {
       try {
         val deviceInfoStart = hid_enumerate(0.toUShort, 0.toUShort)
 
+        require(deviceInfoStart != null)
+
         try
           (deviceInfoStart :: List
             .unfold(deviceInfoStart) { deviceInfo =>
