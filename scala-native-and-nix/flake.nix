@@ -17,11 +17,8 @@
           HIDAPI_PATH = "${pkgs.hidapi}/include/hidapi/hidapi.h";
         };
       in {
-        devShells.default = pkgs.mkShell {
-          nativeBuildInputs = [ pkgs.hidapi pkgs.sn-bindgen ];
-
-          inherit (PATHS) BINDGEN_PATH HIDAPI_PATH;
-        };
+        devShells.default = pkgs.mkShell
+          ({ nativeBuildInputs = [ pkgs.hidapi pkgs.sn-bindgen ]; } // PATHS);
         packages.default = pkgs.callPackage ./derivation.nix { inherit PATHS; };
       });
 }
