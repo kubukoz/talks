@@ -1,0 +1,561 @@
+/* ------------------------------------------------------------------
+   Local theme for "Why did we choose Scala 3?"
+   Canvas is 1920×1080 (see canvasWidth in slides.md), so all sizes
+   below are in real slide pixels.
+   ------------------------------------------------------------------ */
+
+/* Fonts are bundled from npm, so the talk works offline. */
+@import '@fontsource-variable/space-grotesk/index.css';
+@import '@fontsource-variable/jetbrains-mono/index.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/400-italic.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+
+:root {
+  --sc-dark: #16181D;
+  --sc-light: #F5F3EE;
+  --sc-card: #FCFBF8;
+  --sc-border: #E2DED5;
+  --sc-red: #DE3423;
+  --sc-red-text: #C42B1C;
+  --sc-red-soft: #FF8A70;
+  --sc-ink: #16181D;
+  --sc-body: #3E434D;
+  --sc-muted: #4A4F5A;
+  --sc-muted-dark: #BFC3CC;
+  --sc-code-bg: #1F2229;
+  --sc-code-bg-2: #2B2F38;
+  --sc-code-fg: #E6E1D6;
+  --sc-inline-code-bg: #E9E5DC;
+
+  --sc-display: 'Space Grotesk Variable', 'Space Grotesk', Arial, sans-serif;
+  --sc-text: 'IBM Plex Sans', Arial, sans-serif;
+  --sc-mono: 'JetBrains Mono Variable', 'JetBrains Mono', 'Courier New', monospace;
+
+  --slidev-code-background: var(--sc-code-bg);
+  --slidev-code-foreground: var(--sc-code-fg);
+  --slidev-code-font-family: var(--sc-mono);
+  --slidev-code-font-size: 28px;
+  --slidev-code-line-height: 42px;
+  --slidev-code-padding: 40px 48px;
+  --slidev-code-radius: 20px;
+  --slidev-code-margin: 0;
+}
+
+/* ---------- base ---------- */
+
+.slidev-layout.sc {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  font-family: var(--sc-text);
+  background: var(--sc-light);
+  color: var(--sc-ink);
+}
+
+.slidev-layout.sc :is(h1, h2, h3, h4, p, ul, ol, li) {
+  margin: 0;
+  padding: 0;
+}
+
+.slidev-layout.sc.dark {
+  background: var(--sc-dark);
+  color: var(--sc-light);
+}
+
+/* "spread": title stays at the top, last block sits at the bottom,
+   everything in between is centred in the remaining space. */
+.slidev-layout.sc.spread > h1 {
+  margin-bottom: auto;
+}
+
+.slidev-layout.sc.spread > :last-child {
+  margin-top: auto;
+}
+
+.slidev-layout.sc :is(h1, h2, h3) {
+  font-family: var(--sc-display);
+  text-wrap: balance;
+}
+
+.slidev-layout.sc strong {
+  color: var(--sc-ink);
+  font-weight: 600;
+}
+
+.slidev-layout.sc.dark strong {
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc ul {
+  list-style: none;
+}
+
+/* code blocks */
+.slidev-layout.sc .slidev-code-wrapper {
+  margin: 0;
+}
+
+.slidev-layout.sc pre.slidev-code {
+  background: var(--slidev-code-background) !important;
+  font-family: var(--sc-mono);
+  font-size: var(--slidev-code-font-size);
+  line-height: var(--slidev-code-line-height);
+  padding: var(--slidev-code-padding);
+  border-radius: var(--slidev-code-radius);
+}
+
+/* inline code */
+.slidev-layout.sc :not(pre) > code {
+  font-family: var(--sc-mono);
+  font-size: 0.85em;
+  font-weight: 600;
+  background: var(--sc-inline-code-bg);
+  color: var(--sc-red-text);
+  padding: 0.08em 0.35em;
+  border-radius: 8px;
+}
+
+.slidev-layout.sc.dark :not(pre) > code,
+.slidev-layout.sc .dark :not(pre) > code {
+  background: var(--sc-code-bg-2);
+  color: var(--sc-red-soft);
+}
+
+/* ---------- eyebrow ---------- */
+
+.slidev-layout.sc p.eyebrow {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--sc-red-text);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: -24px;
+}
+
+/* ---------- default (content) layout ---------- */
+
+.slidev-layout.sc.default > h1 {
+  font-size: 72px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--sc-ink);
+}
+
+/* :where() keeps this rule weak so classes like .muted / .punch win */
+:where(.slidev-layout.sc.default) > p,
+.slidev-layout.sc p.lead {
+  font-size: 36px;
+  line-height: 1.4;
+  color: var(--sc-body);
+}
+
+.slidev-layout.sc .muted {
+  font-size: 32px;
+  line-height: 1.4;
+  color: var(--sc-muted);
+}
+
+.slidev-layout.sc .punch {
+  font-family: var(--sc-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sc-red-text);
+}
+
+.slidev-layout.sc .punch.xl {
+  font-size: 56px;
+  font-weight: 700;
+}
+
+.slidev-layout.sc .big {
+  font-family: var(--sc-display);
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--sc-ink);
+}
+
+/* ---------- cover / end ---------- */
+
+.slidev-layout.sc :is(.cover, .end),
+.slidev-layout.sc.cover,
+.slidev-layout.sc.end {
+  justify-content: flex-end;
+}
+
+.slidev-layout.sc .bar {
+  width: 160px;
+  height: 12px;
+  background: var(--sc-red);
+  flex: none;
+}
+
+.slidev-layout.sc.cover h1 {
+  font-size: 140px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.cover p {
+  font-size: 40px;
+  line-height: 1.4;
+  color: var(--sc-muted-dark);
+}
+
+.slidev-layout.sc.end h1 {
+  font-size: 120px;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -2px;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.end p {
+  font-size: 32px;
+  line-height: 1.45;
+  color: var(--sc-muted-dark);
+}
+
+.slidev-layout.sc.end h1 + p {
+  font-size: 40px;
+  line-height: 1.4;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.end strong {
+  color: var(--sc-red-soft);
+  font-weight: 700;
+}
+
+/* ---------- section divider ---------- */
+
+.slidev-layout.sc.section {
+  justify-content: flex-end;
+  gap: 32px;
+}
+
+.slidev-layout.sc .section-number {
+  font-family: var(--sc-display);
+  font-size: 200px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sc-red);
+}
+
+.slidev-layout.sc.section h1 {
+  font-size: 120px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.section p:not(.section-number) {
+  font-size: 40px;
+  line-height: 1.4;
+  color: var(--sc-muted-dark);
+}
+
+/* ---------- accent (red statement) ---------- */
+
+.slidev-layout.sc.accent {
+  background: var(--sc-red);
+  color: var(--sc-light);
+  justify-content: flex-end;
+}
+
+.slidev-layout.sc.accent p.eyebrow {
+  color: var(--sc-light);
+  margin-bottom: 0;
+}
+
+.slidev-layout.sc.accent h2 {
+  font-size: 72px;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.accent h1 {
+  font-size: 200px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -3px;
+  color: var(--sc-dark);
+}
+
+/* ---------- statement (dark, centered) ---------- */
+
+.slidev-layout.sc.statement {
+  justify-content: center;
+  gap: 48px;
+}
+
+.slidev-layout.sc.statement p {
+  font-size: 40px;
+  line-height: 1.4;
+  color: var(--sc-muted-dark);
+}
+
+.slidev-layout.sc.statement h1 {
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc.statement h1 ~ p {
+  color: var(--sc-red-soft);
+}
+
+/* ---------- cards ---------- */
+
+.slidev-layout.sc .cards {
+  display: flex;
+  gap: 32px;
+}
+
+.slidev-layout.sc .cards > * {
+  flex: 1;
+}
+
+.slidev-layout.sc .card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--sc-card);
+  border: 1px solid var(--sc-border);
+  border-radius: 20px;
+  padding: 48px;
+  min-width: 0;
+  --slidev-code-font-size: 24px;
+  --slidev-code-line-height: 36px;
+  --slidev-code-padding: 16px 20px;
+  --slidev-code-radius: 12px;
+}
+
+.slidev-layout.sc .card.compact {
+  padding: 32px;
+  gap: 24px;
+}
+
+.slidev-layout.sc .card.dark {
+  background: var(--sc-dark);
+  border-color: var(--sc-dark);
+  --slidev-code-background: var(--sc-code-bg-2);
+}
+
+.slidev-layout.sc .card h3 {
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sc-ink);
+}
+
+.slidev-layout.sc .card.big-title h3 {
+  font-size: 56px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.slidev-layout.sc .card.dark h3 {
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc .card p {
+  font-size: 30px;
+  line-height: 1.4;
+  color: var(--sc-body);
+}
+
+.slidev-layout.sc .card p.lead {
+  font-size: 36px;
+}
+
+.slidev-layout.sc .card.dark p {
+  color: var(--sc-muted-dark);
+}
+
+/* long commands wrap inside narrow cards instead of overflowing */
+.slidev-layout.sc .card pre.slidev-code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.slidev-layout.sc .card .card-number {
+  font-family: var(--sc-display);
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--sc-red);
+}
+
+/* cards joined by arrows */
+.slidev-layout.sc .flow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.slidev-layout.sc .flow > .card {
+  flex: 1;
+  align-self: stretch;
+}
+
+.slidev-layout.sc .arrow {
+  flex: none;
+}
+
+/* small tiles with a red marker */
+.slidev-layout.sc .tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.slidev-layout.sc .tile {
+  background: var(--sc-card);
+  border: 1px solid var(--sc-border);
+  border-left: 8px solid var(--sc-red);
+  border-radius: 20px;
+  padding: 28px 32px;
+  font-size: 28px;
+  line-height: 1.4;
+  color: var(--sc-body);
+}
+
+/* two-column split */
+.slidev-layout.sc .split {
+  display: flex;
+  gap: 64px;
+  align-items: center;
+  flex: 1;
+}
+
+.slidev-layout.sc .split > .main {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.slidev-layout.sc .split > .side {
+  flex: 2;
+}
+
+.slidev-layout.sc .split p {
+  font-size: 32px;
+  line-height: 1.45;
+  color: var(--sc-body);
+}
+
+.slidev-layout.sc .split .big {
+  font-size: 56px;
+  line-height: 1.15;
+  color: var(--sc-ink);
+}
+
+/* dark list card (e.g. "building blocks") */
+.slidev-layout.sc .stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--sc-dark);
+  border-radius: 20px;
+  padding: 48px;
+}
+
+.slidev-layout.sc .stack .label {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--sc-red-soft);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.slidev-layout.sc .stack .item {
+  font-family: var(--sc-display);
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sc-light);
+}
+
+/* comparison grid: label | card → card */
+.slidev-layout.sc .compare {
+  display: grid;
+  grid-template-columns: 300px 1fr 64px 1fr;
+  gap: 16px;
+}
+
+.slidev-layout.sc .compare .col-head {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--sc-muted);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.slidev-layout.sc .compare .col-head.hot {
+  color: var(--sc-red-text);
+}
+
+.slidev-layout.sc .compare h3 {
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.2;
+  align-self: center;
+}
+
+.slidev-layout.sc .compare .cell {
+  background: var(--sc-card);
+  border: 1px solid var(--sc-border);
+  border-radius: 16px;
+  padding: 20px 24px;
+  font-size: 28px;
+  line-height: 1.35;
+  color: var(--sc-body);
+}
+
+.slidev-layout.sc .compare .cell.dark {
+  background: var(--sc-dark);
+  border-color: var(--sc-dark);
+  color: var(--sc-code-fg);
+}
+
+.slidev-layout.sc .compare .arrow-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* helpers */
+.slidev-layout.sc .grow {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slidev-layout.sc .center {
+  text-align: center;
+}
+
+.slidev-layout.sc .code-sm {
+  --slidev-code-font-size: 24px;
+  --slidev-code-line-height: 34px;
+  --slidev-code-padding: 36px 48px;
+}
+
+.slidev-layout.sc .code-lg {
+  --slidev-code-font-size: 44px;
+  --slidev-code-line-height: 66px;
+  --slidev-code-padding: 56px 64px;
+}
