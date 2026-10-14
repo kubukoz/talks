@@ -76,6 +76,11 @@
   margin-top: auto;
 }
 
+/* Only one block after the title: centre it instead of pinning it down. */
+.slidev-layout.sc.spread > h1 + :last-child {
+  margin-bottom: auto;
+}
+
 .slidev-layout.sc :is(h1, h2, h3) {
   font-family: var(--sc-display);
   text-wrap: balance;
@@ -138,6 +143,11 @@
 }
 
 /* ---------- default (content) layout ---------- */
+
+/* no eyebrow: reserve its space so the title lands in the same spot */
+.slidev-layout.sc.default > h1:first-child {
+  margin-top: calc(26px * 1.4 + 40px - 24px);
+}
 
 .slidev-layout.sc.default > h1 {
   font-size: 72px;
@@ -202,6 +212,13 @@
   line-height: 1.05;
   letter-spacing: -2px;
   color: var(--sc-light);
+}
+
+.slidev-layout.sc.cover h2 {
+  font-size: 56px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--sc-muted-dark);
 }
 
 .slidev-layout.sc.cover p {
@@ -558,4 +575,73 @@
   --slidev-code-font-size: 44px;
   --slidev-code-line-height: 66px;
   --slidev-code-padding: 56px 64px;
+}
+
+.slidev-layout.sc .figure {
+  min-height: 0;
+}
+
+.slidev-layout.sc .figure img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border: 1px solid var(--sc-border);
+  border-radius: 20px;
+}
+
+/* extra room at the bottom only, so the title stays put */
+.slidev-layout.sc.tight {
+  padding-bottom: 48px;
+}
+
+/* side-by-side code comparison */
+.slidev-layout.sc .versus {
+  gap: 48px;
+  --slidev-code-font-size: 21px;
+  --slidev-code-line-height: 30px;
+  --slidev-code-padding: 20px 28px;
+  tab-size: 4;
+}
+
+/* code block shown blurred first, revealed on the next click */
+.slidev-layout.sc .peek {
+  display: grid;
+}
+
+.slidev-layout.sc .peek > * {
+  grid-area: 1 / 1;
+}
+
+.slidev-layout.sc .peek-cover-wrap {
+  display: grid;
+}
+
+.slidev-layout.sc .peek-cover {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--slidev-code-radius);
+  backdrop-filter: blur(10px);
+  background: rgb(22 24 29 / 0.3);
+}
+
+.slidev-layout.sc .peek-cover p {
+  font-family: var(--sc-display);
+  font-size: 48px;
+  font-weight: 600;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc .peek-cover img {
+  width: 440px;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
+}
+
+.slidev-layout.sc .meme-gif {
+  align-self: center;
+  height: 100%;
+  border-radius: 20px;
 }

@@ -1,6 +1,6 @@
 ---
 theme: none
-title: Why did we choose Scala 3?
+title: Why did SiriusXM choose Scala 3?
 layout: cover
 canvasWidth: 1920
 aspectRatio: 16/9
@@ -12,34 +12,32 @@ fonts:
   provider: none
 ---
 
-# Why did we choose Scala 3?
+# Why SiriusXM chose Scala 3
+## for its next-gen platform
 
-Type system · Scalability · Tooling — and, because it's 2026, AI
 
 ---
-eyebrow: Agenda
 class: spread
 ---
 
-# Three reasons, and a bonus
+# Agenda
 
 <div class="cards">
-  <Card number="1" title="Type system" />
+  <Card number="1" title="The language" />
   <Card number="2" title="Scalability" />
   <Card number="3" title="Tooling" />
   <Card number="+" title="Bonus: ✨AI✨" dark />
 </div>
 
-<p class="muted">And because it's 2026… a bonus section on AI.</p>
 
 ---
 layout: section
 number: '01'
 ---
 
-# Type system
+# The language
 
-Two main strengths: **expressiveness** and **type safety**
+**expressiveness** and **type safety**
 
 <!--
 Not only why we chose Scala, but also why we continue to invest in it.
@@ -48,61 +46,73 @@ You might expect me to make these two separate sections, but in reality they com
 -->
 
 ---
-eyebrow: Type system
+eyebrow: The language
 ---
 
 # Modeling complex domains
 
 `enum` and `case class` get you 90% of the way there.
 
-```scala
-enum ClipKind:
-  case Song, Talk, Promo
+<v-click>
 
-case class Clip(
-  id: ClipId,
-  kind: ClipKind,
-  duration: DurationSeconds
-)
+```scala
+enum Source {
+  case Station(id: StationId)
+  case Channel(id: ChannelId, config: ChannelConfig)
+}
+
+case class ChannelConfig(rules: Ruleset, ...)
 ```
+
+</v-click>
+
+<v-click>
 
 Need something more powerful? `sealed trait` is still there.
 
-<!--
-DRAFT code example on the sequencing domain — replace with a real one if you prefer.
-Idea from the outline: try to make all code examples work on the same domain (sequencing).
--->
+</v-click>
 
 ---
-eyebrow: Type system
+eyebrow: The language
 ---
 
 # Modeling complex domains, pt. 2
 
-`opaque type` gives you cheap value types, so you can describe just the minimal set of operations on primitives, too.
+`opaque type` for **flexible** zero-cost abstractions
 
-```scala
-opaque type DurationSeconds = Int
+<!-- `opaque type` gives you cheap value types, so you can describe just a small, **focused** set of operations on a primitive, too. -->
 
-object DurationSeconds:
-  def apply(seconds: Int): DurationSeconds = seconds
+<v-click>
 
-  extension (d: DurationSeconds)
-    def +(other: DurationSeconds): DurationSeconds = d + other
-    def toSeconds: Int = d
+```scala {1|all}
+opaque type Ruleset = List[Rule]
+
+object Ruleset {
+  extension (r: Ruleset) {
+    def size: Int = r.size
+    //...
+  }
+}
 ```
 
+</v-click>
+
 <!--
-DRAFT example — the outline's TODO: use DurationSeconds from algo, which was made for perf. Swap in the real code.
+- the underlying implementation becomes invisible to the callers
+- UserId =!= ChannelId
+- the callers avoid coupling to a specific implementation and expensive refactors
+- you can expand to a case class later if needed
 -->
 
 ---
-eyebrow: Type system
+eyebrow: The language
 ---
 
-# Separation of plan and execution
+# Plan and execution
 
-```scala
+<v-click>
+
+```scala {1-2|1-5|all}
 def skip(reason: SkipReason): IO[Unit]
 val personalise: IO[Unit]
 
@@ -114,31 +124,75 @@ planningService
   }
 ```
 
-A clean split between plan and execution, on many levels: ADTs + evaluation, or IO computations + evaluation.
+</v-click>
+
+<p v-click class="muted">ADTs · exhaustive pattern matching · case lambdas · effects as values</p>
 
 <!--
-And I don't mean the highest rated Better Call Saul episode (S6E7).
+And I don't mean the highest rated Better Call Saul episode (season 6 episode 7).
 
-Capable of clean separation between plan & execution, on many levels (ADTs + eval, or IO comp + eval).
+Clean separation between plan & execution, on many levels (ADTs + eval, or IO comp + eval).
+
+"Case lambdas": the spec calls them pattern matching anonymous functions. Often called "partial function literals", but here `flatMap` expects a plain function, so it's a total one.
 -->
 
 ---
-eyebrow: Type system
+eyebrow: The language
+class: tight
 ---
 
 # Doing more with less
 
-<div class="grow code-lg">
+<p v-click class="lead">Programs as values → transform them like values</p>
+
+<div class="grow versus">
+
+<v-click>
+
+```scala {1-2|1-3|all}
+(history(user), experiments(user))
+  .parMapN(generatePlaylist)
+  .timeout(150.millis)
+  .handleErrorWith(_ => genericPlaylist(user))
+```
+
+</v-click>
+
+<div class="peek">
+
+<div v-click>
 
 ```go
-if err != nil {
-  // wicked tomfoolery inside
+func playlistFor(ctx context.Context, user User) (Playlist, error) {
+	tctx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
+	g, gctx := errgroup.WithContext(tctx)
+	var h History
+	var e Experiments
+	g.Go(func() (err error) {
+		h, err = history(gctx, user)
+		return err
+	})
+	g.Go(func() (err error) {
+		e, err = experiments(gctx, user)
+		return err
+	})
+	if err := g.Wait(); err != nil {
+		return genericPlaylist(ctx, user)
+	}
+	return generatePlaylist(h, e), nil
 }
 ```
 
 </div>
 
-<p class="lead center">How much do you do on your own, and how much can you trust the language to do for you?</p>
+<div v-click.hide class="peek-cover-wrap">
+  <div v-after class="peek-cover"><img src="/go-peek.jpg" alt="" /><p>Now let's see Go's code.</p></div>
+</div>
+
+</div>
+
+</div>
 
 <!--
 Every language has its uses, so I won't be using any specific code samples from other languages for comparison here...
@@ -146,16 +200,41 @@ Every language has its uses, so I won't be using any specific code samples from 
 ...but not that long ago I had a brief stint with Go...
 ...and I could definitely feel the difference in how much I had to do on my own, rather than trust the language to do it for me.
 
-(Outline TODO: "I don't really buy it. Replace with something like 'the power of functional programming'?")
+[click] (tagline)
+
+[click] In Scala, four lines:
+- both lookups run in parallel; if one fails, the other is cancelled
+- [click] if they don't finish within 150ms, both are cancelled and resources are released
+- [click] any failure falls back to a generic playlist (which is an effect too)
+
+[click] (Go block appears, blurred) Here's the same thing in Go. Just look at the size of it for now.
+
+[click] Idiomatic Go: errgroup + context. It's explicit and it works — but it's on you to get it right:
+- every call has to take a ctx and respect it, or the timeout silently stops applying
+- results come back through variables the closures write to; reading them before g.Wait() is a data race
+- three contexts in play: the fallback has to use the original ctx — pass the timed-out one and it fails immediately. The "natural" shadowing style (ctx, cancel := ...; g, ctx := ...) gets this wrong.
+- adding/removing the timeout or fallback means restructuring the function
+
+Be fair: cancellation is cooperative in both — cats-effect can't interrupt a blocking call either.
+
+None of this is magic in the compiler — it's a library. But it's a library you can only write, and only make this pleasant, in a language this expressive.
 -->
 
 ---
-eyebrow: Type system · path-dependent types
+layout: statement
+---
+
+<SlideGif class="meme-gif" src="/bateman-card-drop.gif" poster="/bateman-card-drop.png" alt="Patrick Bateman dropping his business card" />
+
+---
+eyebrow: The language · path-dependent types
 ---
 
 # Keeping things in check
 
 Scala's strong type system lets you be exactly as precise as you need to be.
+
+<v-click>
 
 ```scala
 // The caller can't just return an arbitrary Expr,
@@ -163,17 +242,21 @@ Scala's strong type system lets you be exactly as precise as you need to be.
 def eval(computation: (ctx: Context) => ctx.Expr)
 ```
 
+</v-click>
+
 <!--
 Recently, some of my personal favourites are path-dependent types and context functions.
 -->
 
 ---
-eyebrow: Type system · context functions
+eyebrow: The language · context functions
 ---
 
 # Keeping things in check, pt. 2
 
 <div class="code-sm">
+
+<v-click>
 
 ```scala
 trait Tracker[F[_]] {
@@ -188,9 +271,11 @@ type Modifier[F[_], B] = Tracker[F] ?=> F[B]
 // The caller passes a code block that uses `Tracker[F]`
 // without having to know where it comes from
 def loop[F[_]: {Ref.Make, MonadCancelThrow}](
-  round: IterationState.Modifier[F, Unit]
+  round: Tracker[F] ?=> F[B]
 ): F[Vector[Clip]]
 ```
+
+</v-click>
 
 </div>
 
@@ -220,15 +305,19 @@ class: spread
 
 Start with a single-file script…
 
+<v-click>
+
 ```bash
 scala-cli run next-track.sc
 ```
 
+</v-click>
+
 </Card>
 
-<BlockArrow />
+<BlockArrow v-click />
 
-<Card title="CLI app" compact>
+<Card title="CLI app" compact v-after>
 
 …grow it to a command-line app…
 
@@ -239,9 +328,9 @@ scala-cli package .
 
 </Card>
 
-<BlockArrow />
+<BlockArrow v-click />
 
-<Card title="Service" compact dark>
+<Card title="Service" compact dark v-after>
 
 …and evolve it all the way to production.
 
@@ -254,7 +343,7 @@ POST /internal/v1/
 
 </div>
 
-<p class="muted">Same language, same libraries, all the way up.</p>
+<p v-click class="muted">Same language, same libraries, all the way up.</p>
 
 ---
 eyebrow: Scalability
@@ -262,23 +351,18 @@ eyebrow: Scalability
 
 # Scale down
 
-<div class="split">
-  <div class="main">
-    <p class="big">In serverless, time is money and memory is at a premium.</p>
-    <p class="lead">We've been experimenting with <strong>Scala Native lambdas</strong> and seeing promising results — and there's constant development in this area.</p>
-  </div>
-  <div class="side stack">
-    <p class="label">The building blocks</p>
-    <p class="item">Scala Native</p>
-    <p class="item">Feral</p>
-    <p class="item">AWS Lambda Web Adapter</p>
-  </div>
+<p class="lead">In serverless, time is money and memory is at a premium. We've been experimenting with <strong>Scala Native lambdas</strong> and seeing promising results — and there's constant development in this area.</p>
+
+<div class="grow figure">
+  <img src="/lambda-power-tuning.png" alt="AWS Lambda Power Tuning results: execution time and cost by memory size" />
 </div>
+
+<p class="muted">Building blocks: <strong>Scala Native</strong>, <strong>Feral</strong>, <strong>AWS Lambda Web Adapter</strong> · Chart: github.com/alexcasalboni/aws-lambda-power-tuning</p>
 
 <!--
 Memory/time-based pricing in serverless — Scala Native lambdas!
 
-Outline TODOs: some diagram with Lambda pricing? Show feral, LWA adapter. Lambda Web Functions (Node.js).
+Outline TODOs: show feral, LWA adapter. Lambda Web Functions (Node.js).
 -->
 
 ---
@@ -322,6 +406,23 @@ Rich ecosystem of libraries for anything between simple scripts and enterprise-g
 
 The honeycomb is a stand-in for the Typelevel picture (outline TODO) — adjust the library list to what you actually use.
 -->
+
+---
+eyebrow: Scalability · Scala Toolkit
+class: spread
+---
+
+# Batteries included: the Scala Toolkit
+
+<div class="cards">
+  <Card title="MUnit" compact><p>Testing</p></Card>
+  <Card title="OS-Lib" compact><p>Files and processes</p></Card>
+  <Card title="uPickle" compact><p>JSON parsing and serialization</p></Card>
+  <Card title="sttp" compact><p>HTTP requests and file uploads</p></Card>
+  <Card title="Cask" compact><p>Web servers</p></Card>
+</div>
+
+<p class="muted">One dependency, on the JVM, Scala.js and Scala Native.</p>
 
 ---
 layout: section
