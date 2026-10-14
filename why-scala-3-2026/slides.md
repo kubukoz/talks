@@ -396,7 +396,7 @@ eyebrow: Scalability
 
 <div class="split even">
   <div class="main">
-    <p class="label">The Scala Toolkit</p>
+    <p class="label">Scala Toolkit</p>
     <ul class="toolkit">
       <li><strong>MUnit</strong><span>Testing</span></li>
       <li><strong>OS-Lib</strong><span>Files and processes</span></li>
@@ -406,7 +406,7 @@ eyebrow: Scalability
     </ul>
   </div>
   <div class="side">
-    <p class="label">The Typelevel stack</p>
+    <p class="label">Typelevel stack</p>
     <Honeycomb
       :items="['Cats', 'Cats Effect', 'fs2', 'skunk', 'weaver', 'circe', 'http4s', 'otel4s', 'log4cats', 'feral']"
       :highlight="1"
