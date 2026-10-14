@@ -373,6 +373,7 @@ Outline TODOs: show feral, LWA adapter. Lambda Web Functions (Node.js).
 ---
 eyebrow: Scalability · Scala.js
 class: spread
+hide: true
 ---
 
 # Scale… aside?
@@ -393,14 +394,21 @@ eyebrow: Scalability
 
 # Rich ecosystem
 
-<div class="split">
+<div class="split even">
   <div class="main">
-    <p class="big">A library for anything between simple scripts and enterprise-grade services.</p>
-    <p>A batteries-included stdlib and toolkit — and the Typelevel stack: composable pieces that fit together like certain plastic toy bricks from Denmark.</p>
+    <p class="label">The Scala Toolkit</p>
+    <ul class="toolkit">
+      <li><strong>MUnit</strong><span>Testing</span></li>
+      <li><strong>OS-Lib</strong><span>Files and processes</span></li>
+      <li><strong>uPickle</strong><span>JSON parsing and serialization</span></li>
+      <li><strong>sttp</strong><span>HTTP requests and file uploads</span></li>
+      <li><strong>Cask</strong><span>Web servers</span></li>
+    </ul>
   </div>
   <div class="side">
+    <p class="label">The Typelevel stack</p>
     <Honeycomb
-      :items="['Cats', 'Cats Effect', 'fs2', 'http4s', 'circe', 'Doobie', 'Skunk', 'log4cats', 'otel4s', 'Feral']"
+      :items="['Cats', 'Cats Effect', 'fs2', 'skunk', 'weaver', 'circe', 'http4s', 'otel4s', 'log4cats', 'feral']"
       :highlight="1"
     />
   </div>
@@ -411,23 +419,6 @@ Rich ecosystem of libraries for anything between simple scripts and enterprise-g
 
 The honeycomb is a stand-in for the Typelevel picture (outline TODO) — adjust the library list to what you actually use.
 -->
-
----
-eyebrow: Scalability · Scala Toolkit
-class: spread
----
-
-# Batteries included: the Scala Toolkit
-
-<div class="cards">
-  <Card title="MUnit" compact><p>Testing</p></Card>
-  <Card title="OS-Lib" compact><p>Files and processes</p></Card>
-  <Card title="uPickle" compact><p>JSON parsing and serialization</p></Card>
-  <Card title="sttp" compact><p>HTTP requests and file uploads</p></Card>
-  <Card title="Cask" compact><p>Web servers</p></Card>
-</div>
-
-<p class="muted">One dependency, on the JVM, Scala.js and Scala Native.</p>
 
 ---
 layout: section

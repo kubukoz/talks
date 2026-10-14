@@ -705,3 +705,48 @@
   font-weight: 600;
   color: var(--sc-muted);
 }
+
+/* Rich ecosystem: two equal columns, labels aligned at the top */
+.slidev-layout.sc .split.even {
+  align-items: start;
+  flex: none;
+  margin-block: auto;
+}
+
+.slidev-layout.sc .split.even > * {
+  flex: 1;
+}
+
+.slidev-layout.sc .split .label {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--sc-red-text);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.slidev-layout.sc .split > .side {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.slidev-layout.sc .toolkit {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px 40px;
+  font-size: 32px;
+  line-height: 1.3;
+}
+
+.slidev-layout.sc .toolkit li {
+  display: contents;
+}
+
+.slidev-layout.sc .toolkit strong {
+  font-family: var(--sc-display);
+}
+
+.slidev-layout.sc .toolkit span {
+  color: var(--sc-body);
+}
