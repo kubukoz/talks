@@ -26,7 +26,7 @@ class: spread
   <Card number="1" title="The language" />
   <Card number="2" title="Scalability" />
   <Card number="3" title="Tooling" />
-  <Card number="+" title="Bonus: ✨AI✨" dark />
+  <Card number="+" title="Bonus: ✨AI✨" dark><p v-click>...because it's 2026</p></Card>
 </div>
 
 
@@ -209,15 +209,15 @@ Every language has its uses, so I won't be using any specific code samples from 
 
 [click] (Go block appears, blurred) Here's the same thing in Go. Just look at the size of it for now.
 
-[click] Idiomatic Go: errgroup + context. It's explicit and it works — but it's on you to get it right:
+[click] Idiomatic Go: errgroup + context. It's explicit and it works - but it's on you to get it right:
 - every call has to take a ctx and respect it, or the timeout silently stops applying
 - results come back through variables the closures write to; reading them before g.Wait() is a data race
-- three contexts in play: the fallback has to use the original ctx — pass the timed-out one and it fails immediately. The "natural" shadowing style (ctx, cancel := ...; g, ctx := ...) gets this wrong.
+- three contexts in play: the fallback has to use the original ctx - pass the timed-out one and it fails immediately. The "natural" shadowing style (ctx, cancel := ...; g, ctx := ...) gets this wrong.
 - adding/removing the timeout or fallback means restructuring the function
 
-Be fair: cancellation is cooperative in both — cats-effect can't interrupt a blocking call either.
+Be fair: cancellation is cooperative in both - cats-effect can't interrupt a blocking call either.
 
-None of this is magic in the compiler — it's a library. But it's a library you can only write, and only make this pleasant, in a language this expressive.
+None of this is magic in the compiler - it's a library. But it's a library you can only write, and only make this pleasant, in a language this expressive.
 -->
 
 ---
@@ -301,7 +301,7 @@ class: spread
 
 <Card title="Script" compact>
 
-Start with a single-file script…
+Start with a single-file script...
 
 ```bash
 scala-cli next-track.sc
@@ -313,7 +313,7 @@ scala-cli next-track.sc
 
 <Card title="CLI app" compact v-after>
 
-…grow it to a command-line app…
+...grow it to a command-line app...
 
 ```bash
 scala-cli package .
@@ -327,7 +327,7 @@ scala-cli package .
 
 <Card title="Service" compact dark v-after>
 
-…and evolve it all the way to production.
+...and evolve it all the way to production.
 
 ```http
 POST /internal/v1/sequencer/next-track
@@ -363,9 +363,9 @@ eyebrow: Scalability
 
 
 <!--
-Memory/time-based pricing in serverless — Scala Native lambdas!
+Memory/time-based pricing in serverless - Scala Native lambdas!
 
-We've been experimenting with Scala Native lambdas and seeing promising results — and there's constant development in this area.
+We've been experimenting with Scala Native lambdas and seeing promising results - and there's constant development in this area.
 
 Outline TODOs: show feral, LWA adapter. Lambda Web Functions (Node.js).
 -->
@@ -376,9 +376,9 @@ class: spread
 hide: true
 ---
 
-# Scale… aside?
+# Scale... aside?
 
-You can also build frontend applications with Scala.js. We haven't seen much of it at SXM — my best guess why:
+You can also build frontend applications with Scala.js. We haven't seen much of it at SXM - my best guess why:
 
 <div class="cards">
   <Card title="Mostly internal tools" compact><p>Bundle size, library support etc.</p></Card>
@@ -417,7 +417,7 @@ eyebrow: Scalability
 <!--
 Rich ecosystem of libraries for anything between simple scripts and enterprise-grade services. Batteries-included stdlib and toolkit, and there's a library for anything you wanna do. The Typelevel stack is made of composable pieces, and they fit together like certain plastic toy bricks from Denmark.
 
-The honeycomb is a stand-in for the Typelevel picture (outline TODO) — adjust the library list to what you actually use.
+The honeycomb is a stand-in for the Typelevel picture (outline TODO) - adjust the library list to what you actually use.
 -->
 
 ---
@@ -434,13 +434,13 @@ eyebrow: Tooling
 class: spread
 ---
 
-# scalac, scalafix, …
+# scalac, scalafix, ...
 
 <div class="tiles">
   <div class="tile">Catch problems early</div>
   <div class="tile">Efficient bytecode for prime-time production use 🔥</div>
   <div class="tile">In your way? Temporary tricks like <code>???</code> usually help</div>
-  <div class="tile">Fast compilation: pay once for a full compile, incremental builds take no time — and it keeps getting better</div>
+  <div class="tile">Fast compilation: pay once for a full compile, incremental builds take no time - and it keeps getting better</div>
 </div>
 
 <p class="muted"><strong>Scalafix</strong> lets you apply organization-wide standards on the “micro” scale, automatically.</p>
@@ -457,7 +457,7 @@ class: spread
 Just the fact that we have two, both maintained to this day, is a testament to how good we have it.
 
 <div class="cards">
-  <Card title="Metals" dark class="big-title"><p>Fast, accurate diagnostics, completions and more — straight from the compiler.</p></Card>
+  <Card title="Metals" dark class="big-title"><p>Fast, accurate diagnostics, completions and more - straight from the compiler.</p></Card>
   <Card title="IntelliJ" dark class="big-title"><p>Powerful refactors, debugger, profiler, and more.</p></Card>
 </div>
 
@@ -535,7 +535,7 @@ class: spread
 # It goes both ways
 
 <div class="cards">
-  <Card><p class="lead">New AI-friendly tools are useful to developers too — directly or programmatically (e.g. <strong>Cellar</strong>).</p></Card>
+  <Card><p class="lead">New AI-friendly tools are useful to developers too - directly or programmatically (e.g. <strong>Cellar</strong>).</p></Card>
   <Card><p class="lead">Tools like <strong>Metals</strong> get better as bugs become cheaper to fix.</p></Card>
 </div>
 
@@ -549,4 +549,4 @@ layout: end
 
 The initial decision to use Scala 3 is paying off every day.
 
-Even now, when the language supposedly doesn't matter, we continue to see benefits on every new feature we launch — but also, most importantly, on every alarm that **doesn't** ring!
+Even now, when the language supposedly doesn't matter, we continue to see benefits on every new feature we launch - but also, most importantly, on every alarm that **doesn't** ring!
