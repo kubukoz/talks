@@ -266,10 +266,8 @@ trait Tracker[F[_]] {
   def update(f: IterationState => IterationState): F[Unit]
 }
 
-type Modifier[F[_], B] = Tracker[F] ?=> F[B]
-
 // The caller passes a code block that uses `Tracker[F]`
-// without having to know where it comes from
+// as if it came from the enclosing scope
 def loop[F[_]: {Ref.Make, MonadCancelThrow}](
   round: Tracker[F] ?=> F[B]
 ): F[Vector[Clip]]
@@ -305,13 +303,9 @@ class: spread
 
 Start with a single-file script…
 
-<v-click>
-
 ```bash
-scala-cli run next-track.sc
+scala-cli next-track.sc
 ```
-
-</v-click>
 
 </Card>
 
@@ -323,6 +317,7 @@ scala-cli run next-track.sc
 
 ```bash
 scala-cli package .
+
 ./sequencer next-track
 ```
 
@@ -335,8 +330,7 @@ scala-cli package .
 …and evolve it all the way to production.
 
 ```http
-POST /internal/v1/
-  sequencer/next-track
+POST /internal/v1/sequencer/next-track
 ```
 
 </Card>
@@ -351,16 +345,27 @@ eyebrow: Scalability
 
 # Scale down
 
-<p class="lead">In serverless, time is money and memory is at a premium. We've been experimenting with <strong>Scala Native lambdas</strong> and seeing promising results — and there's constant development in this area.</p>
+<p class="lead">In serverless, time is money:</p>
 
 <div class="grow figure">
-  <img src="/lambda-power-tuning.png" alt="AWS Lambda Power Tuning results: execution time and cost by memory size" />
+  <img src="/lambda-power-tuning.png" alt="AWS Lambda Power Tuning results: execution time and cost by memory size" />f
 </div>
 
-<p class="muted">Building blocks: <strong>Scala Native</strong>, <strong>Feral</strong>, <strong>AWS Lambda Web Adapter</strong> · Chart: github.com/alexcasalboni/aws-lambda-power-tuning</p>
+<p class="muted">Potential solution: <strong>Scala Native</strong>?</p>
+
+<div class="puzzle">
+  <div class="piece native"><img src="/logos/scala-native.png" alt="" />Scala Native</div>
+  <span class="op">+</span>
+  <div class="piece alt"><img src="/logos/typelevel-outline.svg" alt="" />Feral</div>
+  <span class="op">or</span>
+  <div class="piece alt"><img class="mono" src="/logos/aws.svg" alt="" />AWS Lambda Web Adapter</div>
+</div>
+
 
 <!--
 Memory/time-based pricing in serverless — Scala Native lambdas!
+
+We've been experimenting with Scala Native lambdas and seeing promising results — and there's constant development in this area.
 
 Outline TODOs: show feral, LWA adapter. Lambda Web Functions (Node.js).
 -->

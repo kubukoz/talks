@@ -645,3 +645,63 @@
   height: 100%;
   border-radius: 20px;
 }
+
+/* building blocks as puzzle pieces: a tab on the right, a slot on the left */
+.slidev-layout.sc .puzzle {
+  --knob: 24px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.slidev-layout.sc .piece {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 56px;
+  border-radius: 18px;
+  font-family: var(--sc-display);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--sc-light);
+}
+
+.slidev-layout.sc .piece.native {
+  background: var(--sc-dark);
+}
+
+.slidev-layout.sc .piece img {
+  height: 60px;
+  width: auto;
+}
+
+/* single-colour logos: render them white */
+.slidev-layout.sc .piece img.mono {
+  filter: brightness(0) invert(1);
+}
+
+.slidev-layout.sc .piece.native::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: calc(-1 * var(--knob));
+  width: calc(2 * var(--knob));
+  height: calc(2 * var(--knob));
+  border-radius: 50%;
+  background: inherit;
+  transform: translateY(-50%);
+}
+
+.slidev-layout.sc .piece.alt {
+  background: var(--sc-red);
+  mask: radial-gradient(circle at 0 50%, transparent var(--knob), #000 calc(var(--knob) + 1px));
+}
+
+.slidev-layout.sc .puzzle .op {
+  font-family: var(--sc-display);
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--sc-muted);
+}
