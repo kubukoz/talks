@@ -138,16 +138,13 @@ planningService
 </div>
 
 <div class="features">
-
-<v-clicks>
-
-- ADTs
-- Exhaustive pattern matching
-- Case lambdas
-- Effects as values
-
-</v-clicks>
-
+  <p v-click class="label">This works thanks to</p>
+  <ul>
+    <li v-after>ADTs</li>
+    <li v-click>Exhaustive pattern matching</li>
+    <li v-click>Case lambdas</li>
+    <li v-click>Effects as values</li>
+  </ul>
 </div>
 
 </div>

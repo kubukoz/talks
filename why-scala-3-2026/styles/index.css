@@ -764,6 +764,12 @@
   flex: 1;
 }
 
+.slidev-layout.sc .features {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .slidev-layout.sc .features ul {
   display: flex;
   flex-direction: column;
