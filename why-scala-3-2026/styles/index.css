@@ -967,19 +967,23 @@
   font-size: 48px;
 }
 
-/* closing "Thank you!" with the SiriusXM dog, as in the platform deck */
-.slidev-layout.sc.end.thanks {
-  justify-content: center;
+/* closing "Thank You!", laid out like the platform deck's: black title with the dog beside it */
+.slidev-layout.sc.thanks {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 72px;
 }
 
-.slidev-layout.sc.end.thanks h1 {
+.slidev-layout.sc.thanks > h1 {
+  margin: 0;
   font-size: 200px;
+  font-weight: 700;
+  letter-spacing: -3px;
+  color: var(--sc-ink);
 }
 
 .slidev-layout.sc .thanks-dog {
-  position: absolute;
-  right: 160px;
-  top: 50%;
-  height: 420px;
-  transform: translateY(-50%);
+  height: 363px;
+  width: auto;
 }

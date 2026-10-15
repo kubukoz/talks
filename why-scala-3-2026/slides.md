@@ -996,10 +996,9 @@ but also, most importantly, on every alarm that **doesn't** ring!
  -->
 
 ---
-layout: end
 class: thanks
 ---
 
-# Thank you!
+# Thank You!
 
-<img class="thanks-dog" src="/logos/siriusxm-dog-white.png" alt="" />
+<img class="thanks-dog" src="/logos/siriusxm-dog.png" alt="" />
