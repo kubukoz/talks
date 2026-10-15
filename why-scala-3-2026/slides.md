@@ -13,7 +13,7 @@ fonts:
 ---
 
 # Why SiriusXM chose Scala 3
-## for its next-gen platform
+## for its next-generation platform
 
 
 ---
