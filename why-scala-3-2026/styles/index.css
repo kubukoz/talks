@@ -596,6 +596,7 @@
 
 /* side-by-side code comparison */
 .slidev-layout.sc .versus {
+  align-items: flex-start;
   gap: 48px;
   --slidev-code-font-size: 21px;
   --slidev-code-line-height: 30px;
@@ -749,4 +750,72 @@
 
 .slidev-layout.sc .toolkit span {
   color: var(--sc-body);
+}
+
+/* code on the left, feature list on the right */
+.slidev-layout.sc .split > .plan-code {
+  flex: none;
+}
+
+.slidev-layout.sc .features {
+  flex: 1;
+}
+
+.slidev-layout.sc .features ul {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.slidev-layout.sc .features li {
+  border-left: 6px solid var(--sc-red);
+  padding-left: 24px;
+  font-size: 30px;
+  line-height: 1.3;
+  color: var(--sc-body);
+}
+
+/* bullet points inside a card */
+.slidev-layout.sc .card .points {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.slidev-layout.sc .card .points li {
+  border-left: 6px solid var(--sc-red);
+  padding-left: 20px;
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--sc-body);
+}
+
+/* cards with room to spare: larger points */
+.slidev-layout.sc .cards.roomy .points {
+  gap: 24px;
+}
+
+.slidev-layout.sc .cards.roomy .points li {
+  font-size: 30px;
+}
+
+/* closing pair: punch line with a quieter follow-up right under it */
+.slidev-layout.sc .takeaway {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* one big number */
+.slidev-layout.sc .split p.stat {
+  font-family: var(--sc-display);
+  font-size: 220px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -6px;
+  color: var(--sc-red-text);
+}
+
+.slidev-layout.sc .features strong {
+  color: var(--sc-ink);
 }

@@ -37,12 +37,10 @@ number: '01'
 
 # The language
 
-**expressiveness** and **type safety**
-
 <!--
 Not only why we chose Scala, but also why we continue to invest in it.
 
-You might expect me to make these two separate sections, but in reality they complement each other, so I'll treat them as one thing.
+Two main strengths: expressiveness and type safety. You might expect me to make these two separate sections, but in reality they complement each other, so I'll treat them as one thing.
 -->
 
 ---
@@ -57,11 +55,11 @@ eyebrow: The language
 
 ```scala
 enum Source {
-  case Station(id: StationId)
+  case Station(id: StationId, artistId: ArtistId)
   case Channel(id: ChannelId, config: ChannelConfig)
 }
 
-case class ChannelConfig(rules: Ruleset, ...)
+case class ChannelConfig(rules: Ruleset, launchDate: Option[LocalDate], ...)
 ```
 
 </v-click>
@@ -110,6 +108,10 @@ eyebrow: The language
 
 # Plan and execution
 
+<div class="split">
+
+<div class="code-sm plan-code">
+
 <v-click>
 
 ```scala {1-2|1-5|all}
@@ -126,7 +128,22 @@ planningService
 
 </v-click>
 
-<p v-click class="muted">ADTs · exhaustive pattern matching · case lambdas · effects as values</p>
+</div>
+
+<div class="features">
+
+<v-clicks>
+
+- ADTs
+- Exhaustive pattern matching
+- Case lambdas
+- Effects as values
+
+</v-clicks>
+
+</div>
+
+</div>
 
 <!--
 And I don't mean the highest rated Better Call Saul episode (season 6 episode 7).
@@ -228,6 +245,7 @@ layout: statement
 
 ---
 eyebrow: The language · path-dependent types
+hide: true
 ---
 
 # Keeping things in check
@@ -250,6 +268,7 @@ Recently, some of my personal favourites are path-dependent types and context fu
 
 ---
 eyebrow: The language · context functions
+hide: true
 ---
 
 # Keeping things in check, pt. 2
@@ -282,13 +301,62 @@ Example from the sequencing loop (algo-sequencing-service PR 1840).
 -->
 
 ---
+eyebrow: The language
+class: spread
+---
+
+# Binary stability
+
+<div class="cards">
+  <Card title="Scala 2" compact>
+    <p>2.11 → 2.12 → 2.13: every library re-published for every version, and the ecosystem waits for the slowest one.</p>
+  </Card>
+  <Card title="Scala 3" compact dark v-click>
+    <p>A library built with 3.x keeps working on every later 3.x. Compile once, upgrade whenever.</p>
+  </Card>
+</div>
+
+<p v-click class="lead">And finally: <strong>LTS versions</strong> (3.3, 3.9) - a stable baseline for libraries and long-lived services.</p>
+
+<!--
+Scala 3 minor versions are backward binary compatible: code compiled with 3.x can be used from 3.y for any y >= x. Libraries publish once (often on the LTS line) and every newer Scala 3 project can use them.
+
+Scala 3 also finally has LTS versions (3.3, 3.9): libraries can target the LTS line to reach the widest audience, and services can stay on it without missing fixes.
+
+Contrast with Scala 2, where each minor version (2.11, 2.12, 2.13) was a separate binary world: libraries had to cross-publish, and upgrading meant waiting for all your dependencies.
+-->
+
+---
+eyebrow: The language
+hide: true
+---
+
+# Stability at scale
+
+<div class="split">
+  <div class="main">
+    <p class="stat">255M</p>
+    <p class="lead">monthly active users across all our apps. Our job: change things without anyone noticing.</p>
+  </div>
+  <div class="side features">
+
+<v-clicks>
+
+- **Predictable upgrades:** LTS and binary compatibility mean patches and new versions don't turn into rewrites
+- **Code that ages well:** services written years ago still build on today's Scala 3, and types keep refactors safe
+- **A mature runtime:** the JVM is battle-tested, observable, and well understood by ops
+
+</v-clicks>
+
+  </div>
+</div>
+
+---
 layout: section
 number: '02'
 ---
 
 # Scalability
-
-Up, down, and sideways
 
 ---
 eyebrow: Scalability
@@ -337,7 +405,9 @@ POST /internal/v1/sequencer/next-track
 
 </div>
 
-<p v-click class="muted">Same language, same libraries, all the way up.</p>
+<!--
+Same language, same libraries, all the way up.
+-->
 
 ---
 eyebrow: Scalability
@@ -348,12 +418,12 @@ eyebrow: Scalability
 <p class="lead">In serverless, time is money:</p>
 
 <div class="grow figure">
-  <img src="/lambda-power-tuning.png" alt="AWS Lambda Power Tuning results: execution time and cost by memory size" />f
+  <img src="/lambda-power-tuning.png" alt="AWS Lambda Power Tuning results: execution time and cost by memory size" />
 </div>
 
-<p class="muted">Potential solution: <strong>Scala Native</strong>?</p>
+<p v-click class="muted">Potential solution: <strong>Scala Native</strong>?</p>
 
-<div class="puzzle">
+<div v-after class="puzzle">
   <div class="piece native"><img src="/logos/scala-native.png" alt="" />Scala Native</div>
   <span class="op">+</span>
   <div class="piece alt"><img src="/logos/typelevel-outline.svg" alt="" />Feral</div>
@@ -427,26 +497,64 @@ number: '03'
 
 # Tooling
 
-The compiler, Scalafix, and two great IDEs
-
 ---
 eyebrow: Tooling
 class: spread
 ---
 
-# scalac, scalafix, ...
+# We have a great compiler!
 
 <div class="tiles">
-  <div class="tile">Catch problems early</div>
-  <div class="tile">Efficient bytecode for prime-time production use 🔥</div>
-  <div class="tile">In your way? Temporary tricks like <code>???</code> usually help</div>
-  <div class="tile">Fast compilation: pay once for a full compile, incremental builds take no time - and it keeps getting better</div>
+  <div class="tile">Catches problems early: type mismatches, exhaustiveness, unsafe initialization</div>
+  <div class="tile">(increasingly) helpful error messages</div>
+  <div class="tile">Fast incremental builds, and getting faster</div>
+  <div class="tile">Local optimizations, inlining, unboxing, TCO</div>
 </div>
 
-<p class="muted"><strong>Scalafix</strong> lets you apply organization-wide standards on the “micro” scale, automatically.</p>
+<p v-click class="muted">bonus: prototyping? disable fatal warnings and use <code>???</code> freely!</p>
 
-<p class="punch">We take it for granted, but the compiler has your back.</p>
+<p v-click class="punch">We take it for granted, but the compiler has your back.</p>
 
+<!--
+Initialization checks: Scala 3's safe-init checker (`-Wsafe-init`) catches things like reading a `val` before it's initialized.
+
+Compiler optimizations: opaque types are erased to the underlying type, `inline` is guaranteed compile-time inlining, and self-recursive tail calls become loops (@tailrec makes the compiler check it).
+-->
+
+---
+eyebrow: Tooling
+---
+
+# ...but there's more
+
+<div class="cards roomy">
+  <Card title="Scalafmt + Scalafix">
+    <ul class="points">
+      <li>Consistent formatting - no more "please move this to another line"</li>
+      <li>Rules can be shared within a team and applied automatically</li>
+      <li>Lints, rewrites, best practices</li>
+    </ul>
+  </Card>
+  <Card title="Scala Steward" v-click>
+    <ul class="points">
+      <li>Prevents versions becoming stale</li>
+      <li>Runs Scalafix migrations if needed</li>
+      <li>Flexible in configuration (e.g. cooldowns)</li>
+      <li>Actively helps in supply&nbsp;chain&nbsp;management</li>
+    </ul>
+  </Card>
+  <Card title="MiMa" v-click>
+    <ul class="points">
+      <li>Binary compatibility checks for the libraries we publish</li>
+      <li>Another layer of protection against issues reaching
+      production</li>
+    </ul>
+  </Card>
+</div>
+
+<!--
+Scala Steward bumps a dependency, the library ships Scalafix migration rules, and the upgrade PR rewrites our code too.
+-->
 ---
 eyebrow: Tooling
 class: spread
@@ -454,23 +562,29 @@ class: spread
 
 # IDEs: two great options
 
-Just the fact that we have two, both maintained to this day, is a testament to how good we have it.
-
 <div class="cards">
-  <Card title="Metals" dark class="big-title"><p>Fast, accurate diagnostics, completions and more - straight from the compiler.</p></Card>
-  <Card title="IntelliJ" dark class="big-title"><p>Powerful refactors, debugger, profiler, and more.</p></Card>
+  <Card title="Metals" dark class="big-title"><p>Fast, accurate diagnostics, completions and more - straight from the compiler.</p>
+  <p>LSP-based (bring your own editor)</p></Card>
+  <Card title="IntelliJ IDEA" dark class="big-title"><p>Powerful refactors, Scala-aware debugger, profiling, and more.</p></Card>
 </div>
 
-<p class="muted">Everyone should be able to find the one that solves their problem best.</p>
+<div class="takeaway">
+  <p class="punch">Sometimes we forget how good we have it!</p>
+  <p class="muted">There's an option for everyone.</p>
+</div>
 
 ---
 layout: accent
 eyebrow: Bonus · It's 2026
 ---
 
-## How did the age of agentic AI change our approach to Scala?
+## How did the age of ✨agentic AI✨ change our approach to Scala?
+
+<v-click>
 
 # Not much.
+
+</v-click>
 
 ---
 eyebrow: Bonus · AI
@@ -478,36 +592,38 @@ eyebrow: Bonus · AI
 
 # Everything is mostly the same!
 
-If anything, AI amplifies the benefits of the language.
+AI might actually *amplify* the benefits of the language.
 
 <div class="compare">
   <div></div>
   <p class="col-head">For developers</p>
   <div></div>
-  <p class="col-head hot">For agents</p>
+  <p v-click class="col-head hot">For agents</p>
 
   <h3>Expressiveness</h3>
   <div class="cell">Information-dense code, little boilerplate to write</div>
-  <div class="arrow-cell"><BlockArrow :width="48" /></div>
-  <div class="cell dark">Fewer tokens to read, write and keep in context</div>
+  <div v-after class="arrow-cell"><BlockArrow :width="48" /></div>
+  <div v-after class="cell dark">Fewer tokens to read, write and keep in context</div>
 
   <h3>Types</h3>
   <div class="cell">Type-driven development, fearless refactoring</div>
-  <div class="arrow-cell"><BlockArrow :width="48" /></div>
-  <div class="cell dark">Semantic analysis and sanity checks that catch hallucinations</div>
+  <div v-click class="arrow-cell"><BlockArrow :width="48" /></div>
+  <div v-after class="cell dark">Semantic analysis and sanity checks that catch hallucinations</div>
 
   <h3>Tooling</h3>
-  <div class="cell">Compiler, Metals and IntelliJ at your fingertips</div>
-  <div class="arrow-cell"><BlockArrow :width="48" /></div>
-  <div class="cell dark">Same tools via MCP: Metals MCP, Cellar, Scalex skills</div>
+  <div class="cell">Compiler &amp; friends, Metals, IntelliJ</div>
+  <div v-click class="arrow-cell"><BlockArrow :width="48" /></div>
+  <div v-after class="cell dark">Same tools via MCP, and more: Cellar, Scalex skills</div>
 
   <h3>Scaling up</h3>
   <div class="cell">Script → CLI app → production service</div>
-  <div class="arrow-cell"><BlockArrow :width="48" /></div>
-  <div class="cell dark">Vibe-coded MVP → production, with types as guardrails</div>
+  <div v-click class="arrow-cell"><BlockArrow :width="48" /></div>
+  <div v-after class="cell dark">Vibe-coded MVP → production, with types as guardrails</div>
 </div>
 
 <!--
+If anything, AI amplifies the benefits of the language.
+
 What was useful for developers is equally (if not more) useful to AI.
 
 - An expressive language means code is more information-dense: fewer tokens to read/write and put into context. If large swathes of boilerplate don't need to be written, they don't need to be read. You still read and review your code, right?
@@ -516,16 +632,6 @@ What was useful for developers is equally (if not more) useful to AI.
 - Tools save time and cycles jumping around the codebase: Metals MCP, Cellar, Scalex skills... (TODO pic: Bamboozling... Fidgeting...)
 - A vibe-coded MVP can be scaled to a production system. Scala isn't immune to slop, but agents can be gently steered towards the right patterns, and types can serve as a guardrail.
 -->
-
----
-layout: statement
----
-
-Some would say the language doesn't matter anymore, and ask “why Scala?”
-
-# For us, it's now even more of a “why would you use anything else?”
-
-If the language doesn't matter, nothing is stopping you from using Scala.
 
 ---
 eyebrow: Bonus · AI
@@ -539,8 +645,25 @@ class: spread
   <Card><p class="lead">Tools like <strong>Metals</strong> get better as bugs become cheaper to fix.</p></Card>
 </div>
 
-<p class="punch xl">It's a win-win situation.</p>
+<p v-click class="punch xl">It's a win-win situation.</p>
 
+---
+layout: statement
+---
+
+Some would say the language doesn't matter anymore, and ask “why Scala?”
+
+<v-clicks>
+
+# Why would you use anything else?
+
+If the language doesn't matter, nothing is stopping you from using Scala.
+
+</v-clicks>
+
+<!--
+For us, it's now even more of a “why would you use anything else?”
+-->
 ---
 layout: end
 ---
@@ -549,4 +672,10 @@ layout: end
 
 The initial decision to use Scala 3 is paying off every day.
 
-Even now, when the language supposedly doesn't matter, we continue to see benefits on every new feature we launch - but also, most importantly, on every alarm that **doesn't** ring!
+<!--
+Even now, when the language supposedly doesn't matter...
+
+we continue to see benefits on every new feature we launch
+
+but also, most importantly, on every alarm that **doesn't** ring!
+ -->
