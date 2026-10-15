@@ -112,12 +112,19 @@ eyebrow: The language
 
 <div class="code-sm plan-code">
 
-<v-click>
+```scala
+enum Plan {
+  case Noop(reason: SkipReason)
+  case Personalise
+}
 
-```scala {1-2|1-5|all}
 def skip(reason: SkipReason): IO[Unit]
 val personalise: IO[Unit]
+```
 
+<v-click>
+
+```scala {1-2|all}
 planningService
   .plan(latestAttempt, runId, lastFeedbackTs, assignedExperiments)
   .flatMap {
@@ -426,7 +433,7 @@ eyebrow: Scalability
 <div v-after class="puzzle">
   <div class="piece native"><img src="/logos/scala-native.png" alt="" />Scala Native</div>
   <span class="op">+</span>
-  <div class="piece alt"><img src="/logos/typelevel-outline.svg" alt="" />Feral</div>
+  <div class="piece alt"><img class="mono" src="/logos/aws.svg" alt="" />Custom runtime</div>
   <span class="op">or</span>
   <div class="piece alt"><img class="mono" src="/logos/aws.svg" alt="" />AWS Lambda Web Adapter</div>
 </div>
@@ -437,7 +444,11 @@ Memory/time-based pricing in serverless - Scala Native lambdas!
 
 We've been experimenting with Scala Native lambdas and seeing promising results - and there's constant development in this area.
 
-Outline TODOs: show feral, LWA adapter. Lambda Web Functions (Node.js).
+Feral doesn't support Scala Native, so for native we'd go with a Lambda custom runtime (provided.al2023): the binary talks to the Lambda Runtime API directly.
+
+LWA doesn't need Docker: it works with a zip package too, but you still have to attach the adapter layer to the Lambda.
+
+Outline TODO: Lambda Web Functions (Node.js).
 -->
 
 ---
@@ -527,7 +538,7 @@ eyebrow: Tooling
 
 # ...but there's more
 
-<div class="cards roomy">
+<div class="cards grid2">
   <Card title="Scalafmt + Scalafix">
     <ul class="points">
       <li>Consistent formatting - no more "please move this to another line"</li>
@@ -548,6 +559,12 @@ eyebrow: Tooling
       <li>Binary compatibility checks for the libraries we publish</li>
       <li>Another layer of protection against issues reaching
       production</li>
+    </ul>
+  </Card>
+  <Card title="Scala CLI" v-click>
+    <ul class="points">
+      <li>Scripts, REPL, tests and packaging in one command</li>
+      <li>Perfect for prototypes and small tools / microlibraries</li>
     </ul>
   </Card>
 </div>

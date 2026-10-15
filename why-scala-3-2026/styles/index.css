@@ -755,6 +755,9 @@
 /* code on the left, feature list on the right */
 .slidev-layout.sc .split > .plan-code {
   flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .slidev-layout.sc .features {
@@ -818,4 +821,20 @@
 
 .slidev-layout.sc .features strong {
   color: var(--sc-ink);
+}
+
+/* 2x2 card grid: tighter cards so two rows fit */
+.slidev-layout.sc .cards.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.slidev-layout.sc .cards.grid2 .card {
+  padding: 32px;
+  gap: 16px;
+}
+
+.slidev-layout.sc .cards.grid2 .card h3 {
+  font-size: 32px;
 }
