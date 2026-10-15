@@ -650,6 +650,7 @@ What was useful for developers is equally (if not more) useful to AI.
 ---
 eyebrow: Bonus · AI
 class: spread
+hide: true
 ---
 
 # It goes both ways
