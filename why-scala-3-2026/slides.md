@@ -21,16 +21,20 @@ eyebrow: SiriusXM
 # What is SiriusXM?
 
 <div class="split top">
-<div class="main">
+  <div class="main">
+    <p class="big">
+      Building a <span class="hl">connected audio platform</span> for music,
+      sports, news, talk, podcasts, and in-car entertainment
+    </p>
+    <p class="punch">
+      Serving millions of listeners across more than a dozen device platforms,
+      including the vehicles they drive.
+    </p>
+  </div>
 
-<p class="big">Building a <span class="hl">streaming platform</span> for music, sports, news, talk, and podcasts</p>
-
-<p class="punch">Millions of listeners across over a dozen device platforms, for over three years.</p>
-
-</div>
-<div class="side phone">
-  <img src="/platform/app-home.png" alt="The SiriusXM app home screen" />
-</div>
+  <div class="side phone">
+    <img src="/platform/app-home.png" alt="The SiriusXM app home screen" />
+  </div>
 </div>
 
 <!--
@@ -984,3 +988,12 @@ we continue to see benefits on every new feature we launch
 
 but also, most importantly, on every alarm that **doesn't** ring!
  -->
+
+---
+layout: end
+class: thanks
+---
+
+# Thank you!
+
+<img class="thanks-dog" src="/logos/siriusxm-dog-white.png" alt="" />

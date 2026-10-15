@@ -966,3 +966,20 @@
 .slidev-layout.sc .split:has(> .phone) .big {
   font-size: 48px;
 }
+
+/* closing "Thank you!" with the SiriusXM dog, as in the platform deck */
+.slidev-layout.sc.end.thanks {
+  justify-content: center;
+}
+
+.slidev-layout.sc.end.thanks h1 {
+  font-size: 200px;
+}
+
+.slidev-layout.sc .thanks-dog {
+  position: absolute;
+  right: 160px;
+  top: 50%;
+  height: 420px;
+  transform: translateY(-50%);
+}
