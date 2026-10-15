@@ -25,7 +25,7 @@ eyebrow: SiriusXM
 
 <p class="big">Building a <span class="hl">streaming platform</span> for music, sports, news, talk, and podcasts</p>
 
-<div v-click class="oss">
+<div class="oss">
   <p class="lead">♥️ Scala and Open Source</p>
   <img src="/platform/snapshot4s.png" alt="snapshot4s on GitHub: Snapshot testing for Scala made easy" />
 </div>
@@ -41,7 +41,7 @@ Let's talk briefly about the company!
 
 Leading audio entertainment company in North America.
 
-[click] We're HEAVY users of Scala, and we're trying to grow our presence in Open Source.
+We're HEAVY users of Scala, and we're trying to grow our presence in Open Source.
 -->
 
 ---
