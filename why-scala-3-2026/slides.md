@@ -50,6 +50,18 @@ We're HEAVY users of Scala, and we're trying to grow our presence in Open Source
 -->
 
 ---
+layout: picture
+image: /platform/car-dashboard.jpg
+logo: true
+class: car
+---
+
+<div class="car-text">
+  <p class="eyebrow">SiriusXM</p>
+  <h1>In the car, too</h1>
+</div>
+
+---
 eyebrow: Next Gen Platform
 ---
 
