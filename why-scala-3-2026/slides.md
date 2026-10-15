@@ -25,16 +25,7 @@ eyebrow: SiriusXM
 
 <p class="big">Building a <span class="hl">streaming platform</span> for music, sports, news, talk, and podcasts</p>
 
-<div class="card ngp">
-  <h3>The Next Gen Platform</h3>
-  <p>Backend services built on state-of-the-art architectural principles to power a unified SiriusXM experience for in-vehicle listeners in addition to consumer devices.</p>
-  <p class="punch">Millions of listeners across over a dozen device platforms, for over three years.</p>
-</div>
-
-<div class="oss">
-  <p class="lead">♥️ Scala and Open Source</p>
-  <img src="/platform/snapshot4s.png" alt="snapshot4s on GitHub: Snapshot testing for Scala made easy" />
-</div>
+<p class="punch">Millions of listeners across over a dozen device platforms, for over three years.</p>
 
 </div>
 <div class="side phone">
@@ -47,9 +38,11 @@ Let's talk briefly about the company!
 
 Leading audio entertainment company in North America.
 
-The Next Gen Platform: brand new cloud platform and backend services. In production with automotive, mobile, web, and living room devices like smart speakers and TVs.
+The Next Gen Platform: backend services built on state-of-the-art architectural principles to power a unified SiriusXM experience for in-vehicle listeners in addition to consumer devices.
 
-We're HEAVY users of Scala, and we're trying to grow our presence in Open Source.
+Brand new cloud platform and backend services. In production with automotive, mobile, web, and living room devices like smart speakers and TVs.
+
+We're HEAVY users of Scala, and we're trying to grow our presence in Open Source (e.g. snapshot4s - snapshot testing for Scala made easy).
 -->
 
 ---
