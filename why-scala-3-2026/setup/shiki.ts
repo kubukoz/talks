@@ -1,17 +1,17 @@
-// Code highlighting theme matching the deck: dark panel, orange keywords,
+// Code highlighting theme matching the deck: navy panel, orange keywords,
 // blue types, grey comments.
 const scarlet = {
   name: 'scarlet',
   type: 'dark',
   colors: {
-    'editor.background': '#1F2229',
-    'editor.foreground': '#E6E1D6',
+    'editor.background': '#0A234E',
+    'editor.foreground': '#E6E8F0',
   },
   tokenColors: [
-    { settings: { foreground: '#E6E1D6' } },
+    { settings: { foreground: '#E6E8F0' } },
     {
       scope: ['comment', 'punctuation.definition.comment'],
-      settings: { foreground: '#8A909C', fontStyle: 'italic' },
+      settings: { foreground: '#8FA0C0', fontStyle: 'italic' },
     },
     {
       scope: ['keyword', 'storage', 'keyword.control', 'keyword.declaration', 'constant.language'],
@@ -38,7 +38,7 @@ const scarlet = {
     },
     {
       scope: ['keyword.operator', 'punctuation'],
-      settings: { foreground: '#E6E1D6' },
+      settings: { foreground: '#E6E8F0' },
     },
   ],
 }

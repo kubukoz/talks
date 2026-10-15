@@ -34,7 +34,7 @@ const cells = computed(() => {
 <template>
   <svg class="honeycomb" viewBox="0 0 800 570" style="width: 100%; height: auto; display: block" role="img" :aria-label="items.join(', ')">
     <g v-for="(c, i) in cells" :key="i">
-      <polygon :points="c.points" :style="{ fill: i === highlight ? 'var(--sc-red)' : 'var(--sc-code-bg)' }" />
+      <polygon :points="c.points" :style="{ fill: i === highlight ? 'var(--sc-accent)' : 'var(--sc-code-bg)' }" />
       <text
         :x="c.cx" :y="c.cy" text-anchor="middle" dominant-baseline="central"
         style="fill: var(--sc-light); font-size: 30px; font-weight: 600; font-family: var(--sc-display)"

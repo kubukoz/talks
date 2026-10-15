@@ -6,5 +6,6 @@ defineProps<{ eyebrow?: string }>()
   <div class="slidev-layout sc accent">
     <p v-if="eyebrow" class="eyebrow">{{ eyebrow }}</p>
     <slot />
+    <Logo light />
   </div>
 </template>

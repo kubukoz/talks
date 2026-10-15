@@ -6,5 +6,6 @@ defineProps<{ number?: string | number }>()
   <div class="slidev-layout sc dark section">
     <p v-if="number !== undefined" class="section-number">{{ number }}</p>
     <slot />
+    <Logo light />
   </div>
 </template>

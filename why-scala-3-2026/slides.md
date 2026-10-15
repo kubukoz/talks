@@ -1,7 +1,8 @@
 ---
 theme: none
 title: Why did SiriusXM choose Scala 3?
-layout: cover
+layout: picture
+image: /platform/title.png
 canvasWidth: 1920
 aspectRatio: 16/9
 colorSchema: light
@@ -12,22 +13,332 @@ fonts:
   provider: none
 ---
 
-# Why SiriusXM chose Scala 3
-## for its next-generation platform
-
 
 ---
-class: spread
+eyebrow: SiriusXM
 ---
 
-# Agenda
+# What is SiriusXM?
+
+<div class="split top">
+<div class="main">
+
+<p class="big">Building a <span class="hl">streaming platform</span> for music, sports, news, talk, and podcasts</p>
+
+<div v-click class="oss">
+  <p class="lead">♥️ Scala and Open Source</p>
+  <img src="/platform/snapshot4s.png" alt="snapshot4s on GitHub: Snapshot testing for Scala made easy" />
+</div>
+
+</div>
+<div class="side phone">
+  <img src="/platform/app-home.png" alt="The SiriusXM app home screen" />
+</div>
+</div>
+
+<!--
+Let's talk briefly about the company!
+
+Leading audio entertainment company in North America.
+
+[click] We're HEAVY users of Scala, and we're trying to grow our presence in Open Source.
+-->
+
+---
+eyebrow: Next Gen Platform
+---
+
+# What is the SiriusXM Next Gen Platform?
+
+<p class="lead">Backend services built on state-of-the-art architectural principles to power a unified SiriusXM experience for in-vehicle listeners in addition to consumer devices.</p>
+
+<p class="punch">Millions of listeners across over a dozen device platforms, for over three years.</p>
+
+<!--
+Brand new cloud platform and backend services.
+
+In production with automotive, mobile, web, and living room devices like smart speakers and TVs.
+-->
+
+---
+eyebrow: Next Gen Platform
+---
+
+# Why did we build it?
 
 <div class="cards">
-  <Card number="1" title="The language" />
-  <Card number="2" title="Scalability" />
-  <Card number="3" title="Tooling" />
-  <Card number="+" title="Bonus: ✨AI✨" dark><p v-click>...because it's 2026</p></Card>
+  <Card number="1" title="Speed of innovation" />
+  <Card number="2" title="Reliability" />
+  <Card number="3" title="Unified experience across automotive and consumer devices" />
 </div>
+
+<!--
+We had three goals when we set out to build this platform, but the common thread is raising the bar for our listener experience.
+-->
+
+---
+eyebrow: Next Gen Platform
+---
+
+# Platform tenets
+
+<div class="cards grid2 uniform grow">
+  <Card title="API-first"><p>Modular domain services with versioned contracts enable independent evolution.</p><p><strong>→ Consistent contracts and schemas drive reliability across clients and services.</strong></p></Card>
+  <Card title="Elastic scalability &amp; high availability"><p>Auto-scaling, redundant infrastructure designed for automotive-grade reliability.</p><p><strong>→ Low latency, graceful degradation and no cascading failure.</strong></p></Card>
+  <Card title="Deep observability"><p>Full-stack visibility into the systems that power SiriusXM.</p><p><strong>→ Fewer production incidents and faster mitigation when they do occur.</strong></p></Card>
+  <Card title="Event-driven architecture"><p>Domain services evolve independently and react asynchronously at scale.</p></Card>
+</div>
+
+<!--
+Since we built this platform from the ground up, we were able to define a set of consistent platform tenets to adhere to.
+-->
+
+---
+layout: section
+---
+
+# Architecture &amp; technical highlights
+
+---
+eyebrow: Architecture
+class: tight
+---
+
+# High-level architecture
+
+<div class="grow figure">
+  <img src="/platform/architecture.png" alt="High-level architecture of the Next Gen Platform" />
+</div>
+
+---
+eyebrow: Architecture
+class: tight
+---
+
+# Edge
+
+<div class="grow figure">
+  <img src="/platform/edge.png" alt="Edge request flow: user, client, edge and services" />
+</div>
+
+---
+eyebrow: Architecture
+---
+
+# Cloud native (AWS) &amp; resilient
+
+<p class="lead">Built cloud-native on AWS, which gives us the resiliency, scalability and automation needed to operate at high reliability.</p>
+
+We run across three AWS regions: **us-east-1**, **us-east-2** and **us-west-2**, with auto-scaling, automatic failover, region evacuation and global data replication.
+
+<p class="punch">We absorb regional failures without service disruption, and scale dynamically with demand.</p>
+
+---
+layout: picture
+image: /platform/regions.png
+---
+
+<svg class="overlay" viewBox="0 0 1920 1080" aria-hidden="true">
+  <defs>
+    <marker id="map-arrow" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#fff" />
+    </marker>
+  </defs>
+  <!-- each arrow is aimed at its region's dot and stops in the water just short of the coast -->
+  <g fill="none" stroke="#fff" stroke-width="5" stroke-linecap="butt" marker-end="url(#map-arrow)">
+    <path d="M520 585 C600 530 690 540 780 520" />
+    <path d="M1657 548 C1640 620 1380 600 1269 623" />
+    <path d="M1548 772 C1450 790 1360 712 1258 679" />
+  </g>
+</svg>
+
+---
+eyebrow: Architecture
+class: tight
+---
+
+# Disaster recovery via change data capture
+
+<div class="grow figure">
+  <img src="/platform/cdc.png" alt="CDC pipeline: DynamoDB streams through Kinesis and Lambda into domain events" />
+</div>
+
+---
+eyebrow: Architecture
+---
+
+# Infrastructure as code (AWS CDK)
+
+<div class="split top">
+<div class="main">
+
+<p class="lead">IaC automates creating our environments.</p>
+
+<div class="features">
+  <ul>
+    <li>Reduces <strong>manual errors</strong> and prevents configuration drift across environments.</li>
+    <li>Improves <strong>consistency at scale</strong>.</li>
+    <li>Version-controlled changes are easier to validate, automate and <strong>roll back</strong> to a known stable state.</li>
+  </ul>
+</div>
+
+</div>
+<div class="side code-sm">
+
+```ts
+const table = new dynamodb.TableV2(this, 'Profiles', {
+  partitionKey: { name: 'userId', type: STRING },
+  replicas: [
+    { region: 'us-east-2' },
+    { region: 'us-west-2' },
+  ],
+  dynamoStream: StreamViewType.NEW_AND_OLD_IMAGES,
+});
+```
+
+</div>
+</div>
+
+---
+eyebrow: Architecture
+---
+
+# Domain services
+
+<div class="split">
+<div class="side figure">
+  <img src="/platform/domain-services.png" alt="Domain services behind the edge: Browse, Profiles, Search, Billing, Recommender, Subscriptions, Playback, CMS" />
+</div>
+<div class="main features">
+  <ul>
+    <li><strong>Ownership bounded:</strong> services are modelled as domains and owned by a single team.</li>
+    <li><strong>Loosely coupled:</strong> latency issues in Search won't affect Recommendations or Billing.</li>
+    <li><strong>Event-driven:</strong> each service holds the local state it needs for its own logic, e.g. catalog metadata or listening history.</li>
+    <li><strong>Type safe:</strong> services are built with type safe languages such as <strong>Scala&nbsp;3</strong>.</li>
+  </ul>
+</div>
+</div>
+
+---
+eyebrow: Architecture · Smithy
+---
+
+# Contract-driven development with API Registry &amp; Smithy
+
+<p class="lead">We build our services on top of the <strong>AWS Smithy</strong> IDL.</p>
+
+<div class="cards">
+  <Card title="Protocol agnostic"><p>Works with any programming language, describes services running in any environment, over any transport or serialization format.</p></Card>
+  <Card title="API governance"><p>API standards and validation rules are enforced, incl. versioning, non-breaking changes and backwards compatibility.</p></Card>
+</div>
+
+---
+eyebrow: Architecture · Smithy
+---
+
+# Code generation
+
+<div class="split">
+<div class="side figure">
+  <img src="/platform/smithy-service.png" alt="Smithy service definition for PlaybackApi" />
+</div>
+<div class="main">
+
+Client and server code is **automatically generated** from the Smithy model and enforced across the platform.
+
+<p class="punch">Generated code is type safe and backward compatible.</p>
+
+</div>
+</div>
+
+---
+eyebrow: Architecture · Smithy
+class: tight
+---
+
+# One model, every client
+
+<div class="grow flow shots">
+  <div class="figure"><img src="/platform/smithy-structure.png" alt="Smithy structure TuneSourceRequest" /></div>
+  <BlockArrow v-click />
+  <div v-after class="code-sm">
+
+```scala
+case class TuneSourceRequest(
+  hlsVersion: HLSVersion = HLSVersion.V4,
+  manifestVariant: Option[ManifestVariant] = None,
+  encrypted: Option[Boolean] = None,
+  explicit: Option[Boolean] = None,
+  maxStreams: Option[Int] = None,
+  mediaFormat: Option[MediaFormat] = None,
+)
+```
+
+</div>
+</div>
+
+---
+eyebrow: Architecture · Testing
+hide: true
+---
+
+# Services automated testing
+
+<div class="split">
+<div class="side figure">
+  <img src="/platform/testing-plugin.png" alt="SiriusXM E2E testing plugin documentation site" />
+</div>
+<div class="main">
+
+Automated testing is a **first-class citizen** of the platform: we validate quality continuously and at scale.
+
+Our end-to-end testing framework, built on top of Smithy, runs **contract-enforced tests** against the gateway across all regions or within one, including validation of downstream events such as Kinesis messages consumed by other services.
+
+</div>
+</div>
+
+---
+eyebrow: Architecture · Testing
+hide: true
+---
+
+# Services automated testing, pt. 2
+
+<div class="split">
+<div class="main">
+
+The **isTest** metadata capability lets us safely generate throw-away test data and run thousands of scenarios every few minutes: registration, login, purchase, playback etc.
+
+All tests report back to **Datadog**, and teams are alerted on failures.
+
+</div>
+<div class="side shots-stack">
+  <div class="figure"><img src="/platform/e2e-tests.png" alt="An end-to-end test written with the framework" /></div>
+  <div class="figure"><img src="/platform/test-alerts.png" alt="Test failure notifications in Slack" /></div>
+</div>
+</div>
+
+---
+eyebrow: Architecture
+hide: true
+---
+
+# Architecture for safe, rapid iteration
+
+<div class="tiles roomy">
+  <div class="tile"><strong>Feature flags</strong> enable dark launches and targeted rollouts before broad exposure.</div>
+  <div class="tile"><strong>Canary deploys</strong> ramp changes up gradually, keeping customer impact low if we need to roll back.</div>
+  <div class="tile"><strong>Remote configuration</strong> lets us change behavior at runtime without a full deployment.</div>
+  <div class="tile"><strong>Loosely coupled services</strong> and small, focused deployments keep the blast radius small, so teams can ship frequently with confidence.</div>
+</div>
+
+---
+layout: section
+---
+
+# Why we chose Scala&nbsp;3
+
+<p class="topics">The language <span>·</span> Scalability <span>·</span> Tooling <span>·</span> ✨AI✨</p>
 
 
 ---
@@ -306,7 +617,6 @@ Example from the sequencing loop (algo-sequencing-service PR 1840).
 
 ---
 eyebrow: The language
-class: spread
 ---
 
 # Binary stability
@@ -315,7 +625,7 @@ class: spread
   <Card title="Scala 2" compact>
     <p>2.11 → 2.12 → 2.13: every library re-published for every version, and the ecosystem waits for the slowest one.</p>
   </Card>
-  <Card title="Scala 3" compact dark v-click>
+  <Card title="Scala 3" compact dark v-click>
     <p>A library built with 3.x keeps working on every later 3.x. Compile once, upgrade whenever.</p>
   </Card>
 </div>
@@ -347,7 +657,7 @@ hide: true
 <v-clicks>
 
 - **Predictable upgrades:** LTS and binary compatibility mean patches and new versions don't turn into rewrites
-- **Code that ages well:** services written years ago still build on today's Scala 3, and types keep refactors safe
+- **Code that ages well:** services written years ago still build on today's Scala&nbsp;3, and types keep refactors safe
 - **A mature runtime:** the JVM is battle-tested, observable, and well understood by ops
 
 </v-clicks>
@@ -364,7 +674,6 @@ number: '02'
 
 ---
 eyebrow: Scalability
-class: spread
 ---
 
 # Scale up
@@ -450,7 +759,6 @@ Outline TODO: Lambda Web Functions (Node.js).
 
 ---
 eyebrow: Scalability · Scala.js
-class: spread
 hide: true
 ---
 
@@ -507,7 +815,6 @@ number: '03'
 
 ---
 eyebrow: Tooling
-class: spread
 ---
 
 # We have a great compiler!
@@ -571,7 +878,6 @@ Scala Steward bumps a dependency, the library ships Scalafix migration rules, an
 -->
 ---
 eyebrow: Tooling
-class: spread
 ---
 
 # IDEs: two great options
@@ -649,7 +955,6 @@ What was useful for developers is equally (if not more) useful to AI.
 
 ---
 eyebrow: Bonus · AI
-class: spread
 hide: true
 ---
 
@@ -683,9 +988,9 @@ For us, it's now even more of a “why would you use anything else?”
 layout: end
 ---
 
-# Scala (3) isn't leaving SXM anytime soon
+# Scala&nbsp;(3) isn't leaving SXM anytime soon
 
-The initial decision to use Scala 3 is paying off every day.
+The initial decision to use Scala&nbsp;3 is paying off every day.
 
 <!--
 Even now, when the language supposedly doesn't matter...

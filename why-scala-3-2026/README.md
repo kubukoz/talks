@@ -5,8 +5,8 @@ Slidev project for the talk. The theme is part of this project (no separate them
 ```
 slides.md            the talk (speaker notes are the <!-- --> comments)
 styles/index.css     colours, type, all the layout classes
-layouts/             cover · section · default · accent · statement · end
-components/          Card · BlockArrow · Honeycomb
+layouts/             cover · section · default · accent · statement · end · picture
+components/          Card · BlockArrow · Honeycomb · Logo (SiriusXM corner logo)
 setup/shiki.ts       code highlighting colours
 ```
 
@@ -33,6 +33,7 @@ The canvas is 1920×1080, so sizes in CSS are real slide pixels.
 | `accent`    | `layout: accent`, `eyebrow: …`      | Red statement: `## question` + `# punch` |
 | `statement` | `layout: statement`                 | Dark quote: lead-in, `# big line`, kicker |
 | `end`       | `layout: end`                       | Closing slide                            |
+| `picture`   | `layout: picture`, `image: /x.png`  | Full-bleed image (slides copied verbatim) |
 
 Add `class: spread` to a content slide to pin the last block to the bottom and centre the middle.
 
