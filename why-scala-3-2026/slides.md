@@ -18,7 +18,7 @@ fonts:
 eyebrow: SiriusXM
 ---
 
-# What is SiriusXM?
+# What is Next-Gen SiriusXM?
 
 <div class="split top">
   <div class="main">
