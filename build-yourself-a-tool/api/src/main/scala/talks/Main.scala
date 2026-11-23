@@ -15,6 +15,8 @@ object Main extends IOApp.Simple {
       talks <- Catalog.load.toResource
       given Random[IO] <- Random.scalaUtilRandom[IO].toResource
       given RecommendationRepository <- RecommendationRepository.inMemory.toResource
+      given RuleEngine = RuleEngine.instance(talks)
+      given PlaylistGenerator = PlaylistGenerator.random
       api <- SimpleRestJsonBuilder.routes(TalkServiceImpl.instance(talks)).resource
       _ <- EmberServerBuilder
         .default[IO]

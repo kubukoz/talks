@@ -87,3 +87,9 @@ list Talks {
 list Strings {
     member: String
 }
+
+union Rule {
+    noRepeats: NoRepeats
+}
+
+structure NoRepeats {}
