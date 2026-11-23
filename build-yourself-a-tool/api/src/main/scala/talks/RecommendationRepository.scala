@@ -13,18 +13,21 @@ trait RecommendationRepository {
 
 object RecommendationRepository {
 
-  val inMemory: IO[RecommendationRepository] = Ref[IO].of(Map.empty[PlaylistId, List[TalkId]]).map { ref =>
-    new RecommendationRepository {
+  val inMemory: IO[RecommendationRepository] = Ref[IO].of(Map.empty[PlaylistId, List[TalkId]]).map {
+    ref =>
+      new RecommendationRepository {
 
-      def create(playlistId: PlaylistId, talks: List[TalkId]): IO[Unit] = ref.update(_.updated(playlistId, talks))
+        def create(playlistId: PlaylistId, talks: List[TalkId]): IO[Unit] = ref.update(
+          _.updated(playlistId, talks)
+        )
 
-      def get(playlistId: PlaylistId): IO[Option[List[TalkId]]] = ref.get.map(_.get(playlistId))
+        def get(playlistId: PlaylistId): IO[Option[List[TalkId]]] = ref.get.map(_.get(playlistId))
 
-      def append(playlistId: PlaylistId, talk: TalkId): IO[Unit] = ref.update(
-        _.updatedWith(playlistId)(_.map(_ :+ talk))
-      )
+        def append(playlistId: PlaylistId, talk: TalkId): IO[Unit] = ref.update(
+          _.updatedWith(playlistId)(_.map(_ :+ talk))
+        )
 
-    }
+      }
   }
 
 }

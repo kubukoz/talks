@@ -23,13 +23,15 @@ object PreviewServiceImpl {
 
       def listTalks(): IO[ListTalksOutput] = talks.getAll.map(ListTalksOutput(_))
 
-      def preview(rules: List[Rule], seed: Long, count: Int, history: List[TalkId]): IO[PreviewOutput] = for {
-        candidates <- talks.getAll
-        byId = candidates.map(talk => talk.id -> talk).toMap
-        historyTalks <- history.traverse(id => IO.fromOption(byId.get(id))(UnknownTalk(id)))
-        randomizer <- Randomizer.seeded(seed)
-        trace <- generator.generate(rules, candidates, historyTalks, count, randomizer)
-      } yield PreviewOutput(trace)
+      def preview(rules: List[Rule], seed: Long, count: Int, history: List[TalkId])
+        : IO[PreviewOutput] =
+        for {
+          candidates <- talks.getAll
+          byId = candidates.map(talk => talk.id -> talk).toMap
+          historyTalks <- history.traverse(id => IO.fromOption(byId.get(id))(UnknownTalk(id)))
+          randomizer <- Randomizer.seeded(seed)
+          trace <- generator.generate(rules, candidates, historyTalks, count, randomizer)
+        } yield PreviewOutput(trace)
 
     }
 

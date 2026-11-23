@@ -9,8 +9,9 @@ trait RuleRepository {
 
 object RuleRepository {
 
-  def const(rules: List[Rule]): RuleRepository = new RuleRepository {
-    val getAll: IO[List[Rule]] = IO.pure(rules)
-  }
+  def const(rules: List[Rule]): RuleRepository =
+    new RuleRepository {
+      val getAll: IO[List[Rule]] = IO.pure(rules)
+    }
 
 }

@@ -32,15 +32,16 @@ object Main extends IOApp.Simple {
       given PlaylistGenerator = PlaylistGenerator.instance
       talkRoutes <- SimpleRestJsonBuilder.routes(TalkServiceImpl.instance).resource
       previewRoutes <- SimpleRestJsonBuilder.routes(PreviewServiceImpl.instance).resource
-      _ <- EmberServerBuilder
-        .default[IO]
-        .withHttpApp(
-          Router(
-            "/api/thumbnails" -> resourceServiceBuilder[IO]("/").toRoutes,
-            "/" -> (talkRoutes <+> previewRoutes),
-          ).orNotFound
-        )
-        .build
+      _ <-
+        EmberServerBuilder
+          .default[IO]
+          .withHttpApp(
+            Router(
+              "/api/thumbnails" -> resourceServiceBuilder[IO]("/").toRoutes,
+              "/" -> (talkRoutes <+> previewRoutes),
+            ).orNotFound
+          )
+          .build
     } yield ()
   }.useForever
 

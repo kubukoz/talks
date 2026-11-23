@@ -12,7 +12,7 @@ lazy val api = project
       "com.disneystreaming.smithy4s" %% "smithy4s-http4s" % smithy4sVersion.value,
       "org.http4s" %% "http4s-ember-server" % "0.23.38",
       "com.kubuszok" %% "kindlings-cats-derivation" % "0.4.0",
-    )
+    ),
   )
 
 lazy val web = project
