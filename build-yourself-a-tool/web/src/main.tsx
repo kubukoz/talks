@@ -28,7 +28,7 @@ const TalkRow = ({ talk, index }: { talk: Talk; index: number }) => (
   </li>
 )
 
-const App = () => {
+const Production = () => {
   const [playlistId, setPlaylistId] = useState<PlaylistId>()
   const [playlist, setPlaylist] = useState<Talk[]>([])
   const [loading, setLoading] = useState(true)
@@ -60,7 +60,7 @@ const App = () => {
   }
 
   return (
-    <main>
+    <>
       <h1>Your playlist</h1>
       <ol>
         {playlist.map((talk, i) => (
@@ -74,6 +74,34 @@ const App = () => {
           {loading ? 'Loading...' : 'One more'}
         </button>
       )}
+    </>
+  )
+}
+
+const Preview = () => null
+
+const tabs = { production: 'Production', preview: 'Preview' } as const
+
+type Tab = keyof typeof tabs
+
+const App = () => {
+  const [tab, setTab] = useState<Tab>('production')
+
+  return (
+    <main>
+      <nav className="tabs">
+        {(Object.keys(tabs) as Tab[]).map((key) => (
+          <button key={key} className={key === tab ? 'active' : ''} onClick={() => setTab(key)}>
+            {tabs[key]}
+          </button>
+        ))}
+      </nav>
+      <section hidden={tab !== 'production'}>
+        <Production />
+      </section>
+      <section hidden={tab !== 'preview'}>
+        <Preview />
+      </section>
     </main>
   )
 }

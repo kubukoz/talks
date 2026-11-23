@@ -2,7 +2,7 @@ package talks
 
 import cats.effect.IO
 import cats.effect.IOApp
-import cats.effect.std.Random
+import cats.syntax.all.*
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.Router
 import org.http4s.server.staticcontent.resourceServiceBuilder
@@ -27,16 +27,17 @@ object Main extends IOApp.Simple {
         )
       )
       given RecommendationRepository <- RecommendationRepository.inMemory.toResource
-      given Random[IO] <- Random.scalaUtilRandom[IO].toResource
+      given Randomizer <- Randomizer.secure.toResource
       given RuleEngine = RuleEngine.instance
-      given PlaylistGenerator = PlaylistGenerator.random
-      api <- SimpleRestJsonBuilder.routes(TalkServiceImpl.instance).resource
+      given PlaylistGenerator = PlaylistGenerator.instance
+      talkRoutes <- SimpleRestJsonBuilder.routes(TalkServiceImpl.instance).resource
+      previewRoutes <- SimpleRestJsonBuilder.routes(PreviewServiceImpl.instance).resource
       _ <- EmberServerBuilder
         .default[IO]
         .withHttpApp(
           Router(
             "/api/thumbnails" -> resourceServiceBuilder[IO]("/").toRoutes,
-            "/" -> api,
+            "/" -> (talkRoutes <+> previewRoutes),
           ).orNotFound
         )
         .build

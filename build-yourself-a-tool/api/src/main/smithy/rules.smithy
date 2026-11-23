@@ -12,6 +12,7 @@ union Rule {
 
 @mixin
 structure Skippable {
+    @required
     skippable: Boolean = false
 }
 

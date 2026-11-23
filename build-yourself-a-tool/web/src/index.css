@@ -106,6 +106,26 @@ button:disabled {
   cursor: default;
 }
 
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--chip);
+  margin-bottom: 8px;
+}
+
+.tabs button {
+  background: none;
+  color: var(--muted);
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+}
+
+.tabs button.active {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
 @media (max-width: 520px) {
   .talk {
     grid-template-columns: 120px 1fr;
