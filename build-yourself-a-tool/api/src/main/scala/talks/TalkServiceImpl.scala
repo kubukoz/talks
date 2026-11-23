@@ -24,7 +24,8 @@ object TalkServiceImpl {
       playlistId <- UUIDGen.randomUUID[IO].map(PlaylistId(_))
       candidates <- talks.getAll
       config <- rules.getAll
-      picked <- generator.generate(config, candidates, history = Nil, count = playlistSize)
+      steps <- generator.generate(config, candidates, history = Nil, count = playlistSize)
+      picked = steps.flatMap(_.talk)
       _ <- recommendations.create(playlistId, picked.map(_.id))
     } yield CreatePlaylistOutput(playlistId, picked)
 
@@ -35,7 +36,8 @@ object TalkServiceImpl {
       candidates <- talks.getAll
       config <- rules.getAll
       byId = candidates.map(talk => talk.id -> talk).toMap
-      picked <- generator.generate(config, candidates, historyIds.flatMap(byId.get), count = 1)
+      steps <- generator.generate(config, candidates, historyIds.flatMap(byId.get), count = 1)
+      picked = steps.flatMap(_.talk)
       _ <- picked.traverse_(talk => recommendations.append(playlistId, talk.id))
     } yield ExtendPlaylistOutput(picked.headOption)
 

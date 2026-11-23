@@ -1,40 +1,70 @@
 package talks
 
+import cats.effect.IO
+import cats.syntax.all.*
+import talks.api.Evaluation
 import talks.api.Every
 import talks.api.Positions
 import talks.api.Rule
+import talks.api.RuleEvaluation
+import talks.api.RuleOutcome
 import talks.api.Talk
 import talks.api.TalkPredicate
 
 trait RuleEngine {
-  def matching(rules: List[Rule], candidates: List[Talk], history: List[Talk]): List[Talk]
+  def evaluate(rules: List[Rule], candidates: List[Talk], history: List[Talk]): IO[Evaluation]
 }
 
 object RuleEngine {
 
   val instance: RuleEngine = new RuleEngine {
 
-    def matching(rules: List[Rule], candidates: List[Talk], history: List[Talk]): List[Talk] = {
+    def evaluate(rules: List[Rule], candidates: List[Talk], history: List[Talk]): IO[Evaluation] = {
       val position = history.size + 1
 
-      rules.foldLeft(candidates) { (remaining, rule) =>
-        val filtered = applyRule(rule, remaining, history, position)
+      rules
+        .foldLeftM((candidates, List.empty[RuleEvaluation])) { case ((remaining, evaluations), rule) =>
+          IO(applyRule(rule, remaining, history, position)).timed.map { case (elapsed, split) =>
+            val (matched, rejected) = split.getOrElse((remaining, Nil))
 
-        if (filtered.isEmpty && rule.skippable) remaining else filtered
-      }
+            val outcome = split match {
+              case None => RuleOutcome.INACTIVE
+              case Some((Nil, _)) if rule.skippable => RuleOutcome.SKIPPED
+              case Some(_) => RuleOutcome.APPLIED
+            }
+
+            val evaluation = RuleEvaluation(
+              rule = rule,
+              outcome = outcome,
+              matchedBefore = remaining.size,
+              matchedAfter = matched.size,
+              rejected = rejected,
+              durationNanos = elapsed.toNanos,
+            )
+
+            val next = if (outcome == RuleOutcome.SKIPPED) remaining else matched
+
+            (next, evaluation :: evaluations)
+          }
+        }
+        .map { case (matching, evaluations) => Evaluation(matching = matching, rules = evaluations.reverse) }
     }
 
   }
 
-  private def applyRule(rule: Rule, candidates: List[Talk], history: List[Talk], position: Int): List[Talk] =
-    rule match {
-      case Rule.NoRepeats(_) =>
-        val seen = history.map(_.id).toSet
-        candidates.filterNot(talk => seen(talk.id))
+  private def applyRule(
+    rule: Rule,
+    candidates: List[Talk],
+    history: List[Talk],
+    position: Int,
+  ): Option[(List[Talk], List[Talk])] = rule match {
+    case Rule.NoRepeats(_) =>
+      val seen = history.map(_.id).toSet
+      Some(candidates.partition(talk => !seen(talk.id)))
 
-      case Rule.Requirement(at, predicate, _) =>
-        if (appliesAt(at, position)) candidates.filter(satisfies(predicate, _)) else candidates
-    }
+    case Rule.Requirement(at, predicate, _) =>
+      Option.when(appliesAt(at, position))(candidates.partition(satisfies(predicate, _)))
+  }
 
   private def appliesAt(positions: Positions, position: Int): Boolean = positions match {
     case Positions.EveryCase(Every(n)) => position % n == 0
