@@ -9,20 +9,30 @@ import talks.api.Talk
 import talks.data.TalkRecord
 import talks.data.TalkRecords
 
-object Catalog {
+trait TalkRepository {
+  def getAll: IO[List[Talk]]
+}
+
+object TalkRepository {
 
   private val conferences: List[(String, String)] = List(
     "scalar-2026" -> "Scalar 2026",
     "scala-days-2026" -> "Scala Days 2026",
   )
 
-  val load: IO[List[Talk]] = conferences.flatTraverse { case (dir, conference) =>
-    readClassLoaderResource[IO](s"$dir/talks.json")
-      .compile
-      .to(Array)
-      .flatMap(bytes => IO.fromEither(Json.read[TalkRecords](Blob(bytes))))
-      .map(_.value.map(toTalk(dir, conference)))
-  }
+  val resources: IO[TalkRepository] = conferences
+    .flatTraverse { case (dir, conference) =>
+      readClassLoaderResource[IO](s"$dir/talks.json")
+        .compile
+        .to(Array)
+        .flatMap(bytes => IO.fromEither(Json.read[TalkRecords](Blob(bytes))))
+        .map(_.value.map(toTalk(dir, conference)))
+    }
+    .map { talks =>
+      new TalkRepository {
+        val getAll: IO[List[Talk]] = IO.pure(talks)
+      }
+    }
 
   private def toTalk(dir: String, conference: String)(record: TalkRecord): Talk = Talk(
     id = record.id,
