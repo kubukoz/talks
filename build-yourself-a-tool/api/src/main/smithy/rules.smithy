@@ -12,8 +12,7 @@ union Rule {
 
 @mixin
 structure Skippable {
-    @default(false)
-    skippable: Boolean
+    skippable: Boolean = false
 }
 
 structure NoRepeats with [Skippable] {}
