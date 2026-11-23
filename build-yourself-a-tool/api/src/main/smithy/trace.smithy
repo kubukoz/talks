@@ -41,6 +41,8 @@ structure RuleEvaluation {
 
     @required
     durationNanos: Long
+
+    satisfiesPredicate: Boolean
 }
 
 enum RuleOutcome {

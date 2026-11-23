@@ -44,9 +44,15 @@ object PlaylistGenerator {
           }
           .timed
           .map { case (elapsed, (evaluation, talk)) =>
+            val annotated = talk.fold(evaluation) { picked =>
+              evaluation.copy(rules = evaluation.rules.map { ruleEvaluation =>
+                ruleEvaluation.copy(satisfiesPredicate = engine.satisfiesPredicate(ruleEvaluation.rule, picked))
+              })
+            }
+
             val step = GenerationStep(
               position = state.history.size + 1,
-              evaluation = evaluation,
+              evaluation = annotated,
               durationNanos = elapsed.toNanos,
               talk = talk,
             )

@@ -14,6 +14,7 @@
   --error: #b3261e;
   --matched-bg: #dff3e3;
   --rejected-bg: #fbe0de;
+  --predicate: #c026d3;
   font-family: system-ui, sans-serif;
 }
 
@@ -33,6 +34,7 @@
     --error: #ff8a80;
     --matched-bg: #1c3a25;
     --rejected-bg: #45201e;
+    --predicate: #e879f9;
   }
 }
 
@@ -51,6 +53,7 @@
   --error: #ff8a80;
   --matched-bg: #1c3a25;
   --rejected-bg: #45201e;
+  --predicate: #e879f9;
 }
 
 :root[data-theme='light'] {
@@ -328,6 +331,11 @@ input.invalid {
   background: var(--rejected-bg);
 }
 
+.step.predicate .talk {
+  outline: 2px solid var(--predicate);
+  outline-offset: -2px;
+}
+
 .rule,
 .trace tbody tr {
   cursor: default;
@@ -577,4 +585,15 @@ button.link:hover {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr) auto;
   }
+}
+
+.rule.hovered .row.predicate {
+  outline: 2px solid var(--predicate);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.trace tr.hovered .predicate {
+  color: var(--predicate);
+  font-weight: 600;
 }

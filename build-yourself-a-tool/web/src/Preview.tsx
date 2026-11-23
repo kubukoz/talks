@@ -75,12 +75,24 @@ const capitalize = (text: string) => text.replace(/^./, (c) => c.toUpperCase())
 
 const describeRule = (rule: Rule) => {
   const description =
-    'noRepeats' in rule
-      ? 'No repeats'
-      : 'require' in rule
-        ? capitalize(`${describePositions(rule.require.at)} ${describePredicate(rule.require.talk)}`)
-        : `Exactly ${rule.spacing.n} apart: talk that ${describePredicate(rule.spacing.talk)}`
-  return isSkippable(rule) ? `${description} (skippable)` : description
+    'noRepeats' in rule ? (
+      'No repeats'
+    ) : 'require' in rule ? (
+      <>
+        {capitalize(describePositions(rule.require.at))}{' '}
+        <span className="predicate">{describePredicate(rule.require.talk)}</span>
+      </>
+    ) : (
+      <>
+        Exactly {rule.spacing.n} apart: talk that <span className="predicate">{describePredicate(rule.spacing.talk)}</span>
+      </>
+    )
+  return (
+    <>
+      {description}
+      {isSkippable(rule) && ' (skippable)'}
+    </>
+  )
 }
 
 const isSkippable = (rule: Rule) =>
@@ -113,7 +125,7 @@ const PredicateEditor = ({
   predicate: TalkPredicate
   onChange: (predicate: TalkPredicate) => void
 }) => (
-  <div className="row">
+  <div className="row predicate">
     <span className="label">Talk</span>
     <select
       value={predicateKind(predicate)}
@@ -143,6 +155,7 @@ const RuleEditor = ({
   onMoveUp,
   onMoveDown,
   onHover,
+  hovered,
 }: {
   rule: Rule
   onChange: (rule: Rule) => void
@@ -150,8 +163,9 @@ const RuleEditor = ({
   onMoveUp?: () => void
   onMoveDown?: () => void
   onHover: (rule: Rule | undefined) => void
+  hovered: boolean
 }) => (
-  <li className="rule" onMouseEnter={() => onHover(rule)} onMouseLeave={() => onHover(undefined)}>
+  <li className={`rule ${hovered ? 'hovered' : ''}`} onMouseEnter={() => onHover(rule)} onMouseLeave={() => onHover(undefined)}>
     <div className="row">
       <select value={ruleKind(rule)} onChange={(e) => onChange(newRule(e.target.value as RuleKind, isSkippable(rule)))}>
         {(Object.keys(ruleKinds) as RuleKind[]).map((kind) => (
@@ -229,11 +243,13 @@ const formatNanos = (nanos: number) => {
 const EvaluationRow = ({
   evaluation,
   onHover,
+  hovered,
 }: {
   evaluation: RuleEvaluation
   onHover: (rule: Rule | undefined) => void
+  hovered: boolean
 }) => (
-  <tr onMouseEnter={() => onHover(evaluation.rule)} onMouseLeave={() => onHover(undefined)}>
+  <tr className={hovered ? 'hovered' : ''} onMouseEnter={() => onHover(evaluation.rule)} onMouseLeave={() => onHover(undefined)}>
     <td>{describeRule(evaluation.rule)}</td>
     <td>
       <span className={`outcome ${evaluation.outcome.toLowerCase()}`}>{evaluation.outcome.toLowerCase()}</span>
@@ -268,13 +284,17 @@ const canonical = (value: unknown): string =>
       : v,
   )
 
+const isHovered = (rule: Rule, hoveredRule: Rule | undefined) =>
+  hoveredRule !== undefined && canonical(rule) === canonical(hoveredRule)
+
 const highlightFor = (step: GenerationStep, rule: Rule | undefined) => {
   if (!rule || !step.talk) return ''
   const key = canonical(rule)
   const evaluation = step.evaluation.rules.find((e) => canonical(e.rule) === key)
   if (!evaluation) return ''
   const talkId = step.talk.id
-  return evaluation.rejected.some((talk) => talk.id === talkId) ? 'rejected' : 'matched'
+  const compliance = evaluation.rejected.some((talk) => talk.id === talkId) ? 'rejected' : 'matched'
+  return evaluation.satisfiesPredicate ? `${compliance} predicate` : compliance
 }
 
 const StepView = ({
@@ -334,7 +354,12 @@ const StepView = ({
           </thead>
           <tbody>
             {step.evaluation.rules.map((evaluation, i) => (
-              <EvaluationRow key={i} evaluation={evaluation} onHover={onHover} />
+              <EvaluationRow
+                key={i}
+                evaluation={evaluation}
+                onHover={onHover}
+                hovered={isHovered(evaluation.rule, hoveredRule)}
+              />
             ))}
           </tbody>
         </table>
@@ -516,6 +541,7 @@ export const Preview = ({ active }: { active: boolean }) => {
               onMoveUp={i > 0 ? () => moveRule(i, i - 1) : undefined}
               onMoveDown={i < currentRules.length - 1 ? () => moveRule(i, i + 1) : undefined}
               onHover={setHoveredRule}
+              hovered={isHovered(rule, hoveredRule)}
             />
           ))}
         </ol>

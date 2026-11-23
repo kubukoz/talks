@@ -13,6 +13,7 @@ import talks.api.TalkPredicate
 
 trait RuleEngine {
   def evaluate(rules: List[Rule], candidates: List[Talk], history: List[Talk]): IO[Evaluation]
+  def satisfiesPredicate(rule: Rule, talk: Talk): Option[Boolean]
 }
 
 object RuleEngine {
@@ -50,6 +51,8 @@ object RuleEngine {
         .map { case (matching, evaluations) => Evaluation(matching = matching, rules = evaluations.reverse) }
     }
 
+    def satisfiesPredicate(rule: Rule, talk: Talk): Option[Boolean] = predicateOf(rule).map(satisfies(_, talk))
+
   }
 
   private def applyRule(
@@ -63,7 +66,7 @@ object RuleEngine {
       Some(candidates.partition(talk => !seen(talk.id)))
 
     case Rule.Requirement(at, predicate, _) =>
-      Option.when(appliesAt(at, position))(candidates.partition(satisfies(predicate, _)))
+      required(at, position).map(expected => candidates.partition(satisfies(predicate, _) == expected))
 
     case Rule.Spacing(n, predicate, _) =>
       history.lastIndexWhere(satisfies(predicate, _)) match {
@@ -74,9 +77,17 @@ object RuleEngine {
       }
   }
 
-  private def appliesAt(positions: Positions, position: Int): Boolean = positions match {
-    case Positions.EveryCase(Every(n)) => position % n == 0
-    case Positions.AllCase             => true
+  private def required(positions: Positions, position: Int): Option[Boolean] = positions match {
+    case Positions.EveryCase(Every(n)) if position % n == 0 => Some(true)
+    case Positions.EveryCase(_) if position == 1            => None
+    case Positions.EveryCase(_)                             => Some(false)
+    case Positions.AllCase                                  => Some(true)
+  }
+
+  private def predicateOf(rule: Rule): Option[TalkPredicate] = rule match {
+    case Rule.NoRepeats(_)                 => None
+    case Rule.Requirement(_, predicate, _) => Some(predicate)
+    case Rule.Spacing(_, predicate, _)     => Some(predicate)
   }
 
   private def satisfies(predicate: TalkPredicate, talk: Talk): Boolean = predicate match {
