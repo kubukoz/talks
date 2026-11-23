@@ -1,0 +1,25 @@
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-utils.url = "github:numtide/flake-utils";
+  };
+
+  outputs =
+    { nixpkgs, flake-utils, ... }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
+      let
+        pkgs = import nixpkgs { inherit system; };
+      in
+      {
+        devShells.default = pkgs.mkShell {
+          packages = [
+            (pkgs.sbt.override { jre = pkgs.temurin-bin-25; })
+            pkgs.temurin-bin-25
+            pkgs.nodejs_22
+            pkgs.pnpm_10
+          ];
+        };
+      }
+    );
+}

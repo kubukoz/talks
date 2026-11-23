@@ -1,0 +1,23 @@
+{
+  "name": "web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "codegen": "cd .. && sbt web/tsCodegen"
+  },
+  "dependencies": {
+    "@polyvariant/smithy-ts-runtime": "0.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "typescript": "~5.9.3",
+    "vite": "^8.0.0"
+  }
+}

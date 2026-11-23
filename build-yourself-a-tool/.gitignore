@@ -1,0 +1,9 @@
+target/
+.bsp/
+.metals/
+.bloop/
+metals.sbt
+node_modules/
+dist/
+web/src/generated.ts
+.direnv/
