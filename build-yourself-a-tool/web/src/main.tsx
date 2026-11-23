@@ -1,26 +1,78 @@
-import { StrictMode, useState } from 'react'
+import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { fetchTransport } from '@polyvariant/smithy-ts-runtime'
-import { HelloServiceClient } from './generated'
+import { TalkServiceClient, type Talk } from './generated'
+import './index.css'
 
-const api = new HelloServiceClient(fetchTransport())
+const api = new TalkServiceClient(fetchTransport())
+
+const TalkRow = ({ talk, index }: { talk: Talk; index: number }) => (
+  <li className="talk">
+    <span className="index">{index + 1}</span>
+    <a href={talk.url} target="_blank" rel="noreferrer">
+      <img src={talk.thumbnailUrl} alt="" />
+    </a>
+    <div>
+      <a className="title" href={talk.url} target="_blank" rel="noreferrer">
+        {talk.title}
+      </a>
+      <div className="meta">
+        {talk.speakers.join(', ')} · {talk.conference}
+      </div>
+      <div className="tags">
+        {talk.tags.map((tag) => (
+          <span key={tag}>{tag}</span>
+        ))}
+      </div>
+    </div>
+  </li>
+)
 
 const App = () => {
-  const [name, setName] = useState('')
-  const [greeting, setGreeting] = useState<string>()
+  const [playlist, setPlaylist] = useState<Talk[]>([])
+  const [loading, setLoading] = useState(true)
+  const [exhausted, setExhausted] = useState(false)
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const { greeting } = await api.hello({ name })
-    setGreeting(greeting)
+  useEffect(() => {
+    let active = true
+    api.extendPlaylist({ playlist: [], count: 5 }).then(({ talks }) => {
+      if (active) {
+        setPlaylist(talks)
+        setLoading(false)
+      }
+    })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const more = async () => {
+    setLoading(true)
+    try {
+      const { talks } = await api.extendPlaylist({ playlist: playlist.map((t) => t.id), count: 1 })
+      setPlaylist((current) => [...current, ...talks])
+      setExhausted(talks.length === 0)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <form onSubmit={submit}>
-      <input value={name} onChange={(e) => setName(e.target.value)} />
-      <button>Greet</button>
-      {greeting && <p>{greeting}</p>}
-    </form>
+    <main>
+      <h1>Your playlist</h1>
+      <ol>
+        {playlist.map((talk, i) => (
+          <TalkRow key={talk.id} talk={talk} index={i} />
+        ))}
+      </ol>
+      {exhausted ? (
+        <p className="meta">That's every talk we have.</p>
+      ) : (
+        <button onClick={more} disabled={loading}>
+          {loading ? 'Loading...' : 'One more'}
+        </button>
+      )}
+    </main>
   )
 }
 

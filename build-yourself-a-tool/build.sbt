@@ -6,6 +6,7 @@ lazy val api = project
   .enablePlugins(Smithy4sCodegenPlugin, SmithyFormatPlugin)
   .settings(
     fork := true,
+    Compile / smithy4sInputDirs += (Compile / sourceDirectory).value / "smithy-data",
     libraryDependencies ++= Seq(
       "com.disneystreaming.smithy4s" %% "smithy4s-http4s" % smithy4sVersion.value,
       "org.http4s" %% "http4s-ember-server" % "0.23.38",
