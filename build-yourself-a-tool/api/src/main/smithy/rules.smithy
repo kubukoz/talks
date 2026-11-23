@@ -8,6 +8,7 @@ use smithy4s.meta#adt
 union Rule {
     noRepeats: NoRepeats
     require: Requirement
+    spacing: Spacing
 }
 
 @mixin
@@ -21,6 +22,15 @@ structure NoRepeats with [Skippable] {}
 structure Requirement with [Skippable] {
     @required
     at: Positions
+
+    @required
+    talk: TalkPredicate
+}
+
+structure Spacing with [Skippable] {
+    @required
+    @range(min: 1)
+    n: Integer
 
     @required
     talk: TalkPredicate

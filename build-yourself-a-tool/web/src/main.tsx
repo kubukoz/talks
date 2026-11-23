@@ -1,100 +1,92 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { fetchTransport } from '@polyvariant/smithy-ts-runtime'
-import { TalkServiceClient, type PlaylistId, type Talk } from './generated'
+import { Preview } from './Preview'
+import { Production } from './Production'
 import './index.css'
 
-const api = new TalkServiceClient(fetchTransport())
-
-const TalkRow = ({ talk, index }: { talk: Talk; index: number }) => (
-  <li className="talk">
-    <span className="index">{index + 1}</span>
-    <a href={talk.url} target="_blank" rel="noreferrer">
-      <img src={talk.thumbnailUrl} alt="" />
-    </a>
-    <div>
-      <a className="title" href={talk.url} target="_blank" rel="noreferrer">
-        {talk.title}
-      </a>
-      <div className="meta">
-        {talk.speakers.map((speaker) => speaker.name).join(', ')} · {talk.conference}
-      </div>
-      <div className="tags">
-        {talk.tags.map((tag) => (
-          <span key={tag}>{tag}</span>
-        ))}
-      </div>
-    </div>
-  </li>
-)
-
-const Production = () => {
-  const [playlistId, setPlaylistId] = useState<PlaylistId>()
-  const [playlist, setPlaylist] = useState<Talk[]>([])
-  const [loading, setLoading] = useState(true)
-  const [exhausted, setExhausted] = useState(false)
-
-  useEffect(() => {
-    let active = true
-    api.createPlaylist({}).then(({ playlistId, talks }) => {
-      if (active) {
-        setPlaylistId(playlistId)
-        setPlaylist(talks)
-        setLoading(false)
-      }
-    })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const more = async (playlistId: PlaylistId) => {
-    setLoading(true)
-    try {
-      const { talk } = await api.extendPlaylist({ playlistId })
-      if (talk) setPlaylist((current) => [...current, talk])
-      setExhausted(!talk)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <>
-      <h1>Your playlist</h1>
-      <ol>
-        {playlist.map((talk, i) => (
-          <TalkRow key={talk.id} talk={talk} index={i} />
-        ))}
-      </ol>
-      {exhausted ? (
-        <p className="meta">That's every talk we have.</p>
-      ) : (
-        <button onClick={() => playlistId && more(playlistId)} disabled={loading || !playlistId}>
-          {loading ? 'Loading...' : 'One more'}
-        </button>
-      )}
-    </>
-  )
-}
-
-const Preview = () => null
-
-const tabs = { production: 'Production', preview: 'Preview' } as const
+const tabs = {
+  production: { label: 'Production', path: '/' },
+  preview: { label: 'Preview', path: '/preview' },
+} as const
 
 type Tab = keyof typeof tabs
 
+const tabKeys = Object.keys(tabs) as Tab[]
+
+const tabAt = (path: string): Tab => tabKeys.find((key) => tabs[key].path === path) ?? 'production'
+
+const usePath = () => {
+  const [path, setPath] = useState(window.location.pathname)
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const navigate = (to: string) => {
+    window.history.pushState(null, '', to)
+    setPath(to)
+  }
+
+  return [path, navigate] as const
+}
+
+const themes = ['system', 'light', 'dark'] as const
+
+type Theme = (typeof themes)[number]
+
+const themeLabels: Record<Theme, string> = { system: 'Theme: system', light: 'Theme: light', dark: 'Theme: dark' }
+
+const storedTheme = (): Theme => {
+  try {
+    const value = localStorage.getItem('theme')
+    return themes.find((theme) => theme === value) ?? 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+const useTheme = () => {
+  const [theme, setTheme] = useState<Theme>(storedTheme)
+
+  useEffect(() => {
+    if (theme === 'system') document.documentElement.removeAttribute('data-theme')
+    else document.documentElement.setAttribute('data-theme', theme)
+    try {
+      localStorage.setItem('theme', theme)
+    } catch {
+      return
+    }
+  }, [theme])
+
+  const next = () => setTheme(themes[(themes.indexOf(theme) + 1) % themes.length])
+
+  return [theme, next] as const
+}
+
 const App = () => {
-  const [tab, setTab] = useState<Tab>('production')
+  const [path, navigate] = usePath()
+  const [theme, nextTheme] = useTheme()
+  const tab = tabAt(path)
+
+  const onClick = (key: Tab) => (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+    e.preventDefault()
+    navigate(tabs[key].path)
+  }
 
   return (
     <main>
       <nav className="tabs">
-        {(Object.keys(tabs) as Tab[]).map((key) => (
-          <button key={key} className={key === tab ? 'active' : ''} onClick={() => setTab(key)}>
-            {tabs[key]}
-          </button>
+        {tabKeys.map((key) => (
+          <a key={key} href={tabs[key].path} className={key === tab ? 'active' : ''} onClick={onClick(key)}>
+            {tabs[key].label}
+          </a>
         ))}
+        <button className="theme" onClick={nextTheme}>
+          {themeLabels[theme]}
+        </button>
       </nav>
       <section hidden={tab !== 'production'}>
         <Production />

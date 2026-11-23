@@ -5,18 +5,56 @@
   --muted: #6b6b6b;
   --card: #ffffff;
   --chip: #ececea;
+  --border: #dcdcd8;
   --accent: #d9363e;
+  --applied-bg: #e3f3e6;
+  --applied-fg: #1f6b35;
+  --skipped-bg: #fbeed3;
+  --skipped-fg: #8a5a00;
+  --error: #b3261e;
+  --matched-bg: #dff3e3;
+  --rejected-bg: #fbe0de;
   font-family: system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
     --bg: #141414;
     --fg: #ececec;
     --muted: #9a9a9a;
     --card: #1e1e1e;
     --chip: #2c2c2c;
+    --border: #3a3a3a;
+    --applied-bg: #1d3524;
+    --applied-fg: #8fd6a2;
+    --skipped-bg: #3b2f14;
+    --skipped-fg: #f0c46b;
+    --error: #ff8a80;
+    --matched-bg: #1c3a25;
+    --rejected-bg: #45201e;
   }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #141414;
+  --fg: #ececec;
+  --muted: #9a9a9a;
+  --card: #1e1e1e;
+  --chip: #2c2c2c;
+  --border: #3a3a3a;
+  --applied-bg: #1d3524;
+  --applied-fg: #8fd6a2;
+  --skipped-bg: #3b2f14;
+  --skipped-fg: #f0c46b;
+  --error: #ff8a80;
+  --matched-bg: #1c3a25;
+  --rejected-bg: #45201e;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
 
 body {
@@ -26,12 +64,22 @@ body {
 }
 
 main {
-  max-width: 760px;
+  max-width: 1160px;
   margin: 0 auto;
-  padding: 32px 16px;
+  padding: 24px 16px 32px;
 }
 
-ol {
+h2 {
+  font-size: 15px;
+  margin: 16px 0 8px;
+}
+
+.production {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.talks {
   list-style: none;
   padding: 0;
   display: grid;
@@ -46,6 +94,11 @@ ol {
   padding: 12px;
   background: var(--card);
   border-radius: 10px;
+}
+
+.talk.none {
+  grid-template-columns: 24px 1fr;
+  color: var(--muted);
 }
 
 .index {
@@ -106,6 +159,39 @@ button:disabled {
   cursor: default;
 }
 
+button.secondary {
+  background: var(--chip);
+  color: var(--fg);
+  padding: 8px 14px;
+}
+
+button.icon {
+  background: none;
+  color: var(--muted);
+  padding: 4px 8px;
+}
+
+button.icon:not(:disabled):hover {
+  color: var(--fg);
+  background: var(--chip);
+}
+
+input,
+select {
+  font: inherit;
+  font-size: 14px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  min-width: 0;
+}
+
+input.invalid {
+  border-color: var(--error);
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -113,17 +199,213 @@ button:disabled {
   margin-bottom: 8px;
 }
 
-.tabs button {
-  background: none;
+.tabs a {
   color: var(--muted);
-  border-radius: 0;
+  text-decoration: none;
   border-bottom: 2px solid transparent;
   padding: 8px 12px;
 }
 
-.tabs button.active {
+.tabs .theme {
+  margin-left: auto;
+  align-self: center;
+  background: none;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.tabs .theme:hover {
+  color: var(--fg);
+  background: var(--chip);
+}
+
+.tabs a.active {
   color: var(--fg);
   border-bottom-color: var(--accent);
+}
+
+.preview {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  padding-top: 8px;
+}
+
+.panel {
+  position: sticky;
+  top: 16px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.panel > input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rules {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.rule {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.rule .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.rule .row select {
+  max-width: 100%;
+}
+
+.rule .row input {
+  flex: 1 1 80px;
+}
+
+.rule .row input[type='number'] {
+  flex: 0 0 72px;
+}
+
+.rule .label {
+  color: var(--muted);
+  font-size: 13px;
+  width: 32px;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.error {
+  color: var(--error);
+  font-size: 14px;
+}
+
+.step {
+  display: grid;
+  gap: 4px;
+}
+
+.step .talk {
+  transition: background-color 120ms;
+}
+
+.step.matched .talk {
+  background: var(--matched-bg);
+}
+
+.step.rejected .talk {
+  background: var(--rejected-bg);
+}
+
+.rule,
+.trace tbody tr {
+  cursor: default;
+}
+
+.trace tbody tr:hover {
+  background: var(--chip);
+}
+
+.trace {
+  font-size: 13px;
+  padding: 0 12px;
+  overflow-x: auto;
+}
+
+.trace summary {
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.trace table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.trace th,
+.trace td {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--chip);
+  vertical-align: top;
+}
+
+.trace th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.trace .number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.trace td details ul {
+  text-align: left;
+  margin: 4px 0 0;
+  padding-left: 16px;
+  white-space: normal;
+}
+
+.outcome {
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+  background: var(--chip);
+  color: var(--muted);
+}
+
+.outcome.applied {
+  background: var(--applied-bg);
+  color: var(--applied-fg);
+}
+
+.outcome.skipped {
+  background: var(--skipped-bg);
+  color: var(--skipped-fg);
+}
+
+@media (max-width: 860px) {
+  .preview {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .panel {
+    position: static;
+  }
 }
 
 @media (max-width: 520px) {

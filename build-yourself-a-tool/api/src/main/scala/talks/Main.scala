@@ -23,7 +23,7 @@ object Main extends IOApp.Simple {
           Rule.NoRepeats(),
           Rule.Requirement(Positions.all(), TalkPredicate.maxDurationSeconds(30 * 60)),
           Rule.Requirement(Positions.every(Every(2)), TalkPredicate.hasTag("ai")),
-          Rule.Requirement(Positions.every(Every(3)), TalkPredicate.speakerCountry(CountryCode("PL")), skippable = true),
+          Rule.Spacing(3, TalkPredicate.speakerCountry(CountryCode("PL")), skippable = true),
         )
       )
       given RecommendationRepository <- RecommendationRepository.inMemory.toResource

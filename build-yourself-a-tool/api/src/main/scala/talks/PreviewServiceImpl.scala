@@ -2,6 +2,7 @@ package talks
 
 import cats.effect.IO
 import cats.syntax.all.*
+import talks.api.GetDefaultRulesOutput
 import talks.api.PreviewOutput
 import talks.api.PreviewService
 import talks.api.Rule
@@ -10,8 +11,14 @@ import talks.api.UnknownTalk
 
 object PreviewServiceImpl {
 
-  def instance(using generator: PlaylistGenerator, talks: TalkRepository): PreviewService[IO] =
+  def instance(
+    using generator: PlaylistGenerator,
+    talks: TalkRepository,
+    rules: RuleRepository,
+  ): PreviewService[IO] =
     new PreviewService[IO] {
+
+      def getDefaultRules(): IO[GetDefaultRulesOutput] = rules.getAll.map(GetDefaultRulesOutput(_))
 
       def preview(rules: List[Rule], seed: Long, count: Int, history: List[TalkId]): IO[PreviewOutput] = for {
         candidates <- talks.getAll

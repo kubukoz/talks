@@ -64,6 +64,14 @@ object RuleEngine {
 
     case Rule.Requirement(at, predicate, _) =>
       Option.when(appliesAt(at, position))(candidates.partition(satisfies(predicate, _)))
+
+    case Rule.Spacing(n, predicate, _) =>
+      history.lastIndexWhere(satisfies(predicate, _)) match {
+        case -1 => None
+        case lastIndex =>
+          val due = position - (lastIndex + 1) >= n
+          Some(candidates.partition(talk => satisfies(predicate, talk) == due))
+      }
   }
 
   private def appliesAt(positions: Positions, position: Int): Boolean = positions match {

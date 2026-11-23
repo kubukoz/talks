@@ -6,7 +6,21 @@ use alloy#simpleRestJson
 
 @simpleRestJson
 service PreviewService {
-    operations: [Preview]
+    operations: [
+        GetDefaultRules
+        Preview
+    ]
+}
+
+@readonly
+@http(method: "GET", uri: "/api/preview/default-rules")
+operation GetDefaultRules {
+    input := {}
+
+    output := {
+        @required
+        rules: [Rule]
+    }
 }
 
 @http(method: "POST", uri: "/api/preview")
@@ -31,7 +45,9 @@ operation Preview {
         trace: [GenerationStep]
     }
 
-    errors: [UnknownTalk]
+    errors: [
+        UnknownTalk
+    ]
 }
 
 @error("client")
