@@ -1,6 +1,8 @@
 ThisBuild / scalaVersion := "3.10.1"
 ThisBuild / tlBaseVersion := "0.1"
 ThisBuild / tlJdkRelease := Some(25)
+// smithy4s generates `$ordinal`, which trips E230 since Scala 3.9: https://github.com/disneystreaming/smithy4s/issues/2000
+ThisBuild / scalacOptions += "-Wconf:id=E230&src=.*/src_managed/.*:s"
 
 lazy val api = project
   .enablePlugins(Smithy4sCodegenPlugin, SmithyFormatPlugin)

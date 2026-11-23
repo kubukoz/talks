@@ -3,34 +3,57 @@ $version: "2"
 namespace talks.api
 
 use alloy#simpleRestJson
+use alloy#uuidFormat
 
 @simpleRestJson
 service TalkService {
-    operations: [ExtendPlaylist]
+    operations: [
+        CreatePlaylist
+        ExtendPlaylist
+    ]
 }
 
-@http(method: "POST", uri: "/api/playlist/extend")
-operation ExtendPlaylist {
-    input := {
-        @required
-        playlist: TalkIds
-
-        @required
-        @range(min: 1)
-        count: Integer
-    }
+@http(method: "POST", uri: "/api/playlists")
+operation CreatePlaylist {
+    input := {}
 
     output := {
+        @required
+        playlistId: PlaylistId
+
         @required
         talks: Talks
     }
 }
 
-string TalkId
+@http(method: "POST", uri: "/api/playlists/{playlistId}/extend")
+operation ExtendPlaylist {
+    input := {
+        @required
+        @httpLabel
+        playlistId: PlaylistId
+    }
 
-list TalkIds {
-    member: TalkId
+    output := {
+        talk: Talk
+    }
+
+    errors: [
+        PlaylistNotFound
+    ]
 }
+
+@error("client")
+@httpError(404)
+structure PlaylistNotFound {
+    @required
+    playlistId: PlaylistId
+}
+
+@uuidFormat
+string PlaylistId
+
+string TalkId
 
 structure Talk {
     @required

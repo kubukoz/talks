@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { fetchTransport } from '@polyvariant/smithy-ts-runtime'
-import { TalkServiceClient, type Talk } from './generated'
+import { TalkServiceClient, type PlaylistId, type Talk } from './generated'
 import './index.css'
 
 const api = new TalkServiceClient(fetchTransport())
@@ -29,14 +29,16 @@ const TalkRow = ({ talk, index }: { talk: Talk; index: number }) => (
 )
 
 const App = () => {
+  const [playlistId, setPlaylistId] = useState<PlaylistId>()
   const [playlist, setPlaylist] = useState<Talk[]>([])
   const [loading, setLoading] = useState(true)
   const [exhausted, setExhausted] = useState(false)
 
   useEffect(() => {
     let active = true
-    api.extendPlaylist({ playlist: [], count: 5 }).then(({ talks }) => {
+    api.createPlaylist({}).then(({ playlistId, talks }) => {
       if (active) {
+        setPlaylistId(playlistId)
         setPlaylist(talks)
         setLoading(false)
       }
@@ -46,12 +48,12 @@ const App = () => {
     }
   }, [])
 
-  const more = async () => {
+  const more = async (playlistId: PlaylistId) => {
     setLoading(true)
     try {
-      const { talks } = await api.extendPlaylist({ playlist: playlist.map((t) => t.id), count: 1 })
-      setPlaylist((current) => [...current, ...talks])
-      setExhausted(talks.length === 0)
+      const { talk } = await api.extendPlaylist({ playlistId })
+      if (talk) setPlaylist((current) => [...current, talk])
+      setExhausted(!talk)
     } finally {
       setLoading(false)
     }
@@ -68,7 +70,7 @@ const App = () => {
       {exhausted ? (
         <p className="meta">That's every talk we have.</p>
       ) : (
-        <button onClick={more} disabled={loading}>
+        <button onClick={() => playlistId && more(playlistId)} disabled={loading || !playlistId}>
           {loading ? 'Loading...' : 'One more'}
         </button>
       )}
