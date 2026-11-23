@@ -421,3 +421,25 @@ input.invalid {
 .step .card {
   cursor: pointer;
 }
+
+button.link {
+  background: none;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  text-decoration: underline dotted;
+  font-variant-numeric: tabular-nums;
+}
+
+button.link:hover {
+  color: var(--fg);
+}
+
+.seeds {
+  display: flex;
+  gap: 8px;
+}
+
+.seeds input {
+  flex: 1;
+}

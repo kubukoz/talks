@@ -92,7 +92,7 @@ const App = () => {
         <Production />
       </section>
       <section hidden={tab !== 'preview'}>
-        <Preview />
+        <Preview active={tab === 'preview'} />
       </section>
     </main>
   )

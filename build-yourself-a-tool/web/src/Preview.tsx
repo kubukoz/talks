@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import { previewApi } from './api'
 import {
+  RuleSchema,
   UnexpectedResponseError,
   type CountryCode,
   type GenerationStep,
@@ -275,10 +277,12 @@ const StepView = ({
   entry: { step, seed },
   hoveredRule,
   onHover,
+  onSeed,
 }: {
   entry: Entry
   hoveredRule: Rule | undefined
   onHover: (rule: Rule | undefined) => void
+  onSeed: (seed: number) => void
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -301,7 +305,18 @@ const StepView = ({
       </div>
       <details className="trace" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
         <summary>
-          {formatNanos(step.durationNanos)} · seed {seed} · {step.evaluation.matching.length} matching
+          {formatNanos(step.durationNanos)} · seed{' '}
+          <button
+            className="link"
+            title="Use this seed"
+            onClick={(e) => {
+              e.preventDefault()
+              onSeed(seed)
+            }}
+          >
+            {seed}
+          </button>{' '}
+          · {step.evaluation.matching.length} matching
         </summary>
         <table>
           <thead>
@@ -326,6 +341,55 @@ const StepView = ({
 
 const randomSeed = () => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
 
+const parseSeeds = (text: string): number[] | undefined => {
+  const parts = text.split(/[\s,]+/).filter((part) => part !== '')
+  const seeds = parts.map(Number)
+  return seeds.every(Number.isSafeInteger) ? seeds : undefined
+}
+
+const CallSchema = z.object({ rules: z.array(RuleSchema), seed: z.number().int(), count: z.number().int() })
+
+type Call = z.infer<typeof CallSchema>
+
+const parseParam = <A,>(params: URLSearchParams, name: string, schema: z.ZodType<A>): A | undefined => {
+  const value = params.get(name)
+  if (value === null) return undefined
+  try {
+    const result = schema.safeParse(JSON.parse(value))
+    return result.success ? result.data : undefined
+  } catch {
+    return undefined
+  }
+}
+
+const readUrl = () => {
+  const params = new URLSearchParams(window.location.search)
+  return {
+    rules: parseParam(params, 'rules', z.array(RuleSchema)),
+    seeds: params.get('seeds') ?? '',
+    calls: parseParam(params, 'calls', z.array(CallSchema)),
+  }
+}
+
+const writeUrl = (rules: Rule[], seeds: string, calls: Call[] | undefined) => {
+  const params = new URLSearchParams()
+  params.set('rules', JSON.stringify(rules))
+  if (seeds.trim() !== '') params.set('seeds', seeds.trim())
+  if (calls) params.set('calls', JSON.stringify(calls))
+  const url = `${window.location.pathname}?${params}`
+  if (url !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(null, '', url)
+}
+
+const historyOf = (entries: Entry[]) => entries.flatMap(({ step }) => (step.talk ? [step.talk.id] : []))
+
+const execute = async (call: Call, history: Entry[]): Promise<Entry[]> => {
+  const { trace } = await previewApi.preview({ ...call, history: historyOf(history) })
+  return [...history, ...trace.map((step) => ({ step, seed: call.seed }))]
+}
+
+const replay = (calls: Call[]) =>
+  calls.reduce<Promise<Entry[]>>((entries, call) => entries.then((history) => execute(call, history)), Promise.resolve([]))
+
 const describeError = (error: unknown) =>
   error instanceof UnexpectedResponseError
     ? `${error.status}: ${JSON.stringify(error.body)}`
@@ -333,10 +397,13 @@ const describeError = (error: unknown) =>
       ? error.message
       : String(error)
 
-export const Preview = () => {
+export const Preview = ({ active }: { active: boolean }) => {
+  const [initial] = useState(readUrl)
   const [defaultRules, setDefaultRules] = useState<Rule[]>()
-  const [rules, setRules] = useState<Rule[]>([])
-  const [seedText, setSeedText] = useState('')
+  const [rules, setRules] = useState<Rule[] | undefined>(initial.rules)
+  const [seedText, setSeedText] = useState(initial.seeds)
+  const [calls, setCalls] = useState<Call[]>([])
+  const [frozen, setFrozen] = useState<Call[] | undefined>(initial.calls)
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
@@ -349,7 +416,7 @@ export const Preview = () => {
       .then(({ rules }) => {
         if (active) {
           setDefaultRules(rules)
-          setRules(rules)
+          setRules((current) => current ?? rules)
         }
       })
       .catch((e) => active && setError(describeError(e)))
@@ -358,21 +425,41 @@ export const Preview = () => {
     }
   }, [])
 
-  const seedValid = seedText.trim() === '' || Number.isSafeInteger(Number(seedText))
+  useEffect(() => {
+    if (!initial.calls) return
+    let active = true
+    setLoading(true)
+    replay(initial.calls)
+      .then((entries) => {
+        if (active) {
+          setEntries(entries)
+          setCalls(initial.calls ?? [])
+        }
+      })
+      .catch((e) => active && setError(describeError(e)))
+      .finally(() => active && setLoading(false))
+    return () => {
+      active = false
+    }
+  }, [initial])
+
+  useEffect(() => {
+    if (active && rules) writeUrl(rules, seedText, frozen)
+  }, [active, rules, seedText, frozen])
+
+  const seeds = parseSeeds(seedText)
   const exhausted = entries.length > 0 && !entries[entries.length - 1].step.talk
 
-  const run = async (count: number, history: Entry[]) => {
-    const seed = seedText.trim() === '' ? randomSeed() : Number(seedText)
+  const run = async (count: number, history: Entry[], previous: Call[]) => {
+    if (!rules || !seeds) return
+    const seed = seeds.length === 0 ? randomSeed() : seeds[Math.min(previous.length, seeds.length - 1)]
+    const call = { rules, seed, count }
     setLoading(true)
     setError(undefined)
+    setFrozen(undefined)
     try {
-      const { trace } = await previewApi.preview({
-        rules,
-        seed,
-        count,
-        history: history.flatMap(({ step }) => (step.talk ? [step.talk.id] : [])),
-      })
-      setEntries([...history, ...trace.map((step) => ({ step, seed }))])
+      setEntries(await execute(call, history))
+      setCalls([...previous, call])
     } catch (e) {
       setError(describeError(e))
     } finally {
@@ -380,10 +467,17 @@ export const Preview = () => {
     }
   }
 
-  const updateRule = (index: number, rule: Rule) => setRules(rules.map((r, i) => (i === index ? rule : r)))
+  const freeze = () => {
+    setFrozen(calls)
+    setSeedText(calls.map((call) => call.seed).join(', '))
+  }
+
+  const currentRules = rules ?? []
+
+  const updateRule = (index: number, rule: Rule) => setRules(currentRules.map((r, i) => (i === index ? rule : r)))
 
   const moveRule = (from: number, to: number) => {
-    const next = [...rules]
+    const next = [...currentRules]
     const [moved] = next.splice(from, 1)
     next.splice(to, 0, moved)
     setRules(next)
@@ -394,53 +488,70 @@ export const Preview = () => {
       <aside className="panel">
         <h2>Rules</h2>
         <ol className="rules">
-          {rules.map((rule, i) => (
+          {currentRules.map((rule, i) => (
             <RuleEditor
               key={i}
               rule={rule}
               onChange={(next) => updateRule(i, next)}
-              onRemove={() => setRules(rules.filter((_, j) => j !== i))}
+              onRemove={() => setRules(currentRules.filter((_, j) => j !== i))}
               onMoveUp={i > 0 ? () => moveRule(i, i - 1) : undefined}
-              onMoveDown={i < rules.length - 1 ? () => moveRule(i, i + 1) : undefined}
+              onMoveDown={i < currentRules.length - 1 ? () => moveRule(i, i + 1) : undefined}
               onHover={setHoveredRule}
             />
           ))}
         </ol>
         <div className="actions">
-          <button className="secondary" onClick={() => setRules([...rules, newRule('require', false)])}>
+          <button className="secondary" onClick={() => setRules([...currentRules, newRule('require', false)])}>
             Add rule
           </button>
           <button className="secondary" onClick={() => defaultRules && setRules(defaultRules)} disabled={!defaultRules}>
             Reset to defaults
           </button>
         </div>
-        <h2>Seed</h2>
-        <input
-          className={seedValid ? '' : 'invalid'}
-          inputMode="numeric"
-          placeholder="Random for each call"
-          value={seedText}
-          onChange={(e) => setSeedText(e.target.value)}
-        />
+        <h2>Seeds</h2>
+        <div className="seeds">
+          <input
+            className={seeds ? '' : 'invalid'}
+            placeholder="Random for each call"
+            value={seedText}
+            onChange={(e) => setSeedText(e.target.value)}
+          />
+          <button className="secondary" onClick={() => setSeedText('')} disabled={seedText === ''}>
+            Clear
+          </button>
+        </div>
+        <p className="hint">One per call, comma-separated. The last one repeats.</p>
       </aside>
       <div className="results">
-        <button onClick={() => run(initialCount, [])} disabled={loading || !seedValid || !defaultRules}>
+        <button onClick={() => run(initialCount, [], [])} disabled={loading || !seeds || !rules}>
           Generate
         </button>
         {error && <p className="error">{error}</p>}
         <ol className="talks">
           {entries.map((entry, i) => (
-            <StepView key={i} entry={entry} hoveredRule={hoveredRule} onHover={setHoveredRule} />
+            <StepView
+              key={i}
+              entry={entry}
+              hoveredRule={hoveredRule}
+              onHover={setHoveredRule}
+              onSeed={(seed) => setSeedText(String(seed))}
+            />
           ))}
         </ol>
-        {entries.length > 0 &&
-          (exhausted ? (
-            <p className="meta">No talk matched, so the sequence ends here.</p>
-          ) : (
-            <button onClick={() => run(1, entries)} disabled={loading || !seedValid}>
-              {loading ? 'Loading...' : 'One more'}
+        {entries.length > 0 && (
+          <div className="actions">
+            {exhausted ? (
+              <p className="meta">No talk matched, so the sequence ends here.</p>
+            ) : (
+              <button onClick={() => run(1, entries, calls)} disabled={loading || !seeds}>
+                {loading ? 'Loading...' : 'One more'}
+              </button>
+            )}
+            <button className="secondary" onClick={freeze} disabled={loading || frozen !== undefined}>
+              {frozen ? 'Frozen in URL' : 'Freeze'}
             </button>
-          ))}
+          </div>
+        )}
       </div>
     </div>
   )
