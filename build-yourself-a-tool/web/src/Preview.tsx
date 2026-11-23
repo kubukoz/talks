@@ -266,7 +266,7 @@ const highlightFor = (step: GenerationStep, rule: Rule | undefined) => {
   if (!rule || !step.talk) return ''
   const key = canonical(rule)
   const evaluation = step.evaluation.rules.find((e) => canonical(e.rule) === key)
-  if (!evaluation || evaluation.outcome === 'INACTIVE') return ''
+  if (!evaluation) return ''
   const talkId = step.talk.id
   return evaluation.rejected.some((talk) => talk.id === talkId) ? 'rejected' : 'matched'
 }
@@ -279,39 +279,50 @@ const StepView = ({
   entry: Entry
   hoveredRule: Rule | undefined
   onHover: (rule: Rule | undefined) => void
-}) => (
-  <li className={`step ${highlightFor(step, hoveredRule)}`}>
-    {step.talk ? (
-      <TalkRow talk={step.talk} position={step.position} />
-    ) : (
-      <div className="talk none">
-        <span className="index">{step.position}</span>
-        <span>No talk matched the rules.</span>
+}) => {
+  const [open, setOpen] = useState(false)
+
+  const onCardClick = (e: React.MouseEvent) => {
+    if (e.target instanceof Element && e.target.closest('a')) return
+    setOpen(!open)
+  }
+
+  return (
+    <li className={`step ${highlightFor(step, hoveredRule)}`}>
+      <div className="card" onClick={onCardClick}>
+        {step.talk ? (
+          <TalkRow talk={step.talk} position={step.position} />
+        ) : (
+          <div className="talk none">
+            <span className="index">{step.position}</span>
+            <span>No talk matched the rules.</span>
+          </div>
+        )}
       </div>
-    )}
-    <details className="trace">
-      <summary>
-        {formatNanos(step.durationNanos)} · seed {seed} · {step.evaluation.matching.length} matching
-      </summary>
-      <table>
-        <thead>
-          <tr>
-            <th>Rule</th>
-            <th>Outcome</th>
-            <th className="number">Matched</th>
-            <th className="number">Rejected</th>
-            <th className="number">Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          {step.evaluation.rules.map((evaluation, i) => (
-            <EvaluationRow key={i} evaluation={evaluation} onHover={onHover} />
-          ))}
-        </tbody>
-      </table>
-    </details>
-  </li>
-)
+      <details className="trace" open={open} onToggle={(e) => setOpen(e.currentTarget.open)}>
+        <summary>
+          {formatNanos(step.durationNanos)} · seed {seed} · {step.evaluation.matching.length} matching
+        </summary>
+        <table>
+          <thead>
+            <tr>
+              <th>Rule</th>
+              <th>Outcome</th>
+              <th className="number">Matched</th>
+              <th className="number">Rejected</th>
+              <th className="number">Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {step.evaluation.rules.map((evaluation, i) => (
+              <EvaluationRow key={i} evaluation={evaluation} onHover={onHover} />
+            ))}
+          </tbody>
+        </table>
+      </details>
+    </li>
+  )
+}
 
 const randomSeed = () => Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
 

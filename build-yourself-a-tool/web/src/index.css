@@ -417,3 +417,7 @@ input.invalid {
     display: none;
   }
 }
+
+.step .card {
+  cursor: pointer;
+}
