@@ -249,6 +249,7 @@ const EvaluationRow = ({
   onHover: (rule: Rule | undefined) => void
   hovered: boolean
 }) => (
+  <>
   <tr className={hovered ? 'hovered' : ''} onMouseEnter={() => onHover(evaluation.rule)} onMouseLeave={() => onHover(undefined)}>
     <td>{describeRule(evaluation.rule)}</td>
     <td>
@@ -273,6 +274,30 @@ const EvaluationRow = ({
     </td>
     <td className="number">{formatNanos(evaluation.durationNanos)}</td>
   </tr>
+  {(evaluation.logs.length > 0 || Object.keys(evaluation.context).length > 0) && (
+    <tr
+      className={`logs ${hovered ? 'hovered' : ''}`}
+      onMouseEnter={() => onHover(evaluation.rule)}
+      onMouseLeave={() => onHover(undefined)}
+    >
+      <td colSpan={5}>
+        <dl>
+          {Object.entries(evaluation.context).map(([key, value]) => (
+            <div key={key}>
+              <dt>{key}</dt>
+              <dd>{JSON.stringify(value)}</dd>
+            </div>
+          ))}
+        </dl>
+        <ul>
+          {evaluation.logs.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul>
+      </td>
+    </tr>
+  )}
+  </>
 )
 
 type Entry = { step: GenerationStep; seed: number }

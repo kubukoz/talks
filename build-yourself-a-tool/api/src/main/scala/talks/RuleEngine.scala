@@ -1,7 +1,13 @@
 package talks
 
+import cats.Monoid
+import cats.Semigroup
+import cats.data.Chain
+import cats.data.Writer
 import cats.effect.IO
 import cats.syntax.all.*
+import hearth.kindlings.catsderivation.extensions.*
+import smithy4s.Document
 import talks.api.Evaluation
 import talks.api.Every
 import talks.api.Positions
@@ -25,7 +31,7 @@ object RuleEngine {
 
       rules
         .foldLeftM((candidates, List.empty[RuleEvaluation])) { case ((remaining, evaluations), rule) =>
-          IO(applyRule(rule, remaining, history, position)).timed.map { case (elapsed, split) =>
+          IO(applyRule(rule, remaining, history, position).run).timed.map { case (elapsed, (diagnostics, split)) =>
             val (matched, rejected) = split.getOrElse((remaining, Nil))
 
             val outcome = split match {
@@ -41,6 +47,8 @@ object RuleEngine {
               matchedAfter = matched.size,
               rejected = rejected,
               durationNanos = elapsed.toNanos,
+              logs = diagnostics.logs.toList,
+              context = diagnostics.context,
             )
 
             val next = if (outcome == RuleOutcome.SKIPPED) remaining else matched
@@ -55,26 +63,61 @@ object RuleEngine {
 
   }
 
+  private given Semigroup[Document] = Semigroup.last
+
+  private final case class Diagnostics(logs: Chain[String], context: Map[String, Document]) derives Monoid
+
+  private type Logged[A] = Writer[Diagnostics, A]
+
+  private def log(message: String): Logged[Unit] = Writer.tell(Diagnostics(Chain.one(message), Map.empty))
+
+  private def context(entries: (String, Document)*): Logged[Unit] = Writer.tell(Diagnostics(Chain.empty, entries.toMap))
+
+  private def number(value: Int): Document = Document.DNumber(BigDecimal(value))
+
   private def applyRule(
     rule: Rule,
     candidates: List[Talk],
     history: List[Talk],
     position: Int,
-  ): Option[(List[Talk], List[Talk])] = rule match {
-    case Rule.NoRepeats(_) =>
-      val seen = history.map(_.id).toSet
-      Some(candidates.partition(talk => !seen(talk.id)))
+  ): Logged[Option[(List[Talk], List[Talk])]] = {
+    def expect(predicate: TalkPredicate, expected: Boolean): Logged[Option[(List[Talk], List[Talk])]] = {
+      val (matching, other) = candidates.partition(satisfies(predicate, _))
+      val (kept, rejected) = if (expected) (matching, other) else (other, matching)
 
-    case Rule.Requirement(at, predicate, _) =>
-      required(at, position).map(expected => candidates.partition(satisfies(predicate, _) == expected))
+      context("mustSatisfy" -> Document.DBoolean(expected), "satisfyingCandidates" -> number(matching.size)) *>
+        log(s"Position $position needs a talk that ${if (expected) "" else "does not "}${describe(predicate)}").as((kept, rejected).some)
+    }
 
-    case Rule.Spacing(n, predicate, _) =>
-      history.lastIndexWhere(satisfies(predicate, _)) match {
-        case -1 => None
-        case lastIndex =>
-          val due = position - (lastIndex + 1) >= n
-          Some(candidates.partition(talk => satisfies(predicate, talk) == due))
-      }
+    rule match {
+      case Rule.NoRepeats(_) =>
+        val seen = history.map(_.id).toSet
+        val (fresh, repeats) = candidates.partition(talk => !seen(talk.id))
+        context("alreadyPlayed" -> number(seen.size)).as((fresh, repeats).some)
+
+      case Rule.Requirement(at, predicate, _) =>
+        required(at, position) match {
+          case None => log(s"Position $position is exempt from this rule").as(None)
+          case Some(expected) => expect(predicate, expected)
+        }
+
+      case Rule.Spacing(n, predicate, _) =>
+        history.lastIndexWhere(satisfies(predicate, _)) match {
+          case -1 => log(s"No earlier talk ${describe(predicate)}, so spacing starts once one is played").as(None)
+          case lastIndex =>
+            val lastPosition = lastIndex + 1
+            val distance = position - lastPosition
+            val due = distance >= n
+
+            context("lastMatchPosition" -> number(lastPosition), "distance" -> number(distance)) *>
+              log(
+                if (distance > n) s"Overdue: last match at position $lastPosition is $distance back, more than $n"
+                else if (due) s"Due: last match at position $lastPosition is exactly $n back"
+                else s"Too soon: last match at position $lastPosition is only $distance back, needs $n"
+              ) *>
+              expect(predicate, due)
+        }
+    }
   }
 
   private def required(positions: Positions, position: Int): Option[Boolean] = positions match {
@@ -88,6 +131,13 @@ object RuleEngine {
     case Rule.NoRepeats(_)                 => None
     case Rule.Requirement(_, predicate, _) => Some(predicate)
     case Rule.Spacing(_, predicate, _)     => Some(predicate)
+  }
+
+  private def describe(predicate: TalkPredicate): String = predicate match {
+    case TalkPredicate.SpeakerCountryCase(country) => s"has a speaker from $country"
+    case TalkPredicate.HasTagCase(tag)             => s"is tagged \"$tag\""
+    case TalkPredicate.ConferenceCase(conference)  => s"is from $conference"
+    case TalkPredicate.MaxDurationSecondsCase(max) => s"is at most ${max / 60} min"
   }
 
   private def satisfies(predicate: TalkPredicate, talk: Talk): Boolean = predicate match {

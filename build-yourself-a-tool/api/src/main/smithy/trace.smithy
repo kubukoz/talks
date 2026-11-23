@@ -42,7 +42,18 @@ structure RuleEvaluation {
     @required
     durationNanos: Long
 
+    @required
+    logs: [String]
+
+    @required
+    context: RuleContext
+
     satisfiesPredicate: Boolean
+}
+
+map RuleContext {
+    key: String
+    value: Document
 }
 
 enum RuleOutcome {
