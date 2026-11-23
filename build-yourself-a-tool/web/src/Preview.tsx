@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { previewApi } from './api'
+import { CraftHistory } from './CraftHistory'
 import {
   RuleSchema,
   UnexpectedResponseError,
@@ -9,6 +10,9 @@ import {
   type Positions,
   type Rule,
   type RuleEvaluation,
+  type Talk,
+  type TalkId,
+  TalkIdSchema,
   type TalkPredicate,
 } from './generated'
 import { TalkRow } from './TalkRow'
@@ -351,6 +355,10 @@ const CallSchema = z.object({ rules: z.array(RuleSchema), seed: z.number().int()
 
 type Call = z.infer<typeof CallSchema>
 
+const SequenceSchema = z.object({ history: z.array(TalkIdSchema), calls: z.array(CallSchema) })
+
+type Sequence = z.infer<typeof SequenceSchema>
+
 const parseParam = <A,>(params: URLSearchParams, name: string, schema: z.ZodType<A>): A | undefined => {
   const value = params.get(name)
   if (value === null) return undefined
@@ -367,28 +375,30 @@ const readUrl = () => {
   return {
     rules: parseParam(params, 'rules', z.array(RuleSchema)),
     seeds: params.get('seeds') ?? '',
-    calls: parseParam(params, 'calls', z.array(CallSchema)),
+    history: parseParam(params, 'history', z.array(TalkIdSchema)) ?? [],
+    sequence: parseParam(params, 'sequence', SequenceSchema),
   }
 }
 
-const writeUrl = (rules: Rule[], seeds: string, calls: Call[] | undefined) => {
+const writeUrl = (rules: Rule[], seeds: string, history: TalkId[], sequence: Sequence | undefined) => {
   const params = new URLSearchParams()
   params.set('rules', JSON.stringify(rules))
   if (seeds.trim() !== '') params.set('seeds', seeds.trim())
-  if (calls) params.set('calls', JSON.stringify(calls))
+  if (history.length > 0) params.set('history', JSON.stringify(history))
+  if (sequence) params.set('sequence', JSON.stringify(sequence))
   const url = `${window.location.pathname}?${params}`
   if (url !== `${window.location.pathname}${window.location.search}`) window.history.replaceState(null, '', url)
 }
 
 const historyOf = (entries: Entry[]) => entries.flatMap(({ step }) => (step.talk ? [step.talk.id] : []))
 
-const execute = async (call: Call, history: Entry[]): Promise<Entry[]> => {
-  const { trace } = await previewApi.preview({ ...call, history: historyOf(history) })
-  return [...history, ...trace.map((step) => ({ step, seed: call.seed }))]
+const execute = async (call: Call, base: TalkId[], entries: Entry[]): Promise<Entry[]> => {
+  const { trace } = await previewApi.preview({ ...call, history: [...base, ...historyOf(entries)] })
+  return [...entries, ...trace.map((step) => ({ step, seed: call.seed }))]
 }
 
-const replay = (calls: Call[]) =>
-  calls.reduce<Promise<Entry[]>>((entries, call) => entries.then((history) => execute(call, history)), Promise.resolve([]))
+const replay = ({ history, calls }: Sequence) =>
+  calls.reduce<Promise<Entry[]>>((entries, call) => entries.then((previous) => execute(call, history, previous)), Promise.resolve([]))
 
 const describeError = (error: unknown) =>
   error instanceof UnexpectedResponseError
@@ -400,10 +410,14 @@ const describeError = (error: unknown) =>
 export const Preview = ({ active }: { active: boolean }) => {
   const [initial] = useState(readUrl)
   const [defaultRules, setDefaultRules] = useState<Rule[]>()
+  const [talks, setTalks] = useState<Talk[]>()
   const [rules, setRules] = useState<Rule[] | undefined>(initial.rules)
   const [seedText, setSeedText] = useState(initial.seeds)
+  const [history, setHistory] = useState<TalkId[]>(initial.history)
+  const [crafting, setCrafting] = useState(false)
+  const [base, setBase] = useState<TalkId[]>(initial.sequence?.history ?? [])
   const [calls, setCalls] = useState<Call[]>([])
-  const [frozen, setFrozen] = useState<Call[] | undefined>(initial.calls)
+  const [frozen, setFrozen] = useState<Sequence | undefined>(initial.sequence)
   const [entries, setEntries] = useState<Entry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
@@ -411,12 +425,12 @@ export const Preview = ({ active }: { active: boolean }) => {
 
   useEffect(() => {
     let active = true
-    previewApi
-      .getDefaultRules({})
-      .then(({ rules }) => {
+    Promise.all([previewApi.getDefaultRules({}), previewApi.listTalks({})])
+      .then(([{ rules }, { talks }]) => {
         if (active) {
           setDefaultRules(rules)
           setRules((current) => current ?? rules)
+          setTalks(talks)
         }
       })
       .catch((e) => active && setError(describeError(e)))
@@ -426,14 +440,15 @@ export const Preview = ({ active }: { active: boolean }) => {
   }, [])
 
   useEffect(() => {
-    if (!initial.calls) return
+    const sequence = initial.sequence
+    if (!sequence) return
     let active = true
     setLoading(true)
-    replay(initial.calls)
+    replay(sequence)
       .then((entries) => {
         if (active) {
           setEntries(entries)
-          setCalls(initial.calls ?? [])
+          setCalls(sequence.calls)
         }
       })
       .catch((e) => active && setError(describeError(e)))
@@ -444,22 +459,25 @@ export const Preview = ({ active }: { active: boolean }) => {
   }, [initial])
 
   useEffect(() => {
-    if (active && rules) writeUrl(rules, seedText, frozen)
-  }, [active, rules, seedText, frozen])
+    if (active && rules) writeUrl(rules, seedText, history, frozen)
+  }, [active, rules, seedText, history, frozen])
 
   const seeds = parseSeeds(seedText)
   const exhausted = entries.length > 0 && !entries[entries.length - 1].step.talk
+  const byId = new Map((talks ?? []).map((talk) => [talk.id, talk]))
 
-  const run = async (count: number, history: Entry[], previous: Call[]) => {
+  const run = async (count: number, nextBase: TalkId[], previousEntries: Entry[], previousCalls: Call[]) => {
     if (!rules || !seeds) return
-    const seed = seeds.length === 0 ? randomSeed() : seeds[Math.min(previous.length, seeds.length - 1)]
+    const seed = seeds.length === 0 ? randomSeed() : seeds[Math.min(previousCalls.length, seeds.length - 1)]
     const call = { rules, seed, count }
     setLoading(true)
     setError(undefined)
     setFrozen(undefined)
     try {
-      setEntries(await execute(call, history))
-      setCalls([...previous, call])
+      const next = await execute(call, nextBase, previousEntries)
+      setBase(nextBase)
+      setEntries(next)
+      setCalls([...previousCalls, call])
     } catch (e) {
       setError(describeError(e))
     } finally {
@@ -468,7 +486,8 @@ export const Preview = ({ active }: { active: boolean }) => {
   }
 
   const freeze = () => {
-    setFrozen(calls)
+    setFrozen({ history: base, calls })
+    setHistory(base)
     setSeedText(calls.map((call) => call.seed).join(', '))
   }
 
@@ -508,6 +527,24 @@ export const Preview = ({ active }: { active: boolean }) => {
             Reset to defaults
           </button>
         </div>
+        <h2>History</h2>
+        {history.length === 0 ? (
+          <p className="hint">Empty. Generated talks start at position 1.</p>
+        ) : (
+          <ol className="history-list">
+            {history.map((id, i) => (
+              <li key={i}>{byId.get(id)?.title ?? id}</li>
+            ))}
+          </ol>
+        )}
+        <div className="actions">
+          <button className="secondary" onClick={() => setCrafting(true)} disabled={!talks}>
+            Craft history
+          </button>
+          <button className="secondary" onClick={() => setHistory([])} disabled={history.length === 0}>
+            Clear
+          </button>
+        </div>
         <h2>Seeds</h2>
         <div className="seeds">
           <input
@@ -523,10 +560,18 @@ export const Preview = ({ active }: { active: boolean }) => {
         <p className="hint">One per call, comma-separated. The last one repeats.</p>
       </aside>
       <div className="results">
-        <button onClick={() => run(initialCount, [], [])} disabled={loading || !seeds || !rules}>
+        <button onClick={() => run(initialCount, history, [], [])} disabled={loading || !seeds || !rules}>
           Generate
         </button>
         {error && <p className="error">{error}</p>}
+        {base.length > 0 && entries.length > 0 && (
+          <ol className="talks injected">
+            {base.map((id, i) => {
+              const talk = byId.get(id)
+              return talk ? <TalkRow key={i} talk={talk} position={i + 1} /> : null
+            })}
+          </ol>
+        )}
         <ol className="talks">
           {entries.map((entry, i) => (
             <StepView
@@ -543,7 +588,7 @@ export const Preview = ({ active }: { active: boolean }) => {
             {exhausted ? (
               <p className="meta">No talk matched, so the sequence ends here.</p>
             ) : (
-              <button onClick={() => run(1, entries, calls)} disabled={loading || !seeds}>
+              <button onClick={() => run(1, base, entries, calls)} disabled={loading || !seeds}>
                 {loading ? 'Loading...' : 'One more'}
               </button>
             )}
@@ -553,6 +598,9 @@ export const Preview = ({ active }: { active: boolean }) => {
           </div>
         )}
       </div>
+      {crafting && talks && (
+        <CraftHistory talks={talks} history={history} onSave={setHistory} onClose={() => setCrafting(false)} />
+      )}
     </div>
   )
 }

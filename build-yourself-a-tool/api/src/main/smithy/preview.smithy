@@ -8,6 +8,7 @@ use alloy#simpleRestJson
 service PreviewService {
     operations: [
         GetDefaultRules
+        ListTalks
         Preview
     ]
 }
@@ -20,6 +21,17 @@ operation GetDefaultRules {
     output := {
         @required
         rules: [Rule]
+    }
+}
+
+@readonly
+@http(method: "GET", uri: "/api/preview/talks")
+operation ListTalks {
+    input := {}
+
+    output := {
+        @required
+        talks: [Talk]
     }
 }
 
