@@ -3,9 +3,13 @@
     "id": "cuPTLi_zvTg",
     "title": "Rigging the game with Rig",
     "speakers": [
-      "Łukasz Biały"
+      {
+        "name": "Łukasz Biały",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=cuPTLi_zvTg",
+    "durationSeconds": 1702,
     "thumbnail": "thumbnails/cuPTLi_zvTg.jpg",
     "abstract": null,
     "tags": []
@@ -14,9 +18,12 @@
     "id": "e8pTQXEGwfk",
     "title": "Scripting on the JVM with Scala",
     "speakers": [
-      "Haoyi Li"
+      {
+        "name": "Haoyi Li"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=e8pTQXEGwfk",
+    "durationSeconds": 1827,
     "thumbnail": "thumbnails/e8pTQXEGwfk.jpg",
     "abstract": "This talk will explore the use of Scala as a scripting language, replacing the Bash and Python scripts common throughout the industry. We will walk through live-coded demonstrations of how the JVM's benefits of performance, compile-time safety, and vast library ecosystem are advantages over traditional script platforms, but also how language verbosity, build tool overhead, and lack of convenient libraries hampers the efforts. Lastly we will demonstrate how script-focused tooling is able to smooth over some of those issues, simplifying build configuration and providing suitable libraries to make the JVM truly a world-class scripting environment as robust as any scripting language out there.",
     "tags": [
@@ -28,9 +35,12 @@
     "id": "pOpb4YPLORk",
     "title": "Automating API Busywork with Scala",
     "speakers": [
-      "Haemin Yoo"
+      {
+        "name": "Haemin Yoo"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=pOpb4YPLORk",
+    "durationSeconds": 1659,
     "thumbnail": "thumbnails/pOpb4YPLORk.jpg",
     "abstract": "Writing client-facing APIs involves mundane tasks, whether it be REST, GraphQL, or gRPC. In this talk, I will pick two repetitive tasks during API development and demonstrate how we can utilize Scala to automate the most boring parts:\n* maintaining the list of possible errors up to date (uses Scala 3)\n* endpoint explosion with different return data requirements, having to write custom optimized DB queries for each of them\nThe demonstration will use GraphQL and Caliban, but the principles apply to other endpoint types as well.",
     "tags": [
@@ -45,9 +55,12 @@
     "id": "cZHSCTi1rqc",
     "title": "Scala and TypeScript Synergy",
     "speakers": [
-      "Mihaela Gheorghe-Roman"
+      {
+        "name": "Mihaela Gheorghe-Roman"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=cZHSCTi1rqc",
+    "durationSeconds": 1726,
     "thumbnail": "thumbnails/cZHSCTi1rqc.jpg",
     "abstract": "Have you ever wondered what it takes to combine the power of Scala with the flexibility of TypeScript to create a secure, real-time collaborative text editor—similar to Google Docs, but built for high-security environments? Imagine a scenario where military teams need to simultaneously update critical text documents during a mission, while ensuring airtight security in air-gapped deployments.\nIn this presentation, I will demonstrate how we leveraged the strengths of Scala and TypeScript to develop a collaborative text editor that meets the strictest standards for security, performance, and real-time collaboration. I will dive deep into the technical architecture, powered by advanced operational transformation algorithms, which enables multi-user editing without conflicts. Additionally, I'll share how we layered robust security measures on top of the solution to ensure it meets military-grade standards, while maintaining seamless performance in isolated networks.",
     "tags": [
@@ -62,9 +75,12 @@
     "id": "-scICevFHec",
     "title": "Backend driven Frontends",
     "speakers": [
-      "Nabil Abdel-Hafeez"
+      {
+        "name": "Nabil Abdel-Hafeez"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=-scICevFHec",
+    "durationSeconds": 1921,
     "thumbnail": "thumbnails/-scICevFHec.jpg",
     "abstract": "In recent years, Single Page Applications (SPAs) have become the de facto standard for web frontends. Frameworks like React, Angular, and Svelte have dominated the development of modern browser applications. Their goal is to create highly interactive websites by offering feature-rich toolkits and entire ecosystems of libraries. The number of libraries on npm is vast, providing a wide variety of functionalities.\nHowever, these benefits come with costs. JavaScript bundles continue to grow in size. Your codebase needs to stay up to date with the latest React version. Keeping frontend and backend state in sync can be challenging. npm builds often take minutes on top of backend builds before deployment is possible. And how often have we deleted node_modules to fix mysterious issues?\nBackend developers often prefer Server-Side Rendering (SSR), which usually lacks the interactivity required for modern web applications. Other attempts, like Scala.js, allow you to use your favorite backend language in the browser but often result in loading multiple megabytes of JavaScript just for the runtime and standard library on top of React, Laminar or similar libraries still used for the web app.\nSo, is there a modern solution for web apps that is powerful, simple, and blazingly fast in both CI and the browser? Something you can understand during a Scalar talk and learn in an afternoon? A solution that lets you write in your favorite backend language and is fun? The answer is Datastar!",
     "tags": [
@@ -77,9 +93,12 @@
     "id": "HAYurs8Fv20",
     "title": "Safer Code with LLMs: Scala Types Silver Bullet?",
     "speakers": [
-      "Andrei Kucharavy"
+      {
+        "name": "Andrei Kucharavy"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=HAYurs8Fv20",
+    "durationSeconds": 1946,
     "thumbnail": "thumbnails/HAYurs8Fv20.jpg",
     "abstract": "Code generation is one of the most promising applications of large language models (LLMs), offering substantial productivity boosts for developers. However, this benefit is tempered by serious concerns surrounding the correctness and security of the generated code - especially outside the happy path.\nSeveral solutions have been put forward to mitigate this, ranging from agentic code review to exhaustive test generation to formal verification.\nIn this talk, I present evidence from our research that these approaches are not currently sufficient to mitigate those concerns and instead suggest an alternative, more viable path forward based on the Scala type system.\nI conclude by offering an insight from the perspective of LLM developers on why this approach is working and how even more secure coding LLMs can be developed, thanks to Scala features.",
     "tags": [
@@ -94,9 +113,13 @@
     "id": "lond2pZ8CIg",
     "title": "Efficient programming with Scala and LLMs",
     "speakers": [
-      "Tomasz Godzik"
+      {
+        "name": "Tomasz Godzik",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=lond2pZ8CIg",
+    "durationSeconds": 1819,
     "thumbnail": "thumbnails/lond2pZ8CIg.jpg",
     "abstract": "Large language models and agentic systems are currently very popular, with many advocating for their use. However, they sometimes fail to deliver the expected 'magical' results. Does this mean they are not useful? Absolutely not. With the right strategy and tools, you can leverage them effectively in Scala using existing solutions like the Metals Language Server. While this may not be a '10x developer' experience, even a 50% productivity boost is a significant win.\nDrawing from multiple Scala LLM workshops we conducted this past year, I will share insights to significantly enhance your AI experience. I'll cover LLM fundamentals, but my primary focus will be on the Model Context Protocol and the agentic system tooling, particularly our solutions within the Scala ecosystem. These tools allow agents to interact with your machine and the external world in a controlled way, providing LLMs with crucial feedback to refine their output. My goal is for the audience to leave with a strong foundational understanding of how to use AI tools and where to seek further improvements.",
     "tags": [
@@ -112,9 +135,12 @@
     "id": "sQ8hZ0CxJuY",
     "title": "Navigating Scala’s AI Landscape",
     "speakers": [
-      "Priyanka Bose"
+      {
+        "name": "Priyanka Bose"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=sQ8hZ0CxJuY",
+    "durationSeconds": 1644,
     "thumbnail": "thumbnails/sQ8hZ0CxJuY.jpg",
     "abstract": "Artificial Intelligence (AI) is a term increasingly applied to a wide range of things every day, becoming a buzzword, especially among skeptical users. AI may refer to chatbots like ChatGPT, command-line coding assistants, IDE features, frameworks for building Model Context Protocol (MCP) servers for connecting tools and language models, or virtually any project involving a Large Language Model (LLM). It can even extend to no-code AI automation platforms like n8n, an open-source tool that lets you connect services and build workflows visually: self-hostable and highly customizable. Does that sound confusing? If so, do not fret, you are not alone!\nIn this talk, I’ll guide you through the crossroads where Scala intersects with AI, some applications aimed at boosting developer productivity, others focused on integrating your code with LLMs.\nBy the end of the talk, we’ll build a simple Scala application that can be incorporated into your agentic workflow and used within a no-code AI flow, making it self-hostable.\nKey Takeaways:\n1. Understand the current AI ecosystem in Scala: tools, frameworks, and interoperability.\n2. Learn how to combine no-code platforms (like n8n) with Scala-based tools for real-world AI integrations.\n3. See a demo of a custom MCP server written in Scala, and how it augments n8n workflows.\n4. Leave inspired that individual developers and small teams can meaningfully innovate in the AI + Scala space.\n‍",
     "tags": [
@@ -128,9 +154,13 @@
     "id": "9MK8Z-du3Ao",
     "title": "Flexible Modeling: Keeping Your Domain Pure with Scala 3",
     "speakers": [
-      "Magda Stożek"
+      {
+        "name": "Magda Stożek",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=9MK8Z-du3Ao",
+    "durationSeconds": 1439,
     "thumbnail": "thumbnails/9MK8Z-du3Ao.jpg",
     "abstract": "A clean Domain Model is hard to maintain. Over time, our core entities often become overloaded, accumulating database logic, infrastructure constraints, and JVM-specific boilerplate. We want a pure, rich domain, but we often settle for leaky abstractions or an explosion of wrappers just to keep the compiler happy.\nScala 3 offers a powerful, pragmatic alternative: you no longer need complex concepts to solve easy problems. By leveraging its modern toolset, we can define behaviors, data shapes, and relationships exactly where they are needed—without polluting the core entities.\nIn this talk, we will walk through a concrete example of a boilerplate-heavy domain. By replacing common Scala 2 workarounds with Opaque Types, Extension Methods, Enums, and Union Types, we will demonstrate how to achieve a strictly typed, decoupled architecture without the noise.",
     "tags": [
@@ -143,9 +173,12 @@
     "id": "1iiHIgX5CKQ",
     "title": "NamedTuples in Action",
     "speakers": [
-      "Norbert Schultz"
+      {
+        "name": "Norbert Schultz"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=1iiHIgX5CKQ",
+    "durationSeconds": 1414,
     "thumbnail": "thumbnails/1iiHIgX5CKQ.jpg",
     "abstract": "I would like to present the use of NamedTuples to implement some cool things in SQL Libraries:\n* Typsesafe deriving column names from (nested) case class structures\n* Natural feeling query builders\n* Implementing (left) joins\n* Example implementation in\nusql.",
     "tags": [
@@ -159,9 +192,12 @@
     "id": "AXzRkx9P7p4",
     "title": "Type-Classes (in Scala 3)",
     "speakers": [
-      "Alexandru Nedelcu"
+      {
+        "name": "Alexandru Nedelcu"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=AXzRkx9P7p4",
+    "durationSeconds": 1830,
     "thumbnail": "thumbnails/AXzRkx9P7p4.jpg",
     "abstract": "Type classes are a Scala superpower, and yet are underused in application code. Compared with OOP-based designs, type classes unlock “parametricity”, meaning polymorphic functions whose type signatures describe their behavior, making code more expressive, safer, and more predictable. This matters even more in the age of AI agents, because more mistakes can be caught at compile time, shortening the feedback loop and speeding up convergence toward a working solution.\nWe'll explore type classes in Scala 3, using its new rules for givens, extension methods, and mechanisms for automatic derivation via mirrors or macros.",
     "tags": [
@@ -175,9 +211,12 @@
     "id": "pG-v_JoPqF8",
     "title": "Effects as Capabilities",
     "speakers": [
-      "Nicolas Rinaudo"
+      {
+        "name": "Nicolas Rinaudo"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=pG-v_JoPqF8",
+    "durationSeconds": 1940,
     "thumbnail": "thumbnails/pG-v_JoPqF8.jpg",
     "abstract": "When writing software, we currently seem to have to choose between an imperative style - easy to read and write, hard to reason about - and a monadic style - hard to read and write, easy to reason about.\nThis talk is about being greedy and getting the best of both worlds, because we deserve it.",
     "tags": [
@@ -190,9 +229,12 @@
     "id": "bbBwqdrRoEI",
     "title": "Real-Life Scala Capture Checking",
     "speakers": [
-      "Daniel Ciocîrlan"
+      {
+        "name": "Daniel Ciocîrlan"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=bbBwqdrRoEI",
+    "durationSeconds": 1855,
     "thumbnail": "thumbnails/bbBwqdrRoEI.jpg",
     "abstract": "This will be a live coding demonstration of Scala's newest feature set: capture checking.\nWe will see what capture checking is, how it works, all with realistic demonstrations of how we would use it in practice, with resources that would have significant consequences if mismanaged; we will see how (and where) capture checking significantly simplifies the code and frees our mental space to focus on the critical parts of our applications.\nBy the end of this talk, you will get a practical understanding of capture checking, with insights of where you should use it and how you can leverage Scala's strengths where it matters.",
     "tags": [
@@ -206,9 +248,12 @@
     "id": "CUy5RrSwbdw",
     "title": "IntelliJ Scala Plugin support for virtualized environments",
     "speakers": [
-      "Vasil Vasilev"
+      {
+        "name": "Vasil Vasilev"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=CUy5RrSwbdw",
+    "durationSeconds": 451,
     "thumbnail": "thumbnails/CUy5RrSwbdw.jpg",
     "abstract": "IntelliJ IDEA 2026.1 with the Scala Plugin now enables you to develop Scala projects within Docker containers or natively within WSL on Windows. This means that all IDE features you're already using in your local projects are now also available for projects living in containerized and virtualized environments.In this talk, we'll walk through the following workflow:\n- Importing an sbt Scala project stored in virtualized environments, such as Docker or WSL\n- Compiling and running the project in IntelliJ IDEA\n- Running unit tests\n- Debugging the code\n- Running Scala worksheets",
     "tags": [
@@ -222,10 +267,15 @@
     "id": "MrY4-6Li5fE",
     "title": "Controlled Concurrency Testing for Scala",
     "speakers": [
-      "Philipp Haller",
-      "Oskar Grönman"
+      {
+        "name": "Philipp Haller"
+      },
+      {
+        "name": "Oskar Grönman"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=MrY4-6Li5fE",
+    "durationSeconds": 1785,
     "thumbnail": "thumbnails/MrY4-6Li5fE.jpg",
     "abstract": "Building resilient and scalable distributed systems is necessary to support emerging and future digital services processing increasing amounts of data and requiring increasing amounts of computing resources to support artificial intelligence. One challenge in building such systems is safe large-scale concurrency. Due to the inherent nondeterminism of concurrent programs, it is notoriously difficult to find, reproduce, and fix concurrency bugs.\nThis talk presents McCCT, a new concurrency testing tool developed at KTH by the speakers in the context of an ongoing research project. McCCT helps find concurrency hazards, such as race conditions and deadlocks, by systematically exploring the possible schedules of concurrent Scala programs. Importantly, McCCT supports replaying problematic schedules, aiding in the reproduction of concurrency bugs. In addition, the tool provides a scheduler that can enforce a sequential schedule, enabling deterministic execution, suitable for integration in unit test suites.\nThe talk will start with an overview of McCCT and its capabilities from the user's perspective. Using live coding, we will show how to use McCCT to find and replay a series of concurrency bugs in real-world concurrent code. After that, we will explain how the tool can be used to create powerful regression tests for concurrent code. At the end, the talk will provide an introduction to the inner workings of McCCT.",
     "tags": [
@@ -239,9 +289,12 @@
     "id": "SOHbEo7UH28",
     "title": "Beyond `flatMap`: Is Kyo the Future of Scala Effects?",
     "speakers": [
-      "Jonathan Winandy"
+      {
+        "name": "Jonathan Winandy"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=SOHbEo7UH28",
+    "durationSeconds": 1629,
     "thumbnail": "thumbnails/SOHbEo7UH28.jpg",
     "abstract": "For nearly a decade, Scala's concurrency has been driven by Akka, Cats Effect and ZIO, each with its own vision for purity, safety, and pragmatism.\nKyo enters this incredible ecosystem with a fresh perspective.\nThis talk provides a critical, technical comparison of these systems through a unified framework, evaluating their approaches to:\n- Effect Modeling: How they represent, compose, and handle effects and errors.\n- Concurrency & Resilience: The guarantees and costs of their fiber and structured concurrency models.\n- Developer Experience: The trade-offs in readability, ergonomics, and type-driven safety.\nWe will focus on how Kyo’s use of algebraic complements the work of its predecessors.\nYou'll see how it embraces Scala 3 and understand why it earns its place in an already fantastic field.",
     "tags": [
@@ -256,9 +309,12 @@
     "id": "2TA-6YplrKA",
     "title": "The Concurrency Triangle",
     "speakers": [
-      "Riccardo Cardin"
+      {
+        "name": "Riccardo Cardin"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=2TA-6YplrKA",
+    "durationSeconds": 1886,
     "thumbnail": "thumbnails/2TA-6YplrKA.jpg",
     "abstract": "Operating system thread context switches are a fundamental bottleneck in high-concurrency JVM applications. Each switch requires kernel transitions, CPU cache invalidation, and scheduling overhead. The JVM ecosystem has developed three prominent solutions: Fibers as implemented by many Scala monadic effect systems, Java Virtual Threads (Project Loom), and Kotlin Coroutines.\nWhile these technologies appear vastly different on the surface, functional versus imperative, library versus runtime, they actually implement the same core pattern: replacing OS thread scheduling with user-space scheduling of continuations.\nThis talk shows how this elegant solution manifests at three different abstraction levels. We'll take the Cats Effect library as an example of Fibers implementation library through the IO monad. Project Loom pushes it down to the JVM runtime, making it transparent to developers. In Scala, the Ox library is built upon virtual threads. Kotlin Coroutines place it at compile time through the transformation of suspend functions. We'll see them as different expressions of the same fundamental breakthrough in concurrent programming.",
     "tags": [
@@ -273,9 +329,12 @@
     "id": "zTq9gdImhpk",
     "title": "Protobuf Goes Scala-First",
     "speakers": [
-      "Pierre Ricadat"
+      {
+        "name": "Pierre Ricadat"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=zTq9gdImhpk",
+    "durationSeconds": 1626,
     "thumbnail": "thumbnails/zTq9gdImhpk.jpg",
     "abstract": "Protobuf is commonly associated with code generation. However, in large projects with tens of thousands of message definitions, this approach can lead to an overwhelming amount of generated code. Combined with additional boilerplate or macros for converting between generated classes and domain entities, it can significantly impact both compile times and developer productivity.\nIs another path possible? In this talk, I’ll share my journey in search of a different approach to this problem—how it led me to an alternative path, the challenges I faced, and the key discoveries I made along the way.",
     "tags": [
@@ -289,9 +348,12 @@
     "id": "0kIjMkTTzog",
     "title": "Scala and C – tight as brothers",
     "speakers": [
-      "Anton Sviridov"
+      {
+        "name": "Anton Sviridov"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=0kIjMkTTzog",
+    "durationSeconds": 1644,
     "thumbnail": "thumbnails/0kIjMkTTzog.jpg",
     "abstract": "Scala Native can interact with C code and libraries, greatly expanding the library ecosystem beyond pure Scala offerings. Let's see the low level and high level tools that make it possible, talk through challenges of encoding various C concepts in Scala, and demonstrate what popular C libraries look like when used alongside idiomatic Scala code.",
     "tags": [
@@ -304,10 +366,17 @@
     "id": "gBnRUr6NG-Y",
     "title": "Cyfra: Scala on GPU",
     "speakers": [
-      "Szymon Rodziewicz",
-      "Marcin Złakowski"
+      {
+        "name": "Szymon Rodziewicz",
+        "country": "PL"
+      },
+      {
+        "name": "Marcin Złakowski",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=gBnRUr6NG-Y",
+    "durationSeconds": 1911,
     "thumbnail": "thumbnails/gBnRUr6NG-Y.jpg",
     "abstract": "Learn how to accelerate Scala code by orders of magnitude with Cyfra.\nThere are many libraries that give you access to low-level GPU APIs, but a high-level, functional one is a different story. That’s why we created the Cyfra GPGPU framework. Use Cyfra to write functional Scala code that compiles to SPIR-V and run it with minimal setup on our Vulkan runtime. Scientific simulations, real-time data processing, rendering, and more, all become possible within the Scala language.\nIn this talk, we’ll demonstrate how to build a high-performance application with Cyfra. We will dive into our model of type-safe data pipelines and memory management. To complete the picture, we will also showcase a set of real-world applications.",
     "tags": [
@@ -319,9 +388,13 @@
     "id": "hhmNxNi0unE",
     "title": "Migration Without Tears: 2,000 Projects, One New LTS",
     "speakers": [
-      "Wojciech Mazur"
+      {
+        "name": "Wojciech Mazur",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=hhmNxNi0unE",
+    "durationSeconds": 1982,
     "thumbnail": "thumbnails/hhmNxNi0unE.jpg",
     "abstract": "Scala 3.3 introduced the first Long-Term Support (LTS) release, setting expectations of stability, incremental improvements, and a predictable migration model - while innovation continued through the Scala Next release line.\nNow, three years later, Scala 3.9 becomes the new LTS baseline, marking the next major migration point. But this cycle is fundamentally different: the compiler and tooling can now automate a large portion of migration effort, allowing teams to focus on product development rather than manual refactoring.\nIn this talk, I will present insights from running the Open Community Build, where we continuously build and migrate nearly 2,000 open-source projects to the newest Scala Next versions, from scratch, every week. This effort surfaces real-world compatibility issues long before they reach users, providing a unique perspective on how migrations behave at scale.\nYou’ll learn:\n- How to approach migration to 3.9 LTS using compiler automation\n- The most common problems observed when upgrading\n- What breaks in practice, and how to fix it efficiently\n- How Community Build feedback loops accelerate ecosystem stability\n- Strategies for migrating libraries, applications, and whole ecosystems\nThis talk is not a feature overview of Scala 3.9, but a practical field report from running large-scale migrations every week. You will leave with a clear, repeatable migration strategy - and confidence that the compiler can handle more of the heavy lifting.",
     "tags": [
@@ -336,9 +409,13 @@
     "id": "gksECSFNQ5A",
     "title": "The world after Scala 3.9 LTS",
     "speakers": [
-      "Piotr Chabelski"
+      {
+        "name": "Piotr Chabelski",
+        "country": "PL"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=gksECSFNQ5A",
+    "durationSeconds": 1185,
     "thumbnail": "thumbnails/gksECSFNQ5A.jpg",
     "abstract": "The new Scala 3.9 LTS is planned to arrive in Q2 2026. With it, a wave of significant changes will soon flood the Scala ecosystem. Numerous language features, a new runner, a revamped REPL, bumped JDK, the list runs long.\nIn this talk, I will introduce the highlights of what to look forward to in Scala 3.9 LTS, as well as how to think about the upcoming new release. I will summarise the changes since 3.3 LTS, unpacking some of the development history. I will also talk about 3.3 LTS ongoing support, JDK compatibility and other things you might wonder about, thinking about Scala going forward.",
     "tags": [
@@ -352,9 +429,12 @@
     "id": "t460XVJA944",
     "title": "How can we trust our agents?",
     "speakers": [
-      "Martin Odersky"
+      {
+        "name": "Martin Odersky"
+      }
     ],
     "url": "https://www.youtube.com/watch?v=t460XVJA944",
+    "durationSeconds": 2034,
     "thumbnail": "thumbnails/t460XVJA944.jpg",
     "abstract": "AI agents are taking over many tasks that required humans before. This could be very good for productivity but how can we possibly trust our agents? There are a multitude of known ways an agent could go wrong, including prompt injections or plain hallucinations. The current techniques to control agent behavior are patchy and rudimentary, they certainly don't instill trust.\nIn my talk I will argue that we can do much better by relying in a systematic way on types and capabilities. We can use them to make not only bad states but also bad actions unrepresentable. This points us to a possible future where an inherently untrustworthy LLM agent can be trusted to stay within defined parameters when put in the right environment.",
     "tags": [

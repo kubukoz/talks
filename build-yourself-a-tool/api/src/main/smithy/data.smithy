@@ -1,8 +1,8 @@
-$version: "2"
+$version: "2.1"
 
 namespace talks.data
 
-use talks.api#Strings
+use talks.api#Speaker
 use talks.api#TalkId
 
 structure TalkRecord {
@@ -13,10 +13,13 @@ structure TalkRecord {
     title: String
 
     @required
-    speakers: Strings
+    speakers: [Speaker]
 
     @required
     url: String
+
+    @required
+    durationSeconds: Integer
 
     @required
     thumbnail: String
@@ -24,7 +27,7 @@ structure TalkRecord {
     abstract: String
 
     @required
-    tags: Strings
+    tags: [String]
 }
 
 list TalkRecords {

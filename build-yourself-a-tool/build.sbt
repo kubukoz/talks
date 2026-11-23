@@ -19,6 +19,12 @@ lazy val web = project
   .settings(
     tsCodegenSmithyDirs := Seq((api / baseDirectory).value / "src" / "main" / "smithy"),
     tsCodegenOutputFile := baseDirectory.value / "src" / "generated.ts",
+    // The TS codegen CLI has its own classpath: Smithy IDL 2.1 (inline collections) needs smithy 1.75.0+,
+    // and smithy4s-protocol provides smithy4s.meta#adt.
+    tsCodegenExtensions ++= Seq(
+      "software.amazon.smithy" % "smithy-model" % "1.75.0",
+      "com.disneystreaming.smithy4s" % "smithy4s-protocol" % smithy4sVersion.value,
+    ),
   )
 
 lazy val root = project

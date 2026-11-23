@@ -17,7 +17,7 @@ const TalkRow = ({ talk, index }: { talk: Talk; index: number }) => (
         {talk.title}
       </a>
       <div className="meta">
-        {talk.speakers.join(', ')} · {talk.conference}
+        {talk.speakers.map((speaker) => speaker.name).join(', ')} · {talk.conference}
       </div>
       <div className="tags">
         {talk.tags.map((tag) => (

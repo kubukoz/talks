@@ -40,6 +40,7 @@ object TalkRepository {
     title = record.title,
     speakers = record.speakers,
     url = record.url,
+    durationSeconds = record.durationSeconds,
     thumbnailUrl = s"/api/thumbnails/$dir/${record.thumbnail}",
     tags = record.tags,
     _abstract = record._abstract,

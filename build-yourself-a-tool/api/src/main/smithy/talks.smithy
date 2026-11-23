@@ -1,4 +1,4 @@
-$version: "2"
+$version: "2.1"
 
 namespace talks.api
 
@@ -22,7 +22,7 @@ operation CreatePlaylist {
         playlistId: PlaylistId
 
         @required
-        talks: Talks
+        talks: [Talk]
     }
 }
 
@@ -66,10 +66,13 @@ structure Talk {
     title: String
 
     @required
-    speakers: Strings
+    speakers: [Speaker]
 
     @required
     url: String
+
+    @required
+    durationSeconds: Integer
 
     @required
     thumbnailUrl: String
@@ -77,19 +80,15 @@ structure Talk {
     abstract: String
 
     @required
-    tags: Strings
+    tags: [String]
 }
 
-list Talks {
-    member: Talk
+structure Speaker {
+    @required
+    name: String
+
+    country: CountryCode
 }
 
-list Strings {
-    member: String
-}
-
-union Rule {
-    noRepeats: NoRepeats
-}
-
-structure NoRepeats {}
+@pattern("^[A-Z]{2}$")
+string CountryCode
