@@ -21,9 +21,6 @@ structure NoRepeats with [Skippable] {}
 
 structure Requirement with [Skippable] {
     @required
-    at: Positions
-
-    @required
     talk: TalkPredicate
 }
 
@@ -34,17 +31,6 @@ structure Spacing with [Skippable] {
 
     @required
     talk: TalkPredicate
-}
-
-union Positions {
-    every: Every
-    all: Unit
-}
-
-structure Every {
-    @required
-    @range(min: 1)
-    n: Integer
 }
 
 union TalkPredicate {

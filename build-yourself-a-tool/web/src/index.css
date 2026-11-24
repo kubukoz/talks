@@ -331,9 +331,14 @@ input.invalid {
   background: var(--rejected-bg);
 }
 
-.step.predicate .talk {
-  outline: 2px solid var(--predicate);
-  outline-offset: -2px;
+.meta .hit {
+  color: var(--predicate);
+  font-weight: 600;
+}
+
+.tags span.hit {
+  background: var(--predicate);
+  color: white;
 }
 
 .rule,

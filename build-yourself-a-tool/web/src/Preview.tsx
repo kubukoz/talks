@@ -7,7 +7,6 @@ import {
   UnexpectedResponseError,
   type CountryCode,
   type GenerationStep,
-  type Positions,
   type Rule,
   type RuleEvaluation,
   type Talk,
@@ -46,14 +45,6 @@ const makePredicate = (kind: PredicateKind, value: string): TalkPredicate => {
   }
 }
 
-const ordinal = (n: number) => {
-  const suffix = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[n % 10] ?? 'th'
-  return `${n}${suffix}`
-}
-
-const describePositions = (positions: Positions) =>
-  'every' in positions && positions.every.n > 1 ? `every ${ordinal(positions.every.n)} talk` : 'every talk'
-
 const describePredicate = (predicate: TalkPredicate) => {
   if ('speakerCountry' in predicate) return `has a speaker from ${predicate.speakerCountry}`
   if ('hasTag' in predicate) return `is tagged "${predicate.hasTag}"`
@@ -71,16 +62,13 @@ const ruleKinds: Record<RuleKind, string> = {
 
 const ruleKind = (rule: Rule): RuleKind => Object.keys(rule)[0] as RuleKind
 
-const capitalize = (text: string) => text.replace(/^./, (c) => c.toUpperCase())
-
 const describeRule = (rule: Rule) => {
   const description =
     'noRepeats' in rule ? (
       'No repeats'
     ) : 'require' in rule ? (
       <>
-        {capitalize(describePositions(rule.require.at))}{' '}
-        <span className="predicate">{describePredicate(rule.require.talk)}</span>
+        Every talk <span className="predicate">{describePredicate(rule.require.talk)}</span>
       </>
     ) : (
       <>
@@ -110,7 +98,7 @@ const newRule = (kind: RuleKind, skippable: boolean): Rule => {
     case 'noRepeats':
       return { noRepeats: { skippable } }
     case 'require':
-      return { require: { skippable, at: { all: {} }, talk: { hasTag: 'ai' } } }
+      return { require: { skippable, talk: { hasTag: 'ai' } } }
     case 'spacing':
       return { spacing: { skippable, n: 3, talk: { speakerCountry: 'PL' as CountryCode } } }
   }
@@ -191,28 +179,6 @@ const RuleEditor = ({
     </div>
     {'require' in rule && (
       <>
-        <div className="row">
-          <span className="label">At</span>
-          <select
-            value={'every' in rule.require.at ? 'every' : 'all'}
-            onChange={(e) =>
-              onChange({
-                require: { ...rule.require, at: e.target.value === 'every' ? { every: { n: 2 } } : { all: {} } },
-              })
-            }
-          >
-            <option value="all">every position</option>
-            <option value="every">every Nth position</option>
-          </select>
-          {'every' in rule.require.at && (
-            <input
-              type="number"
-              min={1}
-              value={rule.require.at.every.n}
-              onChange={(e) => onChange({ require: { ...rule.require, at: { every: { n: positiveInt(e.target.value) } } } })}
-            />
-          )}
-        </div>
         <PredicateEditor predicate={rule.require.talk} onChange={(talk) => onChange({ require: { ...rule.require, talk } })} />
       </>
     )}
@@ -312,14 +278,19 @@ const canonical = (value: unknown): string =>
 const isHovered = (rule: Rule, hoveredRule: Rule | undefined) =>
   hoveredRule !== undefined && canonical(rule) === canonical(hoveredRule)
 
+const rulePredicate = (rule: Rule): TalkPredicate | undefined =>
+  'require' in rule ? rule.require.talk : 'spacing' in rule ? rule.spacing.talk : undefined
+
 const highlightFor = (step: GenerationStep, rule: Rule | undefined) => {
-  if (!rule || !step.talk) return ''
+  if (!rule || !step.talk) return { className: '' }
   const key = canonical(rule)
   const evaluation = step.evaluation.rules.find((e) => canonical(e.rule) === key)
-  if (!evaluation) return ''
+  if (!evaluation) return { className: '' }
   const talkId = step.talk.id
-  const compliance = evaluation.rejected.some((talk) => talk.id === talkId) ? 'rejected' : 'matched'
-  return evaluation.satisfiesPredicate ? `${compliance} predicate` : compliance
+  return {
+    className: evaluation.rejected.some((talk) => talk.id === talkId) ? 'rejected' : 'matched',
+    predicate: evaluation.satisfiesPredicate ? rulePredicate(rule) : undefined,
+  }
 }
 
 const StepView = ({
@@ -333,6 +304,7 @@ const StepView = ({
   onHover: (rule: Rule | undefined) => void
   onSeed: (seed: number) => void
 }) => {
+  const highlight = highlightFor(step, hoveredRule)
   const [open, setOpen] = useState(false)
 
   const onCardClick = (e: React.MouseEvent) => {
@@ -341,10 +313,10 @@ const StepView = ({
   }
 
   return (
-    <li className={`step ${highlightFor(step, hoveredRule)}`}>
+    <li className={`step ${highlight.className}`}>
       <div className="card" onClick={onCardClick}>
         {step.talk ? (
-          <TalkRow talk={step.talk} position={step.position} />
+          <TalkRow talk={step.talk} position={step.position} highlight={highlight.predicate} />
         ) : (
           <div className="talk none">
             <span className="index">{step.position}</span>

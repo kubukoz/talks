@@ -9,8 +9,6 @@ import cats.syntax.all.*
 import hearth.kindlings.catsderivation.extensions.*
 import smithy4s.Document
 import talks.api.Evaluation
-import talks.api.Every
-import talks.api.Positions
 import talks.api.Rule
 import talks.api.RuleEvaluation
 import talks.api.RuleOutcome
@@ -112,10 +110,8 @@ object RuleEngine {
         "mustSatisfy" -> Document.DBoolean(expected),
         "satisfyingCandidates" -> number(matching.size),
       ) *>
-        log(s"Position $position needs a talk that ${if (expected)
-            ""
-          else
-            "does not "}${describe(predicate)}").as((kept, rejected).some)
+        log(s"Position $position needs a talk that ${describe(predicate, expected)}")
+          .as((kept, rejected).some)
     }
 
     rule match {
@@ -124,16 +120,14 @@ object RuleEngine {
         val (fresh, repeats) = candidates.partition(talk => !seen(talk.id))
         context("alreadyPlayed" -> number(seen.size)).as((fresh, repeats).some)
 
-      case Rule.Requirement(at, predicate, _) =>
-        required(at, position) match {
-          case None           => log(s"Position $position is exempt from this rule").as(None)
-          case Some(expected) => expect(predicate, expected)
-        }
+      case Rule.Requirement(predicate, _) => expect(predicate, true)
 
       case Rule.Spacing(n, predicate, _) =>
         history.lastIndexWhere(satisfies(predicate, _)) match {
           case -1 =>
-            log(s"No earlier talk ${describe(predicate)}, so spacing starts once one is played")
+            log(
+              s"No earlier talk ${describe(predicate, true)}, so spacing starts once one is played"
+            )
               .as(None)
           case lastIndex =>
             val lastPosition = lastIndex + 1
@@ -154,27 +148,35 @@ object RuleEngine {
     }
   }
 
-  private def required(positions: Positions, position: Int): Option[Boolean] =
-    positions match {
-      case Positions.EveryCase(Every(n)) if position % n == 0 => Some(true)
-      case Positions.EveryCase(_) if position == 1            => None
-      case Positions.EveryCase(_)                             => Some(false)
-      case Positions.AllCase                                  => Some(true)
-    }
-
   private def predicateOf(rule: Rule): Option[TalkPredicate] =
     rule match {
-      case Rule.NoRepeats(_)                 => None
-      case Rule.Requirement(_, predicate, _) => Some(predicate)
-      case Rule.Spacing(_, predicate, _)     => Some(predicate)
+      case Rule.NoRepeats(_)              => None
+      case Rule.Requirement(predicate, _) => Some(predicate)
+      case Rule.Spacing(_, predicate, _)  => Some(predicate)
     }
 
-  private def describe(predicate: TalkPredicate): String =
+  private def describe(predicate: TalkPredicate, positive: Boolean): String =
     predicate match {
-      case TalkPredicate.SpeakerCountryCase(country) => s"has a speaker from $country"
-      case TalkPredicate.HasTagCase(tag)             => s"is tagged \"$tag\""
-      case TalkPredicate.ConferenceCase(conference)  => s"is from $conference"
-      case TalkPredicate.MaxDurationSecondsCase(max) => s"is at most ${max / 60} min"
+      case TalkPredicate.SpeakerCountryCase(country) =>
+        if (positive)
+          s"has a speaker from $country"
+        else
+          s"has no speaker from $country"
+      case TalkPredicate.HasTagCase(tag) =>
+        if (positive)
+          s"is tagged \"$tag\""
+        else
+          s"is not tagged \"$tag\""
+      case TalkPredicate.ConferenceCase(conference) =>
+        if (positive)
+          s"is from $conference"
+        else
+          s"is not from $conference"
+      case TalkPredicate.MaxDurationSecondsCase(max) =>
+        if (positive)
+          s"is at most ${max / 60} min"
+        else
+          s"is longer than ${max / 60} min"
     }
 
   private def satisfies(predicate: TalkPredicate, talk: Talk): Boolean =
